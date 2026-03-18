@@ -19,7 +19,7 @@
 
     <div style="margin-bottom:var(--sp-8)">
       <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
-      <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
+      <h1 style="margin-bottom:var(--sp-3);color:var(--text)">Generate your<br>checklist.</h1>
       <p class="dim" style="font-size:clamp(15px,1.1vw,17px);max-width:600px;line-height:1.7">
         Paste your ticket or AC, pick your testing areas, and get a grouped QA checklist in seconds.
         Works solo or shared with your team in real time.
@@ -31,12 +31,12 @@
       <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
         <div class="card-icon">🔒</div>
         <div class="card-label">Personal</div>
-        <div class="card-desc">Just you. Saves to your browser automatically.</div>
+        <div class="card-desc" style="color:var(--text);opacity:.72">Just you. Saves to your browser automatically.</div>
       </button>
       <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button">
         <div class="card-icon">👥</div>
         <div class="card-label">Shared</div>
-        <div class="card-desc">Real-time sync with your team via a 6-char code.</div>
+        <div class="card-desc" style="color:var(--text);opacity:.72">Real-time sync with your team via a 6-char code.</div>
       </button>
     </div>
 
@@ -49,7 +49,7 @@
       <div class="field">
         <label class="field-label">Your Name</label>
         <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-        <div class="field-hint">Required. Shown next to your outcomes so teammates know who marked what.</div>
+        <div class="field-hint" style="color:var(--soft)">Required. Shown next to your outcomes so teammates know who marked what.</div>
       </div>
       <div class="join-section" id="joinSection">
         <label class="field-label">Session Code</label>
@@ -86,12 +86,12 @@
       <div class="card">
         <div class="card-icon">👥</div>
         <div class="card-label" style="margin-bottom:8px">Real-Time Sessions</div>
-        <div class="card-desc">Share a 6-character code and your whole team works from the same checklist. Pass, Fail, and Blocked outcomes sync live — no spreadsheet handoff.</div>
+        <div class="card-desc" style="color:var(--text);opacity:.75">Share a 6-character code and your whole team works from the same checklist. Pass, Fail, and Blocked outcomes sync live — no spreadsheet handoff.</div>
       </div>
       <div class="card">
         <div class="card-icon">✦</div>
         <div class="card-label" style="margin-bottom:8px">Built for Testing</div>
-        <div class="card-desc">Add notes per step, delete irrelevant items, regenerate any section, track time estimates, and export to CSV — everything a test session needs.</div>
+        <div class="card-desc" style="color:var(--text);opacity:.75">Add notes per step, delete irrelevant items, regenerate any section, track time estimates, and export to CSV — everything a test session needs.</div>
       </div>
     </div>
 
@@ -114,7 +114,7 @@
 Example:
 As a manager, I can approve or reject expense reports submitted by my team.
 AC: Only managers see approve/reject buttons. Approved reports trigger a notification. Rejected reports require a reason."></textarea>
-          <div class="field-hint">Full AC works best. Short feature notes work too.</div>
+          <div class="field-hint" style="color:var(--soft)">Full AC works best. Short feature notes work too.</div>
         </div>
       </div>
 

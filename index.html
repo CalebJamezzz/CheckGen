@@ -8,12 +8,22 @@
   <link rel="stylesheet" href="/css/main.css">
   <style>
     .hero {
-      min-height: 88vh;
+      min-height: clamp(600px, 88vh, 960px);
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: var(--sp-16) 0 var(--sp-12);
       position: relative;
+    }
+    .hero-glow {
+      position: absolute;
+      top: -10%;
+      left: -5%;
+      width: 65%;
+      height: 75%;
+      background: radial-gradient(ellipse at center, rgba(138,127,248,.14) 0%, rgba(138,127,248,.05) 40%, transparent 70%);
+      pointer-events: none;
+      filter: blur(40px);
     }
     .hero-eyebrow {
       display: inline-flex;
@@ -33,19 +43,20 @@
     }
     .hero-headline {
       font-family: var(--font-display);
-      font-size: clamp(3rem, 6vw, 6rem);
+      font-size: clamp(3rem, 6vw, 8rem);
       font-weight: 700;
-      line-height: .95;
+      line-height: .92;
       letter-spacing: -.03em;
       margin-bottom: var(--sp-6);
-      max-width: 800px;
+      max-width: min(900px, 70vw);
     }
     .hero-headline .accent { color: var(--indigo); }
     .hero-sub {
       font-size: clamp(16px, 1.2vw, 19px);
-      color: var(--dim);
-      line-height: 1.7;
-      max-width: 560px;
+      color: var(--text);
+      opacity: .75;
+      line-height: 1.75;
+      max-width: clamp(480px, 40vw, 680px);
       margin-bottom: var(--sp-8);
     }
     .hero-cta { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
@@ -53,7 +64,7 @@
       font-family: var(--font-mono);
       font-size: clamp(10px, .7vw, 12px);
       letter-spacing: .1em;
-      color: var(--muted);
+      color: var(--soft);
     }
 
     /* How it works */
@@ -70,9 +81,9 @@
     .step {
       position: relative;
       padding: var(--sp-5);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-md);
       border-radius: var(--r-lg);
-      background: var(--bg2);
+      background: linear-gradient(135deg, rgba(14,19,32,.95) 0%, rgba(11,15,26,.98) 100%);
     }
     .step-num {
       font-family: var(--font-display);
@@ -89,7 +100,7 @@
       font-weight: 600;
       margin-bottom: var(--sp-2);
     }
-    .step-desc { color: var(--dim); font-size: clamp(13px, .9vw, 15px); line-height: 1.65; }
+    .step-desc { color: var(--text); font-size: clamp(14px, .95vw, 16px); line-height: 1.75; opacity: .78; }
 
     /* Features */
     .features {
@@ -132,7 +143,7 @@
       color: var(--indigo);
       margin-bottom: var(--sp-2);
     }
-    .feature-desc { color: var(--dim); font-size: clamp(13px, .88vw, 15px); line-height: 1.65; }
+    .feature-desc { color: var(--text); font-size: clamp(14px, .92vw, 16px); line-height: 1.75; opacity: .78; }
 
     /* Final CTA */
     .cta-section {
@@ -141,7 +152,7 @@
       text-align: center;
     }
     .cta-section h2 { margin-bottom: var(--sp-4); }
-    .cta-section p { color: var(--dim); font-size: clamp(15px, 1.1vw, 17px); margin-bottom: var(--sp-8); }
+    .cta-section p { color: var(--text); opacity: .72; font-size: clamp(15px, 1.1vw, 17px); margin-bottom: var(--sp-8); }
 
     /* Footer */
     footer {
@@ -171,6 +182,7 @@
 
   <!-- Hero -->
   <section class="hero">
+    <div class="hero-glow"></div>
     <div class="hero-eyebrow">✦ AI-Powered QA Tooling</div>
     <h1 class="hero-headline">Stop writing<br>checklists<br><span class="accent">from scratch.</span></h1>
     <p class="hero-sub">
@@ -185,7 +197,7 @@
   <!-- How it works -->
   <section class="steps">
     <div class="eyebrow">How it works</div>
-    <h2 style="margin-top:var(--sp-3)">Three steps to a complete test plan.</h2>
+    <h2 style="margin-top:var(--sp-3);color:var(--text)">Three steps to a complete test plan.</h2>
     <div class="steps-grid">
       <div class="step">
         <div class="step-num">01</div>
@@ -208,7 +220,7 @@
   <!-- Features -->
   <section class="features">
     <div class="eyebrow">What's included</div>
-    <h2 style="margin-top:var(--sp-3)">Everything a test session needs.</h2>
+    <h2 style="margin-top:var(--sp-3);color:var(--text)">Everything a test session needs.</h2>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">🤖</div>
