@@ -1,7 +1,7 @@
 /* supabase.js — plain fetch helpers, no SDK required */
 
-const SB_URL = 'https://lbviiggrxzhyxrpivbbi.supabase.co';
-const SB_KEY = 'sb_publishable_eQRvx-J1Cp4nlq6Q6TOjIA__QYJmJq6';
+const SB_URL = 'https://mxqdfsrrxxvwihkeqgcr.supabase.co';
+const SB_KEY = 'sb_publishable_g9bh9q3NmOqhBodXwuHVnw_bgh8f_8x';
 
 function sbHeaders() {
   return {
