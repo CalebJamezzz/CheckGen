@@ -4,7 +4,7 @@
   status = 200
 
 [functions]
-  node_bundler = "esbuild"
+  directory = "netlify/functions"
 
 [functions."ask"]
   timeout = 26
