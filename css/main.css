@@ -260,7 +260,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   box-shadow: 0 0 0 0 var(--green-glow);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #8f85f8;
+  background: #34D399;
   box-shadow: 0 0 16px var(--green-glow);
 }
 
