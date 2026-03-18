@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CheckGen — AI-Powered QA Checklist Generator</title>
+  <meta name="description" content="Paste your ticket or acceptance criteria. Get a grouped, AI-generated QA checklist in seconds. Works solo or shared with your team in real time.">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .hero {
+      min-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: var(--sp-16) 0 var(--sp-12);
+      position: relative;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border: 1px solid rgba(123,110,246,.3);
+      border-radius: 999px;
+      background: var(--indigo-dim);
+      font-family: var(--font-mono);
+      font-size: clamp(10px, .7vw, 12px);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--indigo);
+      margin-bottom: var(--sp-6);
+      width: fit-content;
+    }
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 6vw, 6rem);
+      font-weight: 700;
+      line-height: .95;
+      letter-spacing: -.03em;
+      margin-bottom: var(--sp-6);
+      max-width: 800px;
+    }
+    .hero-headline .accent { color: var(--indigo); }
+    .hero-sub {
+      font-size: clamp(16px, 1.2vw, 19px);
+      color: var(--dim);
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: var(--sp-8);
+    }
+    .hero-cta { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; }
+    .hero-note {
+      font-family: var(--font-mono);
+      font-size: clamp(10px, .7vw, 12px);
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+
+    /* How it works */
+    .steps {
+      padding: var(--sp-16) 0;
+      border-top: 1px solid var(--border);
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-6);
+      margin-top: var(--sp-8);
+    }
+    .step {
+      position: relative;
+      padding: var(--sp-5);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      background: var(--bg2);
+    }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 4vw, 5rem);
+      font-weight: 700;
+      color: rgba(123,110,246,.12);
+      line-height: 1;
+      margin-bottom: var(--sp-3);
+      letter-spacing: -.04em;
+    }
+    .step-title {
+      font-family: var(--font-display);
+      font-size: clamp(1rem, 1.2vw, 1.3rem);
+      font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+    .step-desc { color: var(--dim); font-size: clamp(13px, .9vw, 15px); line-height: 1.65; }
+
+    /* Features */
+    .features {
+      padding: var(--sp-16) 0;
+      border-top: 1px solid var(--border);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-4);
+      margin-top: var(--sp-8);
+    }
+    .feature-card {
+      padding: var(--sp-5) var(--sp-5);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      background: var(--bg2);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .25s, transform .25s;
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--indigo), var(--pass));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .4s;
+    }
+    .feature-card:hover { border-color: rgba(123,110,246,.3); transform: translateY(-4px); }
+    .feature-card:hover::after { transform: scaleX(1); }
+    .feature-icon { font-size: 22px; margin-bottom: var(--sp-3); }
+    .feature-title {
+      font-family: var(--font-mono);
+      font-size: clamp(10px, .72vw, 13px);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--indigo);
+      margin-bottom: var(--sp-2);
+    }
+    .feature-desc { color: var(--dim); font-size: clamp(13px, .88vw, 15px); line-height: 1.65; }
+
+    /* Final CTA */
+    .cta-section {
+      padding: var(--sp-16) 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-section h2 { margin-bottom: var(--sp-4); }
+    .cta-section p { color: var(--dim); font-size: clamp(15px, 1.1vw, 17px); margin-bottom: var(--sp-8); }
+
+    /* Footer */
+    footer {
+      padding: var(--sp-8) 0 var(--sp-6);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--sp-4);
+    }
+    footer .muted { font-family: var(--font-mono); font-size: clamp(10px, .68vw, 12px); letter-spacing: .08em; }
+
+    @media (max-width: 760px) {
+      .steps-grid, .features-grid { grid-template-columns: 1fr; }
+      .hero-headline { font-size: clamp(2.6rem, 8vw, 4rem); }
+    }
+  </style>
+</head>
+<body>
+<div class="shell" style="padding-top:var(--sp-6)">
+
+  <nav class="nav">
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <a href="/app" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px)">Open App →</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-eyebrow">✦ AI-Powered QA Tooling</div>
+    <h1 class="hero-headline">Stop writing<br>checklists<br><span class="accent">from scratch.</span></h1>
+    <p class="hero-sub">
+      Paste your ticket or acceptance criteria. CheckGen reads what was written — then surfaces the edge cases, validations, permissions, and break-it scenarios that don't always make it into the AC.
+    </p>
+    <div class="hero-cta">
+      <a href="/app" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Generate a Checklist →</a>
+      <span class="hero-note">Free · No sign-up required</span>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="steps">
+    <div class="eyebrow">How it works</div>
+    <h2 style="margin-top:var(--sp-3)">Three steps to a complete test plan.</h2>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Paste your AC</div>
+        <div class="step-desc">Paste your ticket, user story, or acceptance criteria. Full AC works best — but even a short description generates useful steps.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Pick your areas</div>
+        <div class="step-desc">Choose which testing areas matter for this ticket — functional, permissions, edge cases, UI, integrations, error handling, and more.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Test and export</div>
+        <div class="step-desc">Mark items pass, fail, or blocked as you go. Add notes, regenerate any section, and export to CSV when you're done.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="eyebrow">What's included</div>
+    <h2 style="margin-top:var(--sp-3)">Everything a test session needs.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">AI-Generated from your AC</div>
+        <div class="feature-desc">15–25 specific, grouped test cases in seconds. Edge cases, validations, break-it scenarios — all derived from what your ticket actually says.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <div class="feature-title">Real-Time Team Sessions</div>
+        <div class="feature-desc">Share a 6-character code and your whole team works from the same checklist simultaneously. Pass, Fail, Blocked — all sync live.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✎</div>
+        <div class="feature-title">Notes Per Item</div>
+        <div class="feature-desc">Capture context as you test — "fails on Safari only", "linked to PROJ-456". Notes export with your CSV so nothing gets lost.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">↺</div>
+        <div class="feature-title">Regen Any Section</div>
+        <div class="feature-desc">Not happy with a section? Regenerate just that group with one click. The rest of your checklist stays untouched.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Live Progress Tracking</div>
+        <div class="feature-desc">Pass, Fail, and Blocked counts update in real time. A time estimate tells you how long the session should take before you start.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">↓</div>
+        <div class="feature-title">Export to CSV</div>
+        <div class="feature-desc">Filter by outcome and export. Notes, priorities, and types all export with each row — paste straight into your defect tracker.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="cta-section">
+    <h2>Ready to test smarter?</h2>
+    <p>No sign-up. No install. Just paste your ticket and go.</p>
+    <a href="/app" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Generate your first checklist →</a>
+  </section>
+
+  <footer>
+    <a href="/" class="nav-logo" style="font-size:clamp(16px,1.2vw,19px)">Check<span>Gen</span></a>
+    <span class="muted">Built by <a href="https://calebthede.com" style="color:var(--indigo);text-decoration:none">Caleb Thede</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
