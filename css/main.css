@@ -178,7 +178,7 @@ input[type="email"],
 textarea,
 select {
   width: 100%;
-  padding: var(--sp-3) var(--sp-4);
+  padding: 13px var(--sp-4);
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -766,13 +766,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   align-items: center;
   justify-content: space-between;
   padding: var(--sp-3) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,.06);
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(8,11,18,.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(8,11,18,.55);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
   margin-bottom: 0;
 }
 .nav-logo {
@@ -1373,3 +1373,29 @@ input[type="password"] {
   transition: color .15s;
 }
 .footer-legal a:hover { color: var(--soft); }
+
+/* Auth inputs — comfortable height */
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"] {
+  padding: 13px 16px;
+  font-size: clamp(14px, .95vw, 16px);
+  height: auto;
+  min-height: 48px;
+}
+
+/* Legal pages — fluid layout */
+.legal-wrap {
+  max-width: min(1600px, 92vw);
+  margin: 0 auto;
+  padding: 0 clamp(var(--sp-6), 3vw, var(--sp-16));
+}
+.legal-body {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--sp-10) 0 var(--sp-16);
+}
+@media (max-width: 900px) {
+  .about-inner { max-width: 100% !important; }
+  .legal-body { max-width: 100%; }
+}

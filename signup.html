@@ -132,8 +132,16 @@ async function handleSignup() {
     if (data?.user) {
       await updateProfile({ name, organization: org || null }).catch(() => {});
     }
-    showSt('✓ Account created! Redirecting…', 'success');
-    setTimeout(() => location.href = '/app/', 1200);
+    // If email confirmation is disabled, user is signed in immediately
+    const { data: sessionData } = await sb.auth.getSession();
+    if (sessionData?.session) {
+      showSt('✓ Account created! Taking you to the app…', 'success');
+      setTimeout(() => location.href = '/app/', 1000);
+    } else {
+      // Email confirmation required
+      showSt('✓ Account created! Check your email to confirm, then sign in.', 'success');
+      setTimeout(() => location.href = '/login.html', 2500);
+    }
   } catch(e) {
     showSt(e.message || 'Signup failed.', 'error');
     btn.disabled = false; btn.textContent = 'Create Free Account';

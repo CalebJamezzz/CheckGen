@@ -37,9 +37,6 @@
   const ctx = await initPage(true);
   if (!ctx) return;
   const { user, profile } = ctx;
-  const tier = profile?.tier || 'free';
-  const isPro = tier === 'pro';
-  const FREE_LIMIT = 25;
 
   const el = document.getElementById('historyContent');
 
@@ -56,21 +53,13 @@
       return;
     }
 
-    const capped = !isPro && sessions.length >= FREE_LIMIT;
 
     el.innerHTML = `
-      ${capped ? `
-        <div class="anon-gate" style="margin-bottom:var(--sp-5)">
-          <div class="anon-gate-text">
-            <strong>Free accounts save the last ${FREE_LIMIT} checklists.</strong>
-            Upgrade to Pro for unlimited history.
-          </div>
-          <a href="/signup.html" class="btn btn-outline" style="flex-shrink:0">Upgrade →</a>
-        </div>` : ''}
+
       <div class="history-grid" id="historyGrid"></div>`;
 
     const grid = document.getElementById('historyGrid');
-    const display = isPro ? sessions : sessions.slice(0, FREE_LIMIT);
+    const display = sessions;
 
     grid.innerHTML = display.map(s => {
       const items = s.items || [];
