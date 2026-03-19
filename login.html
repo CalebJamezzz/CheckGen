@@ -10,43 +10,71 @@
 </head>
 <body>
 <div class="auth-wrap">
-  <div class="auth-card">
-    <a href="/" class="auth-logo">Check<span>Gen</span></a>
-    <h1 class="auth-title">Welcome back</h1>
-    <p class="auth-sub">Sign in to access your checklists and history.</p>
 
-    <button type="button" class="btn-google" onclick="signInWithGoogle()">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-      Continue with Google
-    </button>
-
-    <div class="auth-divider"><span>or</span></div>
-
-    <div class="field">
-      <label class="field-label">Email</label>
-      <input type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email">
-    </div>
-    <div class="field" style="margin-bottom:var(--sp-2)">
-      <label class="field-label">Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <div style="text-align:right;margin-bottom:var(--sp-5)">
-      <a href="/forgot.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Forgot password?</a>
-    </div>
-
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="handleLogin()">Sign In</button>
-    <div class="status" id="loginStatus" style="margin-top:var(--sp-3)"></div>
-
-    <div class="auth-footer">
-      Don't have an account? <a href="/signup.html">Create one free</a>
-    </div>
-    <div class="auth-terms" style="margin-top:var(--sp-5)">
-      <a href="/terms.html" target="_blank">Terms of Service</a> · <a href="/privacy.html" target="_blank">Privacy Policy</a>
-    </div>
-    <div class="auth-footer" style="margin-top:var(--sp-3)">
-      <a href="/app/" style="color:var(--muted);font-size:clamp(11px,.72vw,13px)">Continue without an account →</a>
+  <!-- Left — value props -->
+  <div class="auth-side-left">
+    <a href="/" class="nav-logo" style="margin-bottom:var(--sp-8)">Check<span>Gen</span></a>
+    <h2 style="font-size:clamp(1.4rem,2vw,2.2rem);margin-bottom:var(--sp-3);color:var(--text)">QA checklists from your AC in seconds.</h2>
+    <p style="font-size:clamp(13px,.9vw,15px);color:var(--dim);line-height:1.7;max-width:400px;margin-bottom:var(--sp-8)">Paste your ticket or acceptance criteria. CheckGen generates a grouped, actionable test plan — ready to share with your team.</p>
+    <div class="auth-value-prop">
+      <div class="auth-value-item">
+        <div class="auth-value-icon">🤖</div>
+        <div class="auth-value-text"><strong>AI-generated test cases</strong><span>15–25 grouped items from your AC in 3–8 seconds</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">👥</div>
+        <div class="auth-value-text"><strong>Real-time shared sessions</strong><span>Your whole team on the same checklist, live</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">☁️</div>
+        <div class="auth-value-text"><strong>Cloud history</strong><span>Your last 25 checklists saved and accessible anywhere</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">↓</div>
+        <div class="auth-value-text"><strong>Export to CSV</strong><span>Notes, outcomes, and priorities in every row</span></div>
+      </div>
     </div>
   </div>
+
+  <!-- Right — form -->
+  <div class="auth-side-right">
+    <div class="auth-card">
+      <a href="/" class="auth-logo">Check<span>Gen</span></a>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Sign in to access your checklists and history.</p>
+
+      <button type="button" class="btn-google" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:var(--sp-2)">
+        <label class="field-label">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div style="text-align:right;margin-bottom:var(--sp-5)">
+        <a href="/forgot.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Forgot password?</a>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="handleLogin()">Sign In</button>
+      <div class="status" id="loginStatus" style="margin-top:var(--sp-3)"></div>
+
+      <div class="auth-footer">Don't have an account? <a href="/signup.html">Create one free</a></div>
+      <div class="auth-footer" style="margin-top:var(--sp-2)">
+        <a href="/app/" style="color:var(--muted);font-size:clamp(11px,.72vw,13px)">Continue without an account →</a>
+      </div>
+      <div class="auth-terms" style="margin-top:var(--sp-5)">
+        <a href="/terms.html" target="_blank">Terms of Service</a> · <a href="/privacy.html" target="_blank">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+
 </div>
 <script src="/js/supabase.js"></script>
 <script src="/js/auth.js"></script>
@@ -56,38 +84,27 @@
 async function handleLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pw    = document.getElementById('loginPassword').value;
-  if (!email || !pw) { showSt('loginStatus','Enter your email and password.','error'); return; }
+  if (!email || !pw) { showSt('Enter your email and password.', 'error'); return; }
   const btn = document.querySelector('.btn-primary');
   btn.disabled = true; btn.textContent = 'Signing in…';
   try {
-    const sb = getSB();
-    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    const { error } = await getSB().auth.signInWithPassword({ email, password: pw });
     if (error) throw error;
     location.href = getReturnTo();
   } catch(e) {
-    showSt('loginStatus', e.message || 'Sign in failed.', 'error');
+    showSt(e.message || 'Sign in failed.', 'error');
     btn.disabled = false; btn.textContent = 'Sign In';
   }
 }
-
 async function signInWithGoogle() {
-  await waitForSB();
-  const sb = getSB();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/app/' }
-  });
-  if (error) showSt('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
+  const { error } = await getSB().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/app/' } });
+  if (error) showSt('Google sign-in failed: ' + error.message, 'error');
 }
-
-function showSt(id, msg, type) {
-  const el = document.getElementById(id);
+function showSt(msg, type) {
+  const el = document.getElementById('loginStatus');
   el.textContent = msg; el.className = 'status ' + type;
 }
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleLogin();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 </script>
 </body>
 </html>

@@ -7,9 +7,16 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <style>
-    .prose { font-size:clamp(15px,1.05vw,17px); color:var(--text); opacity:.82; line-height:1.8; max-width:680px; }
+    .about-section { padding:var(--sp-12) 0; border-top:1px solid var(--border); }
+    .about-section:first-of-type { border-top:none; }
+    .prose { font-size:clamp(15px,1.05vw,17px); color:var(--text); opacity:.82; line-height:1.8; }
     .prose p { margin-bottom:var(--sp-4); }
-      @media (max-width:760px) { .about-intro-grid { grid-template-columns:1fr !important; } }
+    @media (max-width:760px) {
+      .about-intro-grid, .about-feature-deep { grid-template-columns:1fr !important; }
+    }
+    @media (max-width:900px) {
+      .about-steps-grid, .about-feat-grid { grid-template-columns:1fr 1fr !important; }
+    }
   </style>
 </head>
 <body>
@@ -18,28 +25,27 @@
   <nav class="nav">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
-      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--green);transition:color .15s">About</a>
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--green)">About</a>
       <a href="/updates.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">Updates</a>
       <a href="/login.html" class="btn btn-ghost" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Sign In</a>
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
 
-  <div style="height:var(--sp-2)"></div>
   <!-- Intro -->
   <section class="about-section" style="border-top:none;padding-top:var(--sp-8)">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10);align-items:start">
+    <div class="about-intro-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-10);align-items:start">
       <div>
         <p class="eyebrow" style="margin-bottom:var(--sp-4)">About CheckGen</p>
         <h1 style="font-size:clamp(2rem,3.5vw,4rem);margin-bottom:var(--sp-5)">Built for QA engineers who test seriously.</h1>
         <div class="prose">
           <p>CheckGen started as an internal tool — a way to stop writing the same test cases from scratch every sprint. Paste acceptance criteria, get a grouped checklist, mark outcomes, export. That's it.</p>
-          <p>Built on Claude Haiku for generation speed, Supabase for real-time shared sessions, and Netlify for hosting. No bloat, no dashboard full of charts nobody reads. Just a fast, focused testing tool.</p>
+          <p>Built on Claude Haiku for generation speed, Supabase for real-time shared sessions, and Netlify for hosting. No bloat. Just a fast, focused testing tool.</p>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:var(--sp-4);padding-top:var(--sp-6)">
         <div class="about-card" style="padding:var(--sp-5)">
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Stack</div>
+          <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-3)">Stack</div>
           <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
             <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">AI model</span><span style="color:var(--text)">Claude Haiku</span></div>
             <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">Database</span><span style="color:var(--text)">Supabase</span></div>
@@ -48,7 +54,7 @@
           </div>
         </div>
         <div class="about-card" style="padding:var(--sp-5)">
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">By the numbers</div>
+          <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-3)">By the numbers</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
             <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">15–25</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">test cases per run</div></div>
             <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">3–8s</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">generation time</div></div>
@@ -60,253 +66,201 @@
     </div>
   </section>
 
-  <!-- How it works -->  <!-- How it works -->
+  <!-- How it works -->
   <section class="about-section">
-          <div class="eyebrow" style="margin-bottom:var(--sp-3)">How it works</div>
-      <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Three steps to a complete test plan.</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)">
-
-        <div class="about-card about-card-md">
-          <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">01</div>
-          <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Paste your AC</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Paste your ticket, user story, or acceptance criteria. Full AC works best — a short description still generates useful steps.</p>
-        </div>
-
-        <div class="about-card about-card-md">
-          <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">02</div>
-          <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Pick your areas</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Choose which testing areas matter — functional, permissions, edge cases, UI, integrations, error handling, and more.</p>
-        </div>
-
-        <div class="about-card about-card-md">
-          <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">03</div>
-          <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Test and export</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Mark items pass, fail, or blocked as you go. Add notes, regenerate any section, and export to CSV when done.</p>
-        </div>
-
+    <div class="eyebrow" style="margin-bottom:var(--sp-3)">How it works</div>
+    <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Three steps to a complete test plan.</h2>
+    <div class="about-steps-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)">
+      <div class="about-card about-card-md">
+        <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">01</div>
+        <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Paste your AC</div>
+        <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Paste your ticket, user story, or acceptance criteria. Full AC works best — a short description still generates useful steps.</p>
+      </div>
+      <div class="about-card about-card-md">
+        <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">02</div>
+        <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Pick your areas</div>
+        <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Choose which testing areas matter — functional, permissions, edge cases, UI, integrations, error handling, and more.</p>
+      </div>
+      <div class="about-card about-card-md">
+        <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">03</div>
+        <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Test and export</div>
+        <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Mark items pass, fail, or blocked as you go. Add notes, regenerate any section, and export to CSV when done.</p>
       </div>
     </div>
   </section>
 
-  <!-- Feature cards -->
+  <!-- What's included -->
   <section class="about-section">
-          <div class="eyebrow" style="margin-bottom:var(--sp-3)">What's included</div>
-      <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Everything a test session needs.</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)">
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">🤖</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI from your AC</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">15–25 specific, grouped test cases in seconds. Edge cases, validations, break-it scenarios — all from your ticket.</p>
-        </div>
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">👥</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Sessions</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Share a 6-character code and your whole team works from the same checklist. Pass, Fail, Blocked sync live.</p>
-        </div>
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">✎</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Notes Per Item</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Capture context as you test. Notes export with your CSV so nothing gets lost between sessions.</p>
-        </div>
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">↺</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Regen Any Section</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Not happy with a section? Regenerate just that group. The rest of your checklist stays untouched.</p>
-        </div>
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">📊</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Live Progress</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Pass, Fail, and Blocked counts update in real time. Time estimates tell you how long a session will take.</p>
-        </div>
-
-        <div class="about-card">
-          <div style="font-size:22px;margin-bottom:var(--sp-3)">↓</div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Export to CSV</div>
-          <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Filter by outcome and export. Notes, priorities, and types all export with each row.</p>
-        </div>
-
-      </div>
+    <div class="eyebrow" style="margin-bottom:var(--sp-3)">What's included</div>
+    <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Everything a test session needs.</h2>
+    <div class="about-feat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)">
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">🤖</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI from your AC</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">15–25 specific, grouped test cases in seconds. Edge cases, validations, break-it scenarios — all from your ticket.</p></div>
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">👥</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Sessions</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Share a 6-character code and your team works from the same checklist. Pass, Fail, Blocked sync live.</p></div>
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">✎</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Notes Per Item</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Capture context as you test. Notes export with your CSV so nothing gets lost between sessions.</p></div>
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">↺</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Regen Any Section</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Not happy with a section? Regenerate just that group. The rest of your checklist stays untouched.</p></div>
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">📊</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Live Progress</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Pass, Fail, and Blocked counts update in real time. Time estimates tell you how long a session will take.</p></div>
+      <div class="about-card"><div style="font-size:22px;margin-bottom:var(--sp-3)">↓</div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Export to CSV</div><p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Filter by outcome and export. Notes, priorities, and types all export with each row.</p></div>
     </div>
   </section>
 
   <!-- Features deep dive -->
   <section class="about-section" id="features">
-    <div class="eyebrow" style="margin-bottom:var(--sp-4)">Features</div>
-    <h2 style="margin-bottom:var(--sp-8);color:var(--text)">How it works in detail</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);max-width:900px">
+    <div class="eyebrow" style="margin-bottom:var(--sp-4)">Features in depth</div>
+    <h2 style="margin-bottom:var(--sp-8);color:var(--text)">How it actually works.</h2>
+    <div class="about-feature-deep" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-8)">
       <div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI Checklist Generation</div>
-          <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Paste your AC and CheckGen sends it to Claude Haiku with a structured prompt: testing areas, focus style, and detail level. It returns 15–25 JSON items grouped by section — rendered into a full checklist.</p>
-        </div>
-        <div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Shared Sessions</div>
-          <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">When you start a shared session, CheckGen creates a row in Supabase with a 6-character code. Teammates who join poll every 5 seconds and see changes reflected live. No WebSockets required.</p>
-        </div>
-        <div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">History &amp; Cloud Sync</div>
-          <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Free accounts store the last 25 checklists tied to your user ID. Each session records full item state, outcomes, notes, ticket ID, and timestamps. Load any previous session and pick up exactly where you left off.</p>
-        </div>
-        <div>
-          <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Export to CSV</div>
-          <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Filter by outcome and export. Each row includes item text, section, priority, type, time estimate, outcome, and notes. Paste straight into your defect tracker or attach to a ticket.</p>
-        </div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI Checklist Generation</div>
+        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Paste your AC and CheckGen sends it to Claude Haiku with a structured prompt: testing areas, focus style, and detail level. It returns 15–25 JSON items grouped by section — rendered into a full checklist.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Shared Sessions</div>
+        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">When you start a shared session, CheckGen creates a row in Supabase with a 6-character code. Teammates who join poll every 5 seconds and see changes reflected live. No WebSockets required.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">History &amp; Cloud Sync</div>
+        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Free accounts store the last 25 checklists tied to your user ID. Each session records full item state, outcomes, notes, ticket ID, and timestamps. Load any previous session and pick up exactly where you left off.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Export to CSV</div>
+        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Filter by outcome and export. Each row includes item text, section, priority, type, time estimate, outcome, and notes. Paste straight into your defect tracker or attach to a ticket.</p>
+      </div>
     </div>
   </section>
 
   <!-- Pricing -->
   <section class="about-section" id="pricing">
-    <div class="eyebrow" style="margin-bottom:var(--sp-4)">Pricing</div>
-    <h2 style="margin-bottom:var(--sp-4);color:var(--text)">Free. Always.</h2>
-    <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);margin-bottom:var(--sp-8);max-width:560px">You can try CheckGen without an account. Create a free account for shared sessions and cloud history. Pro adds team management and integrations.</p>
+    <div class="eyebrow" style="margin-bottom:var(--sp-3)">Pricing</div>
+    <h2 style="margin-bottom:var(--sp-3);color:var(--text)">Free. Always.</h2>
+    <p style="color:var(--text);opacity:.65;font-size:clamp(14px,.95vw,16px);max-width:520px;margin-bottom:var(--sp-8);line-height:1.7">Try it without an account. Create a free account to unlock cloud history and shared sessions — no credit card required.</p>
     <div class="pricing-grid">
       <div class="pricing-card">
         <div class="pricing-tier">No Account</div>
         <div class="pricing-price">Free</div>
+        <p class="pricing-desc">Kick the tyres without signing up.</p>
         <ul class="pricing-features">
           <li>3 AI generations</li>
-          <li>Personal sessions</li>
+          <li>Personal sessions only</li>
           <li>Browser-local history</li>
           <li class="locked">Shared sessions</li>
           <li class="locked">Cloud history</li>
+          <li class="locked">CSV export with notes</li>
         </ul>
-        <a href="/app/" class="btn btn-ghost" style="width:100%;justify-content:center">Try it →</a>
+        <a href="/app/" class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)">Try Now →</a>
       </div>
       <div class="pricing-card featured">
         <div class="pricing-badge">Recommended</div>
         <div class="pricing-tier">Free Account</div>
-        <div class="pricing-price">$0</div>
+        <div class="pricing-price">$0<span> / forever</span></div>
+        <p class="pricing-desc">Everything you need for day-to-day QA testing.</p>
         <ul class="pricing-features">
-          <li>Unlimited generations</li>
+          <li>Unlimited AI generations</li>
           <li>Personal &amp; shared sessions</li>
           <li>Cloud history (last 25)</li>
           <li>CSV export with notes</li>
+          <li>Progress tracking</li>
+          <li>Team workspace</li>
         </ul>
-        <a href="/signup.html" class="btn btn-primary" style="width:100%;justify-content:center">Sign up free →</a>
+        <a href="/signup.html" class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)">Create Free Account →</a>
       </div>
-
     </div>
   </section>
 
   <!-- FAQ -->
   <section class="about-section" id="faq">
-          <div class="eyebrow" style="margin-bottom:var(--sp-4)">FAQ</div>
-      <h2 style="margin-bottom:var(--sp-6);color:var(--text)">Common questions</h2>
-      <div class="faq-accordion">
+    <div class="eyebrow" style="margin-bottom:var(--sp-4)">FAQ</div>
+    <h2 style="margin-bottom:var(--sp-6);color:var(--text)">Common questions.</h2>
+    <div class="faq-accordion" style="max-width:760px">
 
-        <details class="faq-details">
-          <summary class="faq-summary">Does CheckGen store my ticket data?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Ticket text and AC you paste is sent to the Anthropic API to generate your checklist. It is not stored on CheckGen servers unless you save a session — in which case the checklist items and metadata are stored in your Supabase-backed account, not the original ticket text.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">Does CheckGen store my ticket data?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Ticket text and AC you paste is sent to the Anthropic API to generate your checklist. It is not stored on CheckGen servers unless you save a session — in which case the checklist items and metadata are stored in your Supabase-backed account, not the original ticket text.</div>
+      </details>
 
-        <details class="faq-details">
-          <summary class="faq-summary">What AI model does it use?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Claude Haiku via the Anthropic API. Haiku is fast — checklist generation typically takes 3–8 seconds — and accurate enough for structured QA output.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">What AI model does it use?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Claude Haiku via the Anthropic API. Haiku is fast — checklist generation typically takes 3–8 seconds — and accurate enough for structured QA output.</div>
+      </details>
 
-        <details class="faq-details">
-          <summary class="faq-summary">Can I use it without Jira or a ticket system?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Yes. CheckGen works entirely standalone. Ticket ID and environment fields are optional. Just paste your AC and go.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">Can I use it without Jira or a ticket system?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Yes. CheckGen works entirely standalone. Ticket ID and environment fields are optional. Just paste your AC and go.</div>
+      </details>
 
-        <details class="faq-details">
-          <summary class="faq-summary">How does shared session sync work?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Shared sessions use Supabase REST API. Every outcome change pushes a PATCH to the session row. Teammates poll every 5 seconds and see changes reflected live. No WebSocket connection required.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">How does shared session sync work?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Shared sessions use Supabase REST API. Every outcome change pushes a PATCH to the session row. Teammates poll every 5 seconds and see changes reflected live. No WebSocket connection required.</div>
+      </details>
 
-        <details class="faq-details">
-          <summary class="faq-summary">How long do shared sessions stay active?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Sessions stay active until someone clicks End Session or the row expires after 30 days of inactivity. There is no time limit during an active test run.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">How long do shared sessions stay active?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Sessions stay active until someone clicks End Session or the row expires after 30 days of inactivity. There is no time limit during an active test run.</div>
+      </details>
 
-        <details class="faq-details">
-          <summary class="faq-summary">What happens to anonymous history?
-            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-          </summary>
-          <div class="faq-body">Anonymous history is stored in your browser localStorage. It disappears if you clear your browser data. Create a free account to save sessions to the cloud permanently.</div>
-        </details>
+      <details class="faq-details">
+        <summary class="faq-summary">What happens to anonymous history?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="faq-body">Anonymous history is stored in your browser localStorage. It disappears if you clear your browser data. Create a free account to save sessions to the cloud permanently.</div>
+      </details>
 
-      </div>
     </div>
   </section>
 
 </div>
-<script>
-(function() {
-  var nav = document.querySelector('.nav');
-  var shell = document.querySelector('.shell');
-  if (!nav) return;
-  var sticky = false;
-  window.addEventListener('scroll', function() {
-    if (window.scrollY > 60 && !sticky) {
-      sticky = true;
-      nav.classList.add('sticky');
-      if (shell) shell.classList.add('nav-offset');
-    } else if (window.scrollY <= 60 && sticky) {
-      sticky = false;
-      nav.classList.remove('sticky');
-      if (shell) shell.classList.remove('nav-offset');
-    }
-  }, { passive: true });
-})();
-</script>
 
-  <footer class="site-footer">
-    <div class="shell">
-      <div class="site-footer-grid">
-        <div class="site-footer-brand">
-          <a href="/" class="nav-logo">Check<span>Gen</span></a>
-          <p>AI-powered QA checklist generator. Paste your ticket or AC and get grouped test cases in seconds.</p>
-        </div>
-        <div>
-          <div class="site-footer-col-title">Product</div>
-          <div class="site-footer-links">
-            <a href="/app/">Generate Checklist</a>
-            <a href="/app/">Shared Sessions</a>
-            <a href="/app/history.html">History</a>
-          </div>
-        </div>
-        <div>
-          <div class="site-footer-col-title">Company</div>
-          <div class="site-footer-links">
-            <a href="/about.html">About</a>
-            <a href="/about.html#pricing">Pricing</a>
-            <a href="/updates.html">Updates &amp; Contact</a>
-            <a href="/about.html#faq">FAQ</a>
-          </div>
-        </div>
-        <div>
-          <div class="site-footer-col-title">Account</div>
-          <div class="site-footer-links">
-            <a href="/login.html">Sign In</a>
-            <a href="/signup.html">Create Free Account</a>
-            <a href="https://calebthede.com" target="_blank">Built by Caleb Thede</a>
-          </div>
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="site-footer-grid">
+      <div class="site-footer-brand">
+        <a href="/" class="nav-logo">Check<span>Gen</span></a>
+        <p>AI-powered QA checklist generator. Paste your ticket or AC and get grouped test cases in seconds.</p>
+      </div>
+      <div>
+        <div class="site-footer-col-title">Product</div>
+        <div class="site-footer-links">
+          <a href="/app/">Generate Checklist</a>
+          <a href="/app/">Shared Sessions</a>
+          <a href="/app/history.html">History</a>
         </div>
       </div>
-      <div class="site-footer-bottom">
-        <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
-        <div style="display:flex;gap:var(--sp-4)">
-          <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
-          <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+      <div>
+        <div class="site-footer-col-title">Company</div>
+        <div class="site-footer-links">
+          <a href="/about.html">About</a>
+          <a href="/about.html#pricing">Pricing</a>
+          <a href="/updates.html">Updates &amp; Contact</a>
+          <a href="/about.html#faq">FAQ</a>
+        </div>
+      </div>
+      <div>
+        <div class="site-footer-col-title">Account</div>
+        <div class="site-footer-links">
+          <a href="/login.html">Sign In</a>
+          <a href="/signup.html">Create Free Account</a>
+          <a href="https://calebthede.com" target="_blank">Built by Caleb Thede</a>
         </div>
       </div>
     </div>
-  </footer>
+    <div class="site-footer-bottom">
+      <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
+      <div style="display:flex;gap:var(--sp-4)">
+        <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+        <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
 <script>
 (function() {
   var nav = document.querySelector('.nav');

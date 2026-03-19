@@ -7,6 +7,25 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    .member-row { display:flex; align-items:center; justify-content:space-between; padding:var(--sp-3) 0; border-bottom:1px solid var(--border); gap:var(--sp-3); }
+    .member-row:last-child { border-bottom:none; }
+    .member-avatar { width:36px; height:36px; border-radius:50%; background:var(--bg3); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--green); flex-shrink:0; }
+    .member-info { flex:1; min-width:0; }
+    .member-name { font-size:clamp(13px,.88vw,15px); color:var(--text); }
+    .member-email { font-size:clamp(11px,.72vw,13px); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .role-badge { font-family:var(--font-mono); font-size:clamp(9px,.62vw,11px); letter-spacing:.1em; text-transform:uppercase; padding:3px 8px; border-radius:999px; border:1px solid; }
+    .role-badge.admin { color:var(--green); border-color:rgba(16,185,129,.3); background:rgba(16,185,129,.08); }
+    .role-badge.member { color:var(--soft); border-color:var(--border); background:rgba(255,255,255,.03); }
+    .role-badge.viewer { color:var(--muted); border-color:var(--border); background:rgba(255,255,255,.02); }
+    .invite-box { background:var(--bg3); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-3) var(--sp-4); display:flex; align-items:center; gap:var(--sp-3); }
+    .invite-link { flex:1; font-family:var(--font-mono); font-size:clamp(11px,.75vw,13px); color:var(--green); word-break:break-all; }
+    .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:var(--sp-6); }
+    .tab { padding:var(--sp-3) var(--sp-5); font-family:var(--font-mono); font-size:clamp(10px,.72vw,12px); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:all .15s; background:none; border-top:none; border-left:none; border-right:none; }
+    .tab.active { color:var(--green); border-bottom-color:var(--green); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -15,8 +34,8 @@
   <main class="app-content">
 
     <div class="page-header">
-      <h1 class="page-title">Team</h1>
-      <p class="page-sub">Set up your workspace and run shared sessions with your team.</p>
+      <h1 class="page-title" id="wsTitle">Team</h1>
+      <p class="page-sub" id="wsSub">Set up your workspace and collaborate with your team.</p>
     </div>
 
     <div id="teamContent">
@@ -38,141 +57,341 @@
 <script src="/js/auth.js"></script>
 <script src="/js/nav.js"></script>
 <script>
-let _profile = null;
-let _user = null;
+let _user = null, _profile = null, _workspace = null, _members = [], _isAdmin = false;
 
 (async () => {
   const ctx = await initPage(true);
   if (!ctx) return;
   _user = ctx.user;
   _profile = ctx.profile;
-  renderTeam();
+  await loadWorkspace();
 })();
 
-function renderTeam() {
+async function loadWorkspace() {
   const el = document.getElementById('teamContent');
-  const org = _profile?.organization || null;
+  const sb = getSB();
 
-  if (!org) {
-    // No workspace yet — show creation flow
-    el.innerHTML = `
-      <div style="max-width:600px">
-        <div class="panel" style="margin-bottom:var(--sp-5)">
-          <div class="section-title" style="margin-bottom:var(--sp-2)">Create your workspace</div>
-          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.7;margin-bottom:var(--sp-5)">
-            Give your team a name. This helps identify your sessions and will be used
-            when invite links and shared history launch.
-          </p>
-          <div class="field" style="margin-bottom:var(--sp-4)">
-            <label class="field-label">Workspace name</label>
-            <input type="text" id="orgNameInput" placeholder="e.g. Acme QA Team" autocomplete="organization" style="max-width:400px">
-            <div class="field-hint">Your company, team, or project name.</div>
-          </div>
-          <button class="btn btn-primary" onclick="createWorkspace()" id="createWsBtn">Create Workspace →</button>
-          <div class="status" id="wsStatus" style="margin-top:var(--sp-3)"></div>
-        </div>
+  // Check if user has a workspace_id in profile
+  const wsId = _profile?.workspace_id;
 
-        <div class="panel" style="opacity:.6">
-          <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Sessions</div>
-          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim)">Already available — start a shared session from the checklist tool and share the 6-character code with your team. Create a workspace first to unlock team features.</p>
-        </div>
-      </div>`;
+  if (!wsId) {
+    renderSetup();
     return;
   }
 
-  // Has workspace — show team hub
-  el.innerHTML = `
-    <div style="max-width:760px">
+  // Load workspace
+  try {
+    const { data: ws, error: wsErr } = await sb
+      .from('workspaces').select('*').eq('id', wsId).single();
+    if (wsErr || !ws) { renderSetup(); return; }
+    _workspace = ws;
 
-      <!-- Workspace header -->
-      <div class="panel" style="margin-bottom:var(--sp-5);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4)">
-        <div>
-          <div class="section-title" style="margin-bottom:var(--sp-1)">Workspace</div>
-          <div style="font-family:var(--font-display);font-size:clamp(1.2rem,1.6vw,1.8rem);font-weight:600;color:var(--text)">${esc(_profile.organization)}</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="showRenameWs()">Rename →</button>
-      </div>
+    // Load members
+    const { data: members } = await sb
+      .from('workspace_member_details').select('*').eq('workspace_id', wsId);
+    _members = members || [];
+    _isAdmin = _members.some(m => m.user_id === _user.id && m.role === 'admin');
 
-      <div id="renamePanel" style="display:none;margin-bottom:var(--sp-5)">
-        <div class="panel">
-          <div class="section-title" style="margin-bottom:var(--sp-3)">Rename workspace</div>
-          <div style="display:flex;gap:var(--sp-3);align-items:flex-end">
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label class="field-label">New name</label>
-              <input type="text" id="renameInput" placeholder="New workspace name" value="${esc(_profile.organization)}">
-            </div>
-            <button class="btn btn-primary" onclick="renameWorkspace()">Save</button>
-            <button class="btn btn-ghost" onclick="hideRenameWs()">Cancel</button>
-          </div>
-          <div class="status" id="renameStatus" style="margin-top:var(--sp-3)"></div>
-        </div>
-      </div>
+    document.getElementById('wsTitle').textContent = ws.name;
+    document.getElementById('wsSub').textContent = `${_members.length} member${_members.length !== 1 ? 's' : ''} · ${_isAdmin ? 'Admin' : _profile?.role || 'Member'}`;
 
-      <!-- Shared sessions -->
+    renderWorkspace();
+  } catch(e) {
+    el.innerHTML = `<div class="status error">Failed to load workspace: ${e.message}</div>`;
+  }
+}
+
+function renderSetup() {
+  document.getElementById('teamContent').innerHTML = `
+    <div style="max-width:580px">
       <div class="panel" style="margin-bottom:var(--sp-5)">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Sessions</div>
-        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.7;margin-bottom:var(--sp-4)">
-          Start a shared session from the checklist tool and share the 6-character code with any teammate.
-          Everyone with the code can join and mark outcomes in real time — no account required on their end.
+        <div class="section-title" style="margin-bottom:var(--sp-2)">Create your workspace</div>
+        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.7;margin-bottom:var(--sp-5)">
+          Give your team a name. Once created, you'll get an invite link to share with teammates.
         </p>
-        <a href="/app/" class="btn btn-primary">Start a Shared Session →</a>
-      </div>
-
-      <!-- Coming soon -->
-      <div class="panel" style="border-color:rgba(16,185,129,.12)">
-        <div class="section-title" style="margin-bottom:var(--sp-4)">Coming Soon</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)">
-          <div>
-            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Invite Links</div>
-            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">Add teammates directly to your workspace with a link.</p>
-          </div>
-          <div>
-            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Team History</div>
-            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">See all your workspace's sessions in one place.</p>
-          </div>
-          <div>
-            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Roles</div>
-            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">Admin, member, and viewer roles for your team.</p>
-          </div>
+        <div class="field" style="margin-bottom:var(--sp-4)">
+          <label class="field-label">Workspace name</label>
+          <input type="text" id="orgNameInput" placeholder="e.g. Acme QA Team" autocomplete="organization">
+          <div class="field-hint">Your company, team, or project name.</div>
         </div>
+        <button class="btn btn-primary" onclick="createWorkspace()" id="createWsBtn">Create Workspace →</button>
+        <div class="status" id="wsStatus" style="margin-top:var(--sp-3)"></div>
       </div>
 
+      <div class="panel" style="border-color:rgba(16,185,129,.1)">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Already have an invite link?</div>
+        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-4)">
+          If a teammate shared an invite link with you, open that link to join their workspace.
+        </p>
+        <div style="display:flex;gap:var(--sp-3)">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <input type="text" id="inviteCodeInput" placeholder="Paste invite code…">
+          </div>
+          <button class="btn btn-ghost" onclick="joinByCode()">Join →</button>
+        </div>
+        <div class="status" id="joinStatus" style="margin-top:var(--sp-3)"></div>
+      </div>
     </div>`;
 }
 
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function renderWorkspace() {
+  const inviteUrl = `${location.origin}/join.html?code=${_workspace.invite_code}`;
+  document.getElementById('teamContent').innerHTML = `
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('members')">Members</button>
+      <button class="tab" onclick="switchTab('history')">Team History</button>
+      <button class="tab" onclick="switchTab('settings')">Settings</button>
+    </div>
+
+    <!-- Members tab -->
+    <div class="tab-panel active" id="tab-members">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4);margin-bottom:var(--sp-5)">
+        <div>
+          <div class="section-title" style="margin-bottom:var(--sp-1)">Invite teammates</div>
+          <p style="font-size:clamp(12px,.82vw,14px);color:var(--dim)">Share this link to add someone to your workspace. They'll need a CheckGen account.</p>
+        </div>
+      </div>
+      <div class="invite-box" style="margin-bottom:var(--sp-6)">
+        <div class="invite-link" id="inviteUrlDisplay">${inviteUrl}</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyInvite('${inviteUrl}')">Copy</button>
+        ${_isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="regenerateCode()" title="Generate a new invite code (old link will stop working)">Refresh</button>` : ''}
+      </div>
+      <div class="status" id="inviteStatus" style="margin-bottom:var(--sp-4)"></div>
+
+      <div class="section-title" style="margin-bottom:var(--sp-4)">${_members.length} Member${_members.length !== 1 ? 's' : ''}</div>
+      <div id="memberList">${renderMemberList()}</div>
+    </div>
+
+    <!-- Team History tab -->
+    <div class="tab-panel" id="tab-history">
+      <div class="section-title" style="margin-bottom:var(--sp-4)">Team checklists</div>
+      <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-5)">Sessions saved as "team" are visible to all workspace members. Viewers can see but not edit.</p>
+      <div id="teamHistoryContent"><div class="empty" style="padding:var(--sp-6)">Loading…</div></div>
+    </div>
+
+    <!-- Settings tab -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="panel" style="margin-bottom:var(--sp-5);max-width:480px">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Workspace name</div>
+        <div style="display:flex;gap:var(--sp-3)">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <input type="text" id="wsNameInput" value="${esc(_workspace.name)}">
+          </div>
+          ${_isAdmin ? `<button class="btn btn-primary" onclick="renameWorkspace()">Save</button>` : ''}
+        </div>
+        <div class="status" id="renameStatus" style="margin-top:var(--sp-3)"></div>
+      </div>
+      <div class="panel" style="max-width:480px">
+        <div class="section-title" style="margin-bottom:var(--sp-2)">Leave workspace</div>
+        <p style="font-size:clamp(12px,.82vw,14px);color:var(--dim);margin-bottom:var(--sp-4)">You'll lose access to team history and members. Your personal checklists are unaffected.</p>
+        <button class="btn btn-ghost" style="border-color:rgba(248,113,113,.3);color:var(--fail)" onclick="leaveWorkspace()">Leave Workspace</button>
+        <div class="status" id="leaveStatus" style="margin-top:var(--sp-3)"></div>
+      </div>
+    </div>`;
+
+  // Load team history automatically
+  loadTeamHistory();
+}
+
+function renderMemberList() {
+  if (!_members.length) return '<div class="empty">No members yet.</div>';
+  return _members.map(m => `
+    <div class="member-row">
+      <div class="member-avatar">${(m.name || m.email || '?')[0].toUpperCase()}</div>
+      <div class="member-info">
+        <div class="member-name">${esc(m.name || 'Unnamed')}</div>
+        <div class="member-email">${esc(m.email || '')}</div>
+      </div>
+      <span class="role-badge ${m.role}">${m.role}</span>
+      ${_isAdmin && m.user_id !== _user.id ? `
+        <select class="field-select" style="font-size:clamp(10px,.7vw,12px);padding:4px 8px;width:auto" onchange="changeRole('${m.user_id}', this.value)">
+          <option value="admin" ${m.role==='admin'?'selected':''}>Admin</option>
+          <option value="member" ${m.role==='member'?'selected':''}>Member</option>
+          <option value="viewer" ${m.role==='viewer'?'selected':''}>Viewer</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" style="color:var(--fail);border-color:rgba(248,113,113,.3)" onclick="removeMember('${m.user_id}', '${esc(m.name || m.email)}')">Remove</button>
+      ` : ''}
+    </div>`).join('');
+}
+
+async function loadTeamHistory() {
+  const el = document.getElementById('teamHistoryContent');
+  if (!el) return;
+  try {
+    const sb = getSB();
+    const { data, error } = await sb
+      .from('checklist_sessions')
+      .select('*')
+      .eq('workspace_id', _workspace.id)
+      .eq('session_type', 'team')
+      .order('created_at', { ascending: false })
+      .limit(25);
+
+    if (error) throw error;
+    if (!data?.length) {
+      el.innerHTML = `<div class="empty" style="padding:var(--sp-6)">
+        No team sessions yet.<br>
+        <span style="font-size:clamp(12px,.82vw,14px);color:var(--muted);margin-top:var(--sp-2);display:block">Start a shared session and save it as a team session.</span>
+        <a href="/app/" class="btn btn-primary" style="margin-top:var(--sp-4);display:inline-flex">Start a Shared Session →</a>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="history-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4)">
+      ${data.map(s => `
+        <div class="card" style="padding:var(--sp-4)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-2)">
+            <div style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.1em;text-transform:uppercase;color:var(--green)">Team</div>
+            <span style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);color:var(--muted)">${new Date(s.created_at).toLocaleDateString()}</span>
+          </div>
+          <div style="font-size:clamp(13px,.88vw,15px);font-weight:500;color:var(--text);margin-bottom:var(--sp-1)">${esc(s.name || 'Untitled checklist')}</div>
+          ${s.ticket_id ? `<div style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">${esc(s.ticket_id)}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="status error">Failed to load: ${e.message}</div>`;
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['members','history','settings'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name)?.classList.add('active');
+  if (name === 'history') loadTeamHistory();
 }
 
 async function createWorkspace() {
   const name = document.getElementById('orgNameInput')?.value.trim();
-  if (!name) { showSt('wsStatus','Enter a workspace name.','error'); return; }
+  if (!name) { showSt('wsStatus', 'Enter a workspace name.', 'error'); return; }
   const btn = document.getElementById('createWsBtn');
   btn.disabled = true; btn.textContent = 'Creating…';
   try {
-    await updateProfile({ organization: name, updated_at: new Date().toISOString() });
-    _profile = { ..._profile, organization: name };
-    showSt('wsStatus','✓ Workspace created!','success');
-    setTimeout(() => renderTeam(), 800);
+    const sb = getSB();
+    // Create workspace
+    const { data: ws, error: wsErr } = await sb
+      .from('workspaces').insert({ name, owner_id: _user.id }).select().single();
+    if (wsErr) throw wsErr;
+
+    // Add self as admin member
+    await sb.from('workspace_members').insert({
+      workspace_id: ws.id, user_id: _user.id, role: 'admin'
+    });
+
+    // Update profile with workspace_id
+    await updateProfile({ workspace_id: ws.id, organization: name, role: 'admin', updated_at: new Date().toISOString() });
+    _profile = { ..._profile, workspace_id: ws.id, organization: name, role: 'admin' };
+
+    showSt('wsStatus', '✓ Workspace created!', 'success');
+    setTimeout(() => loadWorkspace(), 800);
   } catch(e) {
     showSt('wsStatus', 'Failed: ' + e.message, 'error');
     btn.disabled = false; btn.textContent = 'Create Workspace →';
   }
 }
 
-function showRenameWs() { document.getElementById('renamePanel').style.display = 'block'; }
-function hideRenameWs() { document.getElementById('renamePanel').style.display = 'none'; }
+async function joinByCode() {
+  const code = document.getElementById('inviteCodeInput')?.value.trim();
+  if (!code) { showSt('joinStatus', 'Paste an invite code.', 'error'); return; }
+  try {
+    const sb = getSB();
+    const { data: ws, error } = await sb
+      .from('workspaces').select('*').eq('invite_code', code).single();
+    if (error || !ws) throw new Error('Invite code not found. Check the link and try again.');
+
+    // Join as member
+    await sb.from('workspace_members').insert({
+      workspace_id: ws.id, user_id: _user.id, role: 'member', invited_by: ws.owner_id
+    });
+    await updateProfile({ workspace_id: ws.id, organization: ws.name, role: 'member', updated_at: new Date().toISOString() });
+    _profile = { ..._profile, workspace_id: ws.id, organization: ws.name, role: 'member' };
+
+    showSt('joinStatus', `✓ Joined ${ws.name}!`, 'success');
+    setTimeout(() => loadWorkspace(), 800);
+  } catch(e) {
+    showSt('joinStatus', e.message || 'Failed to join.', 'error');
+  }
+}
+
+async function copyInvite(url) {
+  await navigator.clipboard.writeText(url).catch(() => {});
+  const btn = event.target;
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = orig, 2000);
+}
+
+async function regenerateCode() {
+  if (!confirm('This will invalidate the current invite link. Continue?')) return;
+  try {
+    const sb = getSB();
+    const newCode = Math.random().toString(36).slice(2, 14);
+    const { error } = await sb.from('workspaces').update({ invite_code: newCode }).eq('id', _workspace.id);
+    if (error) throw error;
+    _workspace.invite_code = newCode;
+    const newUrl = `${location.origin}/join.html?code=${newCode}`;
+    document.getElementById('inviteUrlDisplay').textContent = newUrl;
+    showSt('inviteStatus', '✓ Invite link refreshed.', 'success');
+  } catch(e) {
+    showSt('inviteStatus', 'Failed: ' + e.message, 'error');
+  }
+}
+
+async function changeRole(userId, newRole) {
+  try {
+    const sb = getSB();
+    const { error } = await sb.from('workspace_members')
+      .update({ role: newRole })
+      .eq('workspace_id', _workspace.id).eq('user_id', userId);
+    if (error) throw error;
+    _members = _members.map(m => m.user_id === userId ? { ...m, role: newRole } : m);
+    document.getElementById('memberList').innerHTML = renderMemberList();
+  } catch(e) {
+    alert('Failed to update role: ' + e.message);
+  }
+}
+
+async function removeMember(userId, name) {
+  if (!confirm(`Remove ${name} from the workspace?`)) return;
+  try {
+    const sb = getSB();
+    await sb.from('workspace_members').delete().eq('workspace_id', _workspace.id).eq('user_id', userId);
+    _members = _members.filter(m => m.user_id !== userId);
+    document.getElementById('wsTitle').textContent = `${_workspace.name}`;
+    document.getElementById('wsSub').textContent = `${_members.length} member${_members.length !== 1 ? 's' : ''} · ${_isAdmin ? 'Admin' : 'Member'}`;
+    document.getElementById('memberList').innerHTML = renderMemberList();
+  } catch(e) {
+    alert('Failed: ' + e.message);
+  }
+}
 
 async function renameWorkspace() {
-  const name = document.getElementById('renameInput')?.value.trim();
-  if (!name) { showSt('renameStatus','Enter a name.','error'); return; }
+  const name = document.getElementById('wsNameInput')?.value.trim();
+  if (!name) return;
   try {
-    await updateProfile({ organization: name, updated_at: new Date().toISOString() });
-    _profile = { ..._profile, organization: name };
-    showSt('renameStatus','✓ Renamed!','success');
-    setTimeout(() => renderTeam(), 800);
+    const sb = getSB();
+    await sb.from('workspaces').update({ name }).eq('id', _workspace.id);
+    await updateProfile({ organization: name });
+    _workspace.name = name;
+    document.getElementById('wsTitle').textContent = name;
+    showSt('renameStatus', '✓ Renamed!', 'success');
   } catch(e) {
     showSt('renameStatus', 'Failed: ' + e.message, 'error');
+  }
+}
+
+async function leaveWorkspace() {
+  if (!confirm('Leave this workspace? You will lose access to team history.')) return;
+  try {
+    const sb = getSB();
+    await sb.from('workspace_members').delete().eq('workspace_id', _workspace.id).eq('user_id', _user.id);
+    await updateProfile({ workspace_id: null, organization: null, role: 'member' });
+    _profile = { ..._profile, workspace_id: null };
+    _workspace = null; _members = [];
+    renderSetup();
+  } catch(e) {
+    showSt('leaveStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
@@ -181,6 +400,7 @@ function showSt(id, msg, type) {
   if (!el) return;
   el.textContent = msg; el.className = 'status ' + type;
 }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 </script>
 </body>
 </html>

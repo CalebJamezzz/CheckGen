@@ -13,63 +13,79 @@
     .pw-rule::before { content:'○'; font-size:10px; flex-shrink:0; }
     .pw-rule.ok { color:var(--green); }
     .pw-rule.ok::before { content:'●'; }
-    .auth-terms { text-align:center; margin-top:var(--sp-4); font-size:clamp(11px,.72vw,13px); color:var(--muted); line-height:1.7; }
-    .auth-terms a { color:var(--soft); text-decoration:underline; text-underline-offset:2px; }
   </style>
 </head>
 <body>
 <div class="auth-wrap">
-  <div class="auth-card">
-    <a href="/" class="auth-logo">Check<span>Gen</span></a>
-    <h1 class="auth-title">Create your account</h1>
-    <p class="auth-sub">Free forever. Cloud history and shared sessions included.</p>
 
-    <div id="reasonBanner" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-5);font-size:clamp(12px,.82vw,14px);color:var(--green);line-height:1.5"></div>
-
-    <button type="button" class="btn-google" onclick="signUpWithGoogle()">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
-      Continue with Google
-    </button>
-
-    <div class="auth-divider"><span>or</span></div>
-
-    <div class="field">
-      <label class="field-label">Name</label>
-      <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
-    </div>
-
-    <div class="field">
-      <label class="field-label">Email</label>
-      <input type="email" id="signupEmail" placeholder="you@company.com" autocomplete="email">
-    </div>
-
-    <div class="field" style="margin-bottom:var(--sp-5)">
-      <label class="field-label">Password</label>
-      <input type="password" id="signupPassword" placeholder="Create a password" autocomplete="new-password" oninput="checkPwRules(this.value)">
-      <ul class="pw-rules">
-        <li class="pw-rule" id="rule-len">At least 8 characters</li>
-        <li class="pw-rule" id="rule-upper">One uppercase letter</li>
-        <li class="pw-rule" id="rule-num">One number</li>
-        <li class="pw-rule" id="rule-special">One special character</li>
-      </ul>
-    </div>
-
-    <button class="btn btn-primary" id="signupBtn" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="handleSignup()">
-      Create Free Account
-    </button>
-    <div class="status" id="signupStatus" style="margin-top:var(--sp-3)"></div>
-
-    <p class="auth-terms">
-      By creating an account you agree to our
-      <a href="/terms.html" target="_blank">Terms of Service</a>
-      and
-      <a href="/privacy.html" target="_blank">Privacy Policy</a>.
-    </p>
-
-    <div class="auth-footer">
-      Already have an account? <a href="/login.html">Sign in</a>
+  <!-- Left — value props -->
+  <div class="auth-side-left">
+    <a href="/" class="nav-logo" style="margin-bottom:var(--sp-8)">Check<span>Gen</span></a>
+    <h2 style="font-size:clamp(1.4rem,2vw,2.2rem);margin-bottom:var(--sp-3);color:var(--text)">Everything included. Free, forever.</h2>
+    <p style="font-size:clamp(13px,.9vw,15px);color:var(--dim);line-height:1.7;max-width:400px;margin-bottom:var(--sp-8)">No credit card, no trial, no expiry. Create an account and unlock everything CheckGen has to offer.</p>
+    <div class="auth-value-prop">
+      <div class="auth-value-item">
+        <div class="auth-value-icon">∞</div>
+        <div class="auth-value-text"><strong>Unlimited generations</strong><span>Generate as many checklists as you need</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">👥</div>
+        <div class="auth-value-text"><strong>Shared team sessions</strong><span>Invite your team to test together in real time</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">☁️</div>
+        <div class="auth-value-text"><strong>Cloud history</strong><span>25 saved checklists accessible from any device</span></div>
+      </div>
+      <div class="auth-value-item">
+        <div class="auth-value-icon">🏢</div>
+        <div class="auth-value-text"><strong>Team workspace</strong><span>Create a workspace and manage your team</span></div>
+      </div>
     </div>
   </div>
+
+  <!-- Right — form -->
+  <div class="auth-side-right">
+    <div class="auth-card">
+      <a href="/" class="auth-logo">Check<span>Gen</span></a>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-sub">Free forever. No credit card required.</p>
+
+      <div id="reasonBanner" style="display:none;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4);font-size:clamp(12px,.82vw,14px);color:var(--green);line-height:1.5"></div>
+
+      <button type="button" class="btn-google" onclick="signUpWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <div class="field">
+        <label class="field-label">Name</label>
+        <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="signupEmail" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:var(--sp-5)">
+        <label class="field-label">Password</label>
+        <input type="password" id="signupPassword" placeholder="Create a password" autocomplete="new-password" oninput="checkPwRules(this.value)">
+        <ul class="pw-rules">
+          <li class="pw-rule" id="rule-len">At least 8 characters</li>
+          <li class="pw-rule" id="rule-upper">One uppercase letter</li>
+          <li class="pw-rule" id="rule-num">One number</li>
+          <li class="pw-rule" id="rule-special">One special character</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary" id="signupBtn" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="handleSignup()">Create Free Account</button>
+      <div class="status" id="signupStatus" style="margin-top:var(--sp-3)"></div>
+
+      <p class="auth-terms">By creating an account you agree to our <a href="/terms.html" target="_blank">Terms of Service</a> and <a href="/privacy.html" target="_blank">Privacy Policy</a>.</p>
+      <div class="auth-footer">Already have an account? <a href="/login.html">Sign in</a></div>
+    </div>
+  </div>
+
 </div>
 <script src="/js/supabase.js"></script>
 <script src="/js/auth.js"></script>
@@ -84,8 +100,7 @@
   const reason = new URLSearchParams(location.search).get('reason');
   if (reason && reasons[reason]) {
     const el = document.getElementById('reasonBanner');
-    el.textContent = reasons[reason];
-    el.style.display = 'block';
+    el.textContent = reasons[reason]; el.style.display = 'block';
   }
 })();
 
@@ -96,43 +111,36 @@ function checkPwRules(pw) {
   set('rule-num',     /[0-9]/.test(pw));
   set('rule-special', /[^A-Za-z0-9]/.test(pw));
 }
-
 function validatePw(pw) {
-  if (pw.length < 8)          return 'Password must be at least 8 characters.';
-  if (!/[A-Z]/.test(pw))      return 'Password needs at least one uppercase letter.';
-  if (!/[0-9]/.test(pw))      return 'Password needs at least one number.';
+  if (pw.length < 8)             return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(pw))        return 'Password needs at least one uppercase letter.';
+  if (!/[0-9]/.test(pw))        return 'Password needs at least one number.';
   if (!/[^A-Za-z0-9]/.test(pw)) return 'Password needs at least one special character.';
   return null;
 }
-
 async function handleSignup() {
   const name  = document.getElementById('signupName').value.trim();
-  const org   = '';
   const email = document.getElementById('signupEmail').value.trim();
   const pw    = document.getElementById('signupPassword').value;
-  if (!name)          { showSt('Name is required.', 'error'); return; }
-  if (!email)         { showSt('Email is required.', 'error'); return; }
+  if (!name)  { showSt('Name is required.', 'error'); return; }
+  if (!email) { showSt('Email is required.', 'error'); return; }
   const pwErr = validatePw(pw);
-  if (pwErr)          { showSt(pwErr, 'error'); return; }
+  if (pwErr)  { showSt(pwErr, 'error'); return; }
   const btn = document.getElementById('signupBtn');
   btn.disabled = true; btn.textContent = 'Creating account…';
   try {
     const sb = getSB();
     const { data, error } = await sb.auth.signUp({
-        email, password: pw,
-        options: { emailRedirectTo: window.location.origin + '/confirmed.html' }
-      });
+      email, password: pw,
+      options: { emailRedirectTo: location.origin + '/confirmed.html' }
+    });
     if (error) throw error;
-    if (data?.user) {
-      await updateProfile({ name, organization: org || null }).catch(() => {});
-    }
-    // If email confirmation is disabled, user is signed in immediately
-    const { data: sessionData } = await sb.auth.getSession();
-    if (sessionData?.session) {
+    if (data?.user) await updateProfile({ name }).catch(() => {});
+    const { data: sess } = await sb.auth.getSession();
+    if (sess?.session) {
       showSt('✓ Account created! Taking you to the app…', 'success');
       setTimeout(() => location.href = '/app/', 1000);
     } else {
-      // Email confirmation required
       showSt('✓ Account created! Check your email to confirm, then sign in.', 'success');
       setTimeout(() => location.href = '/login.html', 2500);
     }
@@ -141,17 +149,10 @@ async function handleSignup() {
     btn.disabled = false; btn.textContent = 'Create Free Account';
   }
 }
-
 async function signUpWithGoogle() {
-  await waitForSB();
-  const sb = getSB();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/app/' }
-  });
+  const { error } = await getSB().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/app/' } });
   if (error) showSt('Google sign-up failed: ' + error.message, 'error');
 }
-
 function showSt(msg, type) {
   const el = document.getElementById('signupStatus');
   el.textContent = msg; el.className = 'status ' + type;
