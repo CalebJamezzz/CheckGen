@@ -1,6 +1,6 @@
 /* supabase.js — CheckGen v2 */
-const SB_URL = 'https://YOUR_PROJECT.supabase.co';
-const SB_KEY = 'YOUR_ANON_KEY';
+const SB_URL = 'https://mxqdfsrrxxvwihkeqgcr.supabase.co';
+const SB_KEY = 'sb_publishable_g9bh9q3NmOqhBodXwuHVnw_bgh8f_8x';
 
 let _sb = null;
 function getSB() {
