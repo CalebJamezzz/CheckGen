@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sign In — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-card">
+    <a href="/" class="auth-logo">Check<span>Gen</span></a>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your account to access your checklists and history.</p>
+
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input type="email" id="email" placeholder="you@company.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label class="field-label">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <div style="text-align:right;margin-bottom:var(--sp-4)">
+      <a href="/auth/forgot.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);color:var(--soft);text-decoration:none">Forgot password?</a>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-4)" id="loginBtn" onclick="handleLogin()">Sign In</button>
+
+    <div class="status" id="status"></div>
+
+    <p class="auth-footer">Don't have an account? <a href="/auth/signup.html">Create one free</a></p>
+    <div class="auth-divider"><div class="auth-divider-line"></div><span class="auth-divider-text">or</span><div class="auth-divider-line"></div></div>
+    <a href="/app/" class="btn btn-ghost" style="width:100%;justify-content:center">Continue without account</a>
+  </div>
+</div>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  redirectIfAuthed();
+
+  async function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+    const status = document.getElementById('status');
+    if (!email || !password) { showSt('Enter your email and password.', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    try {
+      await waitForSB();
+      await signIn(email, password);
+      location.href = getReturnTo();
+    } catch(e) {
+      showSt(e.message || 'Sign in failed. Check your email and password.', 'error');
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  }
+
+  function showSt(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg; el.className = 'status ' + type;
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+</body>
+</html>

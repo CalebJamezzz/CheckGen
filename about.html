@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>About — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .about-section { padding:var(--sp-12) 0; border-top:1px solid var(--border); }
+    .about-section:first-child { border-top:none; }
+    .prose { font-size:clamp(15px,1.05vw,17px); color:var(--text); opacity:.82; line-height:1.8; max-width:680px; }
+    .prose p { margin-bottom:var(--sp-4); }
+    .faq-item { padding:var(--sp-4) 0; border-bottom:1px solid var(--border); }
+    .faq-q { font-size:clamp(14px,1vw,16px); color:var(--text); font-weight:500; margin-bottom:var(--sp-2); font-family:var(--font-display); }
+    .faq-a { font-size:clamp(13px,.9vw,15px); color:var(--dim); line-height:1.7; }
+    footer { padding:var(--sp-8) 0 var(--sp-6); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--sp-4); }
+  </style>
+</head>
+<body>
+<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
+
+  <nav class="nav">
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-3);align-items:center">
+      <a href="/auth/login.html" class="btn btn-ghost">Sign In</a>
+      <a href="/app/" class="btn btn-primary">Open App →</a>
+    </div>
+  </nav>
+
+  <!-- Intro -->
+  <section class="about-section" style="padding-top:var(--sp-10)">
+    <p class="eyebrow" style="margin-bottom:var(--sp-4)">About CheckGen</p>
+    <h1 style="font-size:clamp(2.2rem,4vw,4rem);margin-bottom:var(--sp-6)">Built for QA engineers<br>who test seriously.</h1>
+    <div class="prose">
+      <p>CheckGen started as an internal tool — a way to stop writing the same test cases from scratch every sprint. Paste acceptance criteria, get a grouped checklist, mark outcomes, export. That's it.</p>
+      <p>It's built on Claude Haiku for generation speed, Supabase for real-time shared sessions, and Netlify for hosting. No bloat, no dashboard full of charts nobody reads. Just a fast, focused testing tool.</p>
+    </div>
+  </section>
+
+  <!-- Features deep dive -->
+  <section class="about-section" id="features">
+    <div class="eyebrow" style="margin-bottom:var(--sp-4)">Features</div>
+    <h2 style="margin-bottom:var(--sp-8);color:var(--text)">How it works in detail</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);max-width:900px">
+      ${[
+        ['AI Checklist Generation','Paste your AC and CheckGen sends it to Claude Haiku with a structured prompt: testing areas you selected, your focus style (balanced, smoke-heavy, edge-heavy), and a detail level. It returns 15–25 JSON items grouped by section — functional, permissions, validation, error handling, UI, integrations, edge cases — that get rendered into the checklist.'],
+        ['Real-Time Shared Sessions','When you start a shared session, CheckGen creates a row in Supabase with a 6-character code. Every outcome change, note save, and item delete gets patched to that row. Teammates who join with the code poll every 5 seconds and see changes reflected live. No WebSockets required.'],
+        ['History &amp; Cloud Sync','Free accounts store the last 25 checklists in Supabase tied to your user ID. Each session records the full item state, outcomes, notes, ticket ID, environment, and timestamps. You can load any previous session and pick up exactly where you left off.'],
+        ['Export to CSV','Export filters by outcome (all, no outcome, has outcome). Each row includes the item text, section, priority, type, time estimate, outcome, and any notes you added. Paste it straight into your defect tracker or attach to a ticket.'],
+      ].map(([t,d]) => `<div><div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">${t}</div><p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">${d}</p></div>`).join('')}
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="about-section" id="pricing">
+    <div class="eyebrow" style="margin-bottom:var(--sp-4)">Pricing</div>
+    <h2 style="margin-bottom:var(--sp-4);color:var(--text)">Free forever. Pro when you need it.</h2>
+    <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);margin-bottom:var(--sp-8);max-width:560px">You can try CheckGen without an account. Create a free account for shared sessions and cloud history. Pro adds team management and integrations.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-tier">No Account</div>
+        <div class="pricing-price">Free</div>
+        <ul class="pricing-features">
+          <li>3 AI generations</li>
+          <li>Personal sessions</li>
+          <li>Browser-local history</li>
+          <li class="locked">Shared sessions</li>
+          <li class="locked">Cloud history</li>
+        </ul>
+        <a href="/app/" class="btn btn-ghost" style="width:100%;justify-content:center">Try it →</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Recommended</div>
+        <div class="pricing-tier">Free Account</div>
+        <div class="pricing-price">$0</div>
+        <ul class="pricing-features">
+          <li>Unlimited generations</li>
+          <li>Personal &amp; shared sessions</li>
+          <li>Cloud history (last 25)</li>
+          <li>CSV export with notes</li>
+          <li class="locked">Jira / Linear export</li>
+          <li class="locked">Team management</li>
+        </ul>
+        <a href="/auth/signup.html" class="btn btn-primary" style="width:100%;justify-content:center">Sign up free →</a>
+      </div>
+      <div class="pricing-card" id="pro">
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">Coming soon</div>
+        <ul class="pricing-features">
+          <li>Everything in Free</li>
+          <li>Unlimited history</li>
+          <li>Jira &amp; Linear export</li>
+          <li>Team management</li>
+          <li>Priority API</li>
+          <li>Dedicated support</li>
+        </ul>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" disabled>Notify Me</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="about-section" id="faq">
+    <div class="eyebrow" style="margin-bottom:var(--sp-4)">FAQ</div>
+    <h2 style="margin-bottom:var(--sp-6);color:var(--text)">Common questions</h2>
+    <div style="max-width:680px">
+      ${[
+        ['Does CheckGen store my ticket data?','Ticket text and AC you paste is sent to the Anthropic API to generate your checklist. It is not stored on CheckGen\'s servers unless you save a session — in which case the checklist items and metadata are stored in your Supabase-backed account, not the original ticket text.'],
+        ['What model does it use?','Claude Haiku via the Anthropic API. Haiku is fast — checklist generation takes 3–8 seconds — and accurate enough for structured QA output.'],
+        ['Can I use it without a Jira or ticket system?','Yes. CheckGen works entirely standalone. Ticket ID and environment fields are optional. Just paste your AC and go.'],
+        ['How does shared session sync work?','Shared sessions use Supabase\'s REST API. Every outcome change pushes a PATCH to the session row. Teammates poll every 5 seconds. There\'s no real-time WebSocket connection — the sync window is a few seconds.'],
+        ['Is there a limit on how long shared sessions stay active?','Sessions stay active until someone clicks "End Session" or the Supabase row expires (30 days of inactivity). There\'s no time limit during an active test run.'],
+        ['What happens to anonymous generation history?','Anonymous history is stored in your browser\'s localStorage. It disappears if you clear your browser data. Create a free account to save sessions to the cloud.'],
+      ].map(([q,a]) => `<div class="faq-item"><div class="faq-q">${q}</div><div class="faq-a">${a}</div></div>`).join('')}
+    </div>
+  </section>
+
+  <footer>
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-5);flex-wrap:wrap">
+      <a href="/#pricing" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Pricing</a>
+      <a href="/about.html#faq" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">FAQ</a>
+      <a href="/auth/login.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Sign In</a>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
+  </footer>
+
+</div>
+</body>
+</html>

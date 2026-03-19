@@ -1,269 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CheckGen — QA Checklist Generator</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CheckGen — Checklist</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
-<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
+<div class="app-shell">
+  <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+  <aside id="appNav"></aside>
 
-  <!-- ═══════════ SCREEN 1 — Welcome ═══════════ -->
-  <div class="screen active" id="screen1">
+  <main class="app-content">
 
-    <nav class="nav">
-      <a href="/" class="nav-logo">Check<span>Gen</span></a>
-      <span class="label">QA Checklist Generator</span>
-    </nav>
-
-    <div style="margin-bottom:var(--sp-8)">
-      <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
-      <h1 style="margin-bottom:var(--sp-3);color:var(--text)">Generate your<br>checklist.</h1>
-      <p class="dim" style="font-size:clamp(15px,1.1vw,17px);max-width:600px;line-height:1.7">
-        Paste your ticket or AC, pick your testing areas, and get a grouped QA checklist in seconds.
-        Works solo or shared with your team in real time.
-      </p>
-    </div>
-
-    <div class="label mb-3">How would you like to work?</div>
-    <div class="session-cards">
-      <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
-        <div class="card-icon">🔒</div>
-        <div class="card-label">Personal</div>
-        <div class="card-desc" style="color:var(--text);opacity:.72">Just you. Saves to your browser automatically.</div>
-      </button>
-      <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button">
-        <div class="card-icon">👥</div>
-        <div class="card-label">Shared</div>
-        <div class="card-desc" style="color:var(--text);opacity:.72">Real-time sync with your team via a 6-char code.</div>
-      </button>
-    </div>
-
-    <div class="shared-panel" id="sharedPanel">
-      <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-      <div class="shared-sub-opts">
-        <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New Session</button>
-        <button class="sub-btn"        id="subJoin"  onclick="setSharedSub('join')"  type="button">↗ Join Existing Session</button>
-      </div>
-      <div class="field">
-        <label class="field-label">Your Name</label>
-        <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-        <div class="field-hint" style="color:var(--soft)">Required. Shown next to your outcomes so teammates know who marked what.</div>
-      </div>
-      <div class="join-section" id="joinSection">
-        <label class="field-label">Session Code</label>
-        <div class="join-row">
-          <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
-          <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
+    <!-- Anon generation gate -->
+    <div class="anon-gate" id="anonGate" style="display:none">
+      <div>
+        <div class="anon-gate-text">
+          <strong id="anonRemaining">3 free generations</strong> remaining — <a href="/auth/signup.html" style="color:var(--green)">create a free account</a> for unlimited access and cloud history.
         </div>
-        <div class="field-hint mt-2">Ask your teammate for the code shown in their session bar.</div>
+        <div class="anon-count-bar" id="anonPips"></div>
       </div>
+      <a href="/auth/signup.html" class="btn btn-outline" style="flex-shrink:0">Sign up free →</a>
     </div>
 
-    <div class="history-section" id="historySection" style="display:none">
-      <div class="history-toggle" onclick="toggleHistory()">
-        <span class="history-toggle-label">Recent Checklists</span>
-        <div class="history-toggle-right">
-          <button class="history-clear-btn" onclick="clearHistory(event)" type="button">Clear All</button>
-          <span class="history-toggle-arrow" id="historyArrow">▶</span>
+    <!-- Screen 1 — Welcome -->
+    <div class="screen active" id="screen1">
+      <div style="margin-bottom:var(--sp-8)">
+        <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
+        <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
+        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:560px;line-height:1.7">
+          Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
+        </p>
+      </div>
+
+      <div class="label mb-3">How would you like to work?</div>
+      <div class="session-cards">
+        <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
+          <div class="card-icon">🔒</div>
+          <div class="card-label">Personal</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">Just you. Saves to your browser.</div>
+        </button>
+        <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button" id="sharedCard">
+          <div class="card-icon">👥</div>
+          <div class="card-label">Shared</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">Real-time sync with your team via a 6-char code.</div>
+        </button>
+      </div>
+
+      <!-- Shared requires account -->
+      <div id="sharedLoginPrompt" style="display:none;padding:var(--sp-4) var(--sp-5);background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18);border-radius:var(--r-lg);margin-bottom:var(--sp-5)">
+        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3)">
+          Shared sessions require a free account to sync with teammates.
+        </p>
+        <div style="display:flex;gap:var(--sp-3)">
+          <a href="/auth/signup.html" class="btn btn-primary">Create free account</a>
+          <a href="/auth/login.html" class="btn btn-ghost">Sign in</a>
         </div>
       </div>
-      <div class="history-list" id="historyList"></div>
-    </div>
 
-    <div class="flex justify-end mt-4">
-      <button class="btn btn-primary" id="startBtn" onclick="startSession()" type="button">Start Session →</button>
-    </div>
-
-    <!-- Feature tiles -->
-    <div class="feature-tiles">
-      <div class="card">
-        <div class="card-icon">🤖</div>
-        <div class="card-label" style="margin-bottom:8px">AI from your AC</div>
-        <div class="card-desc">Paste your acceptance criteria and get 15–25 specific, grouped test cases — edge cases, validations, permissions, and break-it scenarios included.</div>
+      <div class="shared-panel" id="sharedPanel">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
+        <div class="shared-sub-opts">
+          <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New Session</button>
+          <button class="sub-btn" id="subJoin" onclick="setSharedSub('join')" type="button">↗ Join Existing Session</button>
+        </div>
+        <div class="field">
+          <label class="field-label">Your Name</label>
+          <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
+          <div class="field-hint" style="color:var(--soft)">Required for shared sessions. Shown next to your outcomes.</div>
+        </div>
+        <div class="join-section" id="joinSection">
+          <label class="field-label" style="margin-bottom:7px">Session Code</label>
+          <div class="join-row">
+            <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
+            <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
+          </div>
+          <div class="field-hint" style="color:var(--soft);margin-top:7px">Ask your teammate for the code in their session bar.</div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-icon">👥</div>
-        <div class="card-label" style="margin-bottom:8px">Real-Time Sessions</div>
-        <div class="card-desc" style="color:var(--text);opacity:.75">Share a 6-character code and your whole team works from the same checklist. Pass, Fail, and Blocked outcomes sync live — no spreadsheet handoff.</div>
+
+      <div class="history-section" id="historySection" style="display:none">
+        <div class="history-toggle" onclick="toggleHistory()">
+          <span class="history-toggle-label">Recent Checklists</span>
+          <div class="history-toggle-right">
+            <button class="history-clear-btn" onclick="clearHistory(event)" type="button">Clear All</button>
+            <span class="history-toggle-arrow" id="historyArrow">▶</span>
+          </div>
+        </div>
+        <div class="history-list" id="historyList"></div>
       </div>
-      <div class="card">
-        <div class="card-icon">✦</div>
-        <div class="card-label" style="margin-bottom:8px">Built for Testing</div>
-        <div class="card-desc" style="color:var(--text);opacity:.75">Add notes per step, delete irrelevant items, regenerate any section, track time estimates, and export to CSV — everything a test session needs.</div>
+
+      <div class="flex justify-end mt-4">
+        <button class="btn btn-primary" id="startBtn" onclick="startSession()" type="button">Start Session →</button>
+      </div>
+
+      <div class="feature-tiles" style="margin-top:var(--sp-8)">
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <div class="card-label" style="margin-bottom:8px">AI from your AC</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">15–25 specific, grouped test cases in seconds — edge cases, validations, and break-it scenarios included.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">👥</div>
+          <div class="card-label" style="margin-bottom:8px">Real-Time Sessions</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">Share a 6-character code and your whole team works from the same checklist simultaneously.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">✦</div>
+          <div class="card-label" style="margin-bottom:8px">Built for Testing</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">Notes per step, delete items, regen any section, time estimates, and CSV export.</div>
+        </div>
       </div>
     </div>
 
-  </div><!-- end screen1 -->
-
-
-  <!-- ═══════════ SCREEN 2 — Setup ═══════════ -->
-  <div class="screen" id="screen2">
-    <div class="flex items-center justify-between mb-5">
-      <button class="back-link" onclick="goTo(1)" type="button">← Back</button>
-      <span class="eyebrow" style="margin-bottom:0">✦ Ticket / AC &amp; Options</span>
-    </div>
-
-    <div class="setup-grid" style="display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-4);margin-bottom:var(--sp-4);align-items:stretch">
-      <div class="panel" style="display:flex;flex-direction:column">
-        <div class="section-title">Ticket / AC</div>
-        <div class="field" style="flex:1;display:flex;flex-direction:column">
-          <textarea id="ticketText" style="flex:1;min-height:220px" placeholder="Paste your ticket, acceptance criteria, or user story here…
+    <!-- Screen 2 — Setup -->
+    <div class="screen" id="screen2">
+      <div class="flex items-center justify-between mb-5">
+        <button class="back-link" onclick="goTo(1)" type="button">← Back</button>
+        <span class="eyebrow" style="margin-bottom:0">✦ Ticket / AC &amp; Options</span>
+      </div>
+      <div class="setup-grid" style="display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-4);margin-bottom:var(--sp-4);align-items:stretch">
+        <div class="panel" style="display:flex;flex-direction:column">
+          <div class="section-title">Ticket / AC</div>
+          <div class="field" style="flex:1;display:flex;flex-direction:column">
+            <textarea id="ticketText" style="flex:1;min-height:220px" placeholder="Paste your ticket, acceptance criteria, or user story here…
 
 Example:
 As a manager, I can approve or reject expense reports submitted by my team.
-AC: Only managers see approve/reject buttons. Approved reports trigger a notification. Rejected reports require a reason."></textarea>
-          <div class="field-hint" style="color:var(--soft)">Full AC works best. Short feature notes work too.</div>
+AC: Only managers see approve/reject buttons. Approved reports trigger a notification."></textarea>
+            <div class="field-hint">Full AC works best. Short feature notes work too.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="section-title">Options</div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Ticket ID</label>
+              <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
+            </div>
+            <div class="field">
+              <label class="field-label">Environment</label>
+              <input type="text" id="envBranch" placeholder="e.g. staging">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Checklist Name</label>
+              <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
+            </div>
+            <div class="field">
+              <label class="field-label">Detail Level</label>
+              <select id="detailLevel">
+                <option value="expanded" selected>Expanded</option>
+                <option value="concise">Concise</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Focus Style</label>
+              <select id="focusStyle">
+                <option value="balanced" selected>Balanced</option>
+                <option value="smoke">Smoke-heavy</option>
+                <option value="edge">Edge-heavy</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label">CSV Filter</label>
+              <select id="csvMode">
+                <option value="all" selected>All items</option>
+                <option value="open">No outcome yet</option>
+                <option value="done">Has outcome</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Testing Areas</label>
+            <div class="area-grid">
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"   checked> Functional</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"   checked> Validation</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"  checked> Permissions</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI"           checked> UI / Layout</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data"         checked> Data / Persistence</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations" checked> Integrations</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Errors"       checked> Error Handling</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"   checked> Edge Cases</label>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Additions</label>
+            <div class="area-grid">
+              <label class="pill-check"><input type="checkbox" id="includeBreak"     checked> Break-it tests</label>
+              <label class="pill-check"><input type="checkbox" id="includeDataHints" checked> Suggested test data</label>
+            </div>
+          </div>
         </div>
       </div>
+      <div class="summary-bar">
+        <div class="summary-text"><strong id="summaryWords">0</strong> words · <strong id="summaryAreas">8</strong> areas selected</div>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Checklist</button>
+      </div>
+      <div class="status" id="status2"></div>
+    </div>
 
+    <!-- Screen 2.5 — Generating -->
+    <div class="screen" id="screen25">
+      <div class="generating-screen">
+        <div class="gen-orrery">
+          <div class="gen-ring-outer"></div>
+          <div class="gen-ring-mid"></div>
+          <div class="gen-ring-inner"></div>
+          <div class="gen-dot gen-dot-green"></div>
+          <div class="gen-dot gen-dot-pass" style="animation-duration:1.8s"></div>
+          <div class="gen-center"><span class="gen-star">✦</span></div>
+        </div>
+        <div class="gen-label">Generating Checklist</div>
+        <div class="gen-sublabel" id="genSubLabel">Reading your ticket</div>
+      </div>
+    </div>
+
+    <!-- Screen 3 — Checklist -->
+    <div class="screen" id="screen3">
+      <div class="checklist-nav">
+        <button class="back-link" onclick="backToSetup()" type="button">← Edit AC &amp; Options</button>
+        <div class="flex gap-3 items-center flex-wrap">
+          <span id="liveIndicator" style="display:none" class="live-badge"><span class="live-dot"></span>Live</span>
+          <span class="share-code-badge" id="shareCodeBadge" style="display:none" onclick="copyShareCode()" title="Click to copy"></span>
+          <button class="end-session-btn" onclick="endSession()" type="button">✕ End Session</button>
+        </div>
+      </div>
       <div class="panel">
-        <div class="section-title">Options</div>
-        <div class="grid-2">
-          <div class="field">
-            <label class="field-label">Ticket ID</label>
-            <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
-          </div>
-          <div class="field">
-            <label class="field-label">Environment / Branch</label>
-            <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
+        <div class="results-top">
+          <div class="results-title">Generated Checklist</div>
+          <div class="flex gap-2 flex-wrap items-center">
+            <span class="pill" id="countPill">0 items</span>
+            <span class="pill" id="timePill" style="display:none;color:var(--green);border-color:rgba(16,185,129,.3)">~0 min</span>
           </div>
         </div>
-        <div class="grid-2">
-          <div class="field">
-            <label class="field-label">Checklist Name</label>
-            <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
+        <div id="progressWrap" class="progress-wrap" style="display:none">
+          <div class="progress-meta">
+            <div class="progress-label"><strong id="progDone">0</strong> / <strong id="progTotal">0</strong> actioned</div>
+            <div class="progress-stats">
+              <span class="ps pass" id="progPass">0 Pass</span>
+              <span class="ps fail" id="progFail">0 Fail</span>
+              <span class="ps blocked" id="progBlocked">0 Blocked</span>
+            </div>
           </div>
-          <div class="field">
-            <label class="field-label">Detail Level</label>
-            <select id="detailLevel">
-              <option value="expanded" selected>Expanded</option>
-              <option value="concise">Concise</option>
-            </select>
-          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         </div>
-        <div class="grid-2">
-          <div class="field">
-            <label class="field-label">Focus Style</label>
-            <select id="focusStyle">
-              <option value="balanced" selected>Balanced</option>
-              <option value="smoke">Smoke-heavy</option>
-              <option value="edge">Edge-heavy</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="field-label">CSV Export Filter</label>
-            <select id="csvMode">
-              <option value="all" selected>All items</option>
-              <option value="open">No outcome yet</option>
-              <option value="done">Has outcome</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field-label">Testing Areas</label>
-          <div class="area-grid">
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"   checked> Functional</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"   checked> Validation</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"  checked> Permissions</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI"           checked> UI / Layout</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data"         checked> Data / Persistence</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations" checked> Integrations</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Errors"       checked> Error Handling</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"   checked> Edge Cases</label>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field-label">Additions</label>
-          <div class="area-grid">
-            <label class="pill-check"><input type="checkbox" id="includeBreak"     checked> Break-it tests</label>
-            <label class="pill-check"><input type="checkbox" id="includeDataHints" checked> Suggested test data</label>
-          </div>
+        <div id="checklistWrap" class="empty">Generate a checklist to see grouped, AI-generated test steps here.</div>
+        <div class="export-bar" id="exportBar" style="display:none">
+          <select id="exportCsvMode" style="width:auto;padding:8px 12px">
+            <option value="all" selected>Export all items</option>
+            <option value="open">Export unchecked only</option>
+            <option value="done">Export actioned only</option>
+          </select>
+          <button class="btn btn-outline" onclick="downloadCsv()">↓ Export CSV</button>
         </div>
       </div>
+      <div class="status" id="status3"></div>
     </div>
 
-    <div class="summary-bar">
-      <div class="summary-text">
-        <strong id="summaryWords">0</strong> words of input ·
-        <strong id="summaryAreas">8</strong> area(s) selected
-      </div>
-      <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Checklist</button>
-    </div>
-    <div class="status" id="status2"></div>
-  </div><!-- end screen2 -->
-
-
-  <!-- ═══════════ SCREEN 2.5 — Generating ═══════════ -->
-  <div class="screen" id="screen25">
-    <div class="generating-screen">
-      <div class="gen-orrery">
-        <div class="gen-ring-outer"></div>
-        <div class="gen-ring-mid"></div>
-        <div class="gen-ring-inner"></div>
-        <div class="gen-dot gen-dot-green"></div>
-        <div class="gen-dot gen-dot-pass" style="animation-duration:1.8s"></div>
-        <div class="gen-center"><span class="gen-star">✦</span></div>
-      </div>
-      <div class="gen-label">Generating Checklist</div>
-      <div class="gen-sublabel" id="genSubLabel">Reading your ticket</div>
-    </div>
-  </div><!-- end screen25 -->
-
-
-  <!-- ═══════════ SCREEN 3 — Checklist ═══════════ -->
-  <div class="screen" id="screen3">
-    <div class="checklist-nav">
-      <button class="back-link" onclick="backToSetup()" type="button">← Edit AC &amp; Options</button>
-      <div class="flex gap-3 items-center flex-wrap">
-        <span id="liveIndicator" style="display:none" class="live-badge"><span class="live-dot"></span>Live</span>
-        <span class="share-code-badge" id="shareCodeBadge" style="display:none" onclick="copyShareCode()" title="Click to copy share code"></span>
-        <button class="end-session-btn" onclick="endSession()" type="button">✕ End Session</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="results-top">
-        <div class="results-title">Generated Checklist</div>
-        <div class="flex gap-2 flex-wrap items-center">
-          <span class="pill" id="countPill">0 items</span>
-          <span class="pill green" id="timePill" style="display:none">~0 min</span>
-        </div>
-      </div>
-
-      <div id="progressWrap" class="progress-wrap" style="display:none">
-        <div class="progress-meta">
-          <div class="progress-label"><strong id="progDone">0</strong> / <strong id="progTotal">0</strong> actioned</div>
-          <div class="progress-stats">
-            <span class="ps pass"    id="progPass">0 Pass</span>
-            <span class="ps fail"    id="progFail">0 Fail</span>
-            <span class="ps blocked" id="progBlocked">0 Blocked</span>
-          </div>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      </div>
-
-      <div id="checklistWrap" class="empty">Generate a checklist to see grouped, AI-generated test steps here.</div>
-
-      <div class="export-bar" id="exportBar" style="display:none">
-        <select id="exportCsvMode" style="width:auto;padding:8px 12px">
-          <option value="all" selected>Export all items</option>
-          <option value="open">Export unchecked only</option>
-          <option value="done">Export actioned only</option>
-        </select>
-        <button class="btn btn-outline" onclick="downloadCsv()">↓ Export CSV</button>
-      </div>
-    </div>
-    <div class="status" id="status3"></div>
-  </div><!-- end screen3 -->
-
-</div><!-- end shell -->
-
-<div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></div>
+  </main>
+</div>
 
 <script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/nav.js"></script>
 <script src="/js/app.js"></script>
+<script>
+(async () => {
+  // Allow anonymous users but render nav
+  const ctx = await initPage(false);
+  const user = ctx?.user || null;
+  const profile = ctx?.profile || null;
+
+  // Show/hide shared session card based on auth
+  const sharedCard = document.getElementById('cardShared');
+  if (!user) {
+    sharedCard.addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('sharedLoginPrompt').style.display = 'block';
+      document.getElementById('sharedPanel').style.display = 'none';
+    });
+  }
+
+  // Anon gate
+  if (!user) {
+    const count = getAnonCount();
+    const remaining = Math.max(0, ANON_LIMIT - count);
+    if (remaining < ANON_LIMIT) {
+      const gate = document.getElementById('anonGate');
+      gate.style.display = 'flex';
+      document.getElementById('anonRemaining').textContent =
+        remaining === 0 ? 'No free generations' : `${remaining} free generation${remaining!==1?'s':''} left`;
+      const pips = document.getElementById('anonPips');
+      for (let i = 0; i < ANON_LIMIT; i++) {
+        const pip = document.createElement('div');
+        pip.className = 'anon-pip' + (i < count ? ' used' : '');
+        pips.appendChild(pip);
+      }
+    }
+  }
+
+  // Restore saved name
+  const savedName = localStorage.getItem('cg_user_name') || profile?.name || '';
+  if (savedName) { const el = document.getElementById('userName'); if (el) el.value = savedName; }
+
+  // Wire events
+  document.getElementById('ticketText').addEventListener('input', updateSummary);
+  document.querySelectorAll('.areaCheck').forEach(el => el.addEventListener('change', updateSummary));
+  ['ticketId','envBranch','checklistName'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => { if(currentChecklist.length) renderChecklist(); });
+  });
+
+  loadSession();
+  loadHistory();
+  updateSummary();
+})();
+
+// Override generateChecklist to check anon limit
+const _origGenerate = generateChecklist;
+generateChecklist = async function() {
+  const user = await getUser();
+  if (!user && anonLimitReached()) {
+    document.getElementById('anonGate').style.display = 'flex';
+    document.getElementById('anonGate').scrollIntoView({ behavior: 'smooth' });
+    showStatus('status2', 'You\'ve used your 3 free generations. Create a free account to continue.', 'error');
+    return;
+  }
+  await _origGenerate();
+  if (!user) incAnonCount();
+};
+</script>
 </body>
 </html>

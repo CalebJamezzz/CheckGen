@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Create Account — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="auth-shell">
+  <div class="auth-card">
+    <a href="/" class="auth-logo">Check<span>Gen</span></a>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Free forever. Shared sessions and cloud history included.</p>
+
+    <div class="grid-2" style="gap:var(--sp-3)">
+      <div class="field">
+        <label class="field-label">Name</label>
+        <input type="text" id="name" placeholder="Caleb" autocomplete="given-name">
+      </div>
+      <div class="field">
+        <label class="field-label">Organization <span style="font-family:var(--font-body);text-transform:none;letter-spacing:0;color:var(--muted)">optional</span></label>
+        <input type="text" id="org" placeholder="Acme Inc." autocomplete="organization">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Work Email</label>
+      <input type="email" id="email" placeholder="you@company.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label class="field-label">Password</label>
+      <input type="password" id="password" placeholder="8+ characters" autocomplete="new-password">
+      <div class="field-hint">Minimum 8 characters.</div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-4);margin-top:var(--sp-2)" id="signupBtn" onclick="handleSignup()">Create Account</button>
+
+    <div class="status" id="status"></div>
+
+    <p class="auth-footer">Already have an account? <a href="/auth/login.html">Sign in</a></p>
+    <p class="auth-footer" style="margin-top:var(--sp-2);font-size:clamp(11px,.72vw,12px);color:var(--muted)">By creating an account you agree to our <a href="/about.html#terms">Terms</a> and <a href="/about.html#privacy">Privacy Policy</a>.</p>
+  </div>
+</div>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  redirectIfAuthed();
+
+  async function handleSignup() {
+    const name     = document.getElementById('name').value.trim();
+    const org      = document.getElementById('org').value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('signupBtn');
+
+    if (!name)              { showSt('Enter your name.', 'error'); return; }
+    if (!email)             { showSt('Enter your email.', 'error'); return; }
+    if (password.length < 8){ showSt('Password must be at least 8 characters.', 'error'); return; }
+
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      await waitForSB();
+      await signUp(email, password, name);
+      // Update org if provided — will be set after profile is created by trigger
+      if (org) localStorage.setItem('cg_pending_org', org);
+      showSt('✓ Account created! Check your email to confirm, then sign in.', 'success');
+      btn.textContent = 'Account Created';
+      setTimeout(() => location.href = '/auth/login.html', 2000);
+    } catch(e) {
+      showSt(e.message || 'Sign up failed. Try again.', 'error');
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  function showSt(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg; el.className = 'status ' + type;
+  }
+</script>
+</body>
+</html>
