@@ -49,7 +49,8 @@ function setMode(mode) {
   sessionMode = mode;
   $('cardPersonal').classList.toggle('active', mode === 'personal');
   $('cardShared').classList.toggle('active', mode === 'shared');
-  $('sharedPanel').classList.toggle('visible', mode === 'shared');
+  if (mode === 'personal') $('sharedPanel').classList.remove('visible');
+  else $('sharedPanel').classList.add('visible');
   $('startBtn').textContent = (mode === 'shared' && sharedSub === 'join') ? 'Join Session →' : 'Start Session →';
 }
 
@@ -498,7 +499,7 @@ function renderChecklist() {
                 <div class="outcome-btns">
                   <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
                   <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blk</button>
+                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
                 </div>
               </div>
             </div>

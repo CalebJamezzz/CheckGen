@@ -42,7 +42,8 @@
   <nav class="nav">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-3);align-items:center">
-      <a href="/auth/login.html" class="btn btn-ghost">Sign In</a>
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none;transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--soft)'">About</a>
+      <a href="/login.html" class="btn btn-ghost">Sign In</a>
       <a href="/app/" class="btn btn-primary">Open App →</a>
     </div>
   </nav>
@@ -118,27 +119,11 @@
           <li>Cloud history (last 25)</li>
           <li>CSV export with notes</li>
           <li>Progress tracking</li>
-          <li class="locked">Jira / Linear export</li>
-          <li class="locked">Team management</li>
         </ul>
-        <a href="/auth/signup.html" class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)">Create Free Account →</a>
+        <a href="/signup.html" class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)">Create Free Account →</a>
       </div>
 
-      <!-- Pro -->
-      <div class="pricing-card">
-        <div class="pricing-tier">Pro</div>
-        <div class="pricing-price">Soon<span> · Paid</span></div>
-        <p class="pricing-desc">For teams who run QA seriously.</p>
-        <ul class="pricing-features">
-          <li>Everything in Free</li>
-          <li>Unlimited cloud history</li>
-          <li>Jira &amp; Linear export</li>
-          <li>Team management &amp; org seats</li>
-          <li>Priority API (faster generation)</li>
-          <li>Dedicated support</li>
-        </ul>
-        <a href="/about.html#pro" class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)">Learn More →</a>
-      </div>
+
     </div>
   </section>
 
@@ -148,7 +133,7 @@
     <p style="color:var(--text);opacity:.72;font-size:clamp(15px,1.1vw,17px);margin-bottom:var(--sp-8)">No install. No credit card. Just paste your ticket and go.</p>
     <div style="display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap">
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try free →</a>
-      <a href="/auth/signup.html" class="btn btn-outline" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create free account →</a>
+      <a href="/signup.html" class="btn btn-outline" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create free account →</a>
     </div>
   </section>
 
@@ -157,7 +142,7 @@
     <div style="display:flex;gap:var(--sp-5);align-items:center;flex-wrap:wrap">
       <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">About</a>
       <a href="/about.html#pricing" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Pricing</a>
-      <a href="/auth/login.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Sign In</a>
+      <a href="/login.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Sign In</a>
     </div>
     <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
   </footer>
@@ -179,7 +164,7 @@
     try {
       const parsed = JSON.parse(raw);
       if (parsed?.access_token || parsed?.user) {
-        document.querySelectorAll('a[href="/auth/login.html"]').forEach(el => {
+        document.querySelectorAll('a[href="/login.html"]').forEach(el => {
           el.href = '/app/'; el.textContent = 'Open App';
         });
       }

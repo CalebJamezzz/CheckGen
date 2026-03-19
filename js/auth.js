@@ -4,7 +4,7 @@ async function initPage(requireAuth = true) {
   const session = await getSession();
   const user = session?.user || null;
   if (requireAuth && !user) {
-    location.href = `/auth/login.html?returnTo=${encodeURIComponent(location.pathname)}`;
+    location.href = `/login.html?returnTo=${encodeURIComponent(location.pathname)}`;
     return null;
   }
   const profile = user ? await getProfile().catch(() => null) : null;
