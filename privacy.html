@@ -14,7 +14,7 @@
     .legal-body ul { padding-left:var(--sp-5); }
     .legal-body li { margin-bottom:var(--sp-2); }
     .legal-meta { font-family:var(--font-mono); font-size:clamp(10px,.7vw,12px); letter-spacing:.1em; color:var(--muted); margin-bottom:var(--sp-8); }
-    footer { padding:var(--sp-6) 0; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--sp-4); }
+    
   </style>
 </head>
 <body>
@@ -24,6 +24,7 @@
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
       <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">About</a>
+      <a href="/updates.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">Updates</a>
       <a href="/login.html" class="btn btn-ghost" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Sign In</a>
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
@@ -71,9 +72,28 @@
   </div>
 
 </div>
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  var shell = document.querySelector('.shell');
+  if (!nav) return;
+  var sticky = false;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 60 && !sticky) {
+      sticky = true;
+      nav.classList.add('sticky');
+      if (shell) shell.classList.add('nav-offset');
+    } else if (window.scrollY <= 60 && sticky) {
+      sticky = false;
+      nav.classList.remove('sticky');
+      if (shell) shell.classList.remove('nav-offset');
+    }
+  }, { passive: true });
+})();
+</script>
 
-<footer class="site-footer">
-    <div class="shell">
+  <footer class="site-footer">
+    <div class="footer-inner">
       <div class="site-footer-grid">
         <div class="site-footer-brand">
           <a href="/" class="nav-logo">Check<span>Gen</span></a>
@@ -84,7 +104,7 @@
           <div class="site-footer-links">
             <a href="/app/">Generate Checklist</a>
             <a href="/app/">Shared Sessions</a>
-            <a href="/app/history.html">History</a>
+            <a href="/history.html">History</a>
           </div>
         </div>
         <div>
@@ -92,6 +112,7 @@
           <div class="site-footer-links">
             <a href="/about.html">About</a>
             <a href="/about.html#pricing">Pricing</a>
+            <a href="/updates.html">Updates &amp; Contact</a>
             <a href="/about.html#faq">FAQ</a>
           </div>
         </div>
@@ -107,8 +128,8 @@
       <div class="site-footer-bottom">
         <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
         <div style="display:flex;gap:var(--sp-4)">
-          <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms</a>
-          <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy</a>
+          <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+          <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
         </div>
       </div>
     </div>
@@ -121,12 +142,10 @@
   var sticky = false;
   window.addEventListener('scroll', function() {
     if (window.scrollY > 60 && !sticky) {
-      sticky = true;
-      nav.classList.add('sticky');
+      sticky = true; nav.classList.add('sticky');
       if (shell) shell.classList.add('nav-offset');
     } else if (window.scrollY <= 60 && sticky) {
-      sticky = false;
-      nav.classList.remove('sticky');
+      sticky = false; nav.classList.remove('sticky');
       if (shell) shell.classList.remove('nav-offset');
     }
   }, { passive: true });
