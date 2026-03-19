@@ -41,7 +41,14 @@
   const el = document.getElementById('historyContent');
 
   try {
-    const sessions = await sbGet('checklist_sessions', 'user_id', user.id);
+    const sb = getSB();
+    const { data: sessions, error: sessErr } = await sb
+      .from('checklist_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+    if (sessErr) throw new Error('Supabase error: ' + sessErr.message);
 
     if (!sessions.length) {
       el.innerHTML = `
@@ -103,8 +110,8 @@ function loadSession(id) {
 
 <div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:240px">
   <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
-    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms</a>
-    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy</a>
+    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
   </div>
   <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
 </div>
