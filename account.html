@@ -48,7 +48,13 @@
         <div class="account-section-title">Password</div>
         <div class="field" style="margin-bottom:var(--sp-4)">
           <label class="field-label">New Password</label>
-          <input type="password" id="fieldPassword" placeholder="8+ characters" autocomplete="new-password">
+          <input type="password" id="fieldPassword" placeholder="8+ characters" autocomplete="new-password" oninput="checkAccPwRules(this.value)">
+          <ul class="pw-rules">
+            <li class="pw-rule" id="acc-rule-len">At least 8 characters</li>
+            <li class="pw-rule" id="acc-rule-upper">One uppercase letter</li>
+            <li class="pw-rule" id="acc-rule-num">One number</li>
+            <li class="pw-rule" id="acc-rule-special">One special character</li>
+          </ul>
         </div>
         <div class="field" style="margin-bottom:var(--sp-4)">
           <label class="field-label">Confirm Password</label>
@@ -154,8 +160,8 @@ function showSt(id, msg, type) {
 
 <div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:240px">
   <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
-    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms</a>
-    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy</a>
+    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
   </div>
   <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
 </div>

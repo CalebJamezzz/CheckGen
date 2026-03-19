@@ -16,75 +16,171 @@
 
     <div class="page-header">
       <h1 class="page-title">Team</h1>
-      <p class="page-sub">Invite teammates, manage your org, and run shared sessions at scale.</p>
+      <p class="page-sub">Set up your workspace and run shared sessions with your team.</p>
     </div>
 
     <div id="teamContent">
-      <div class="empty" style="padding:var(--sp-4)">Loading…</div>
+      <div class="empty" style="padding:var(--sp-8)">Loading…</div>
     </div>
 
   </main>
+</div>
+
+<div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:240px">
+  <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
+    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+  </div>
+  <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
 </div>
 
 <script src="/js/supabase.js"></script>
 <script src="/js/auth.js"></script>
 <script src="/js/nav.js"></script>
 <script>
+let _profile = null;
+let _user = null;
+
 (async () => {
   const ctx = await initPage(true);
   if (!ctx) return;
-  const { profile } = ctx;
-  const isPro = profile?.tier === 'pro';
-  const el = document.getElementById('teamContent');
+  _user = ctx.user;
+  _profile = ctx.profile;
+  renderTeam();
+})();
 
-  if (!isPro) {
+function renderTeam() {
+  const el = document.getElementById('teamContent');
+  const org = _profile?.organization || null;
+
+  if (!org) {
+    // No workspace yet — show creation flow
     el.innerHTML = `
-      <div class="pro-gate-card">
-        <div class="pro-gate-icon">👥</div>
-        <h2 class="pro-gate-title">Team management is a Pro feature</h2>
-        <p class="pro-gate-desc">
-          Invite teammates to your organization, manage shared session permissions,
-          and see your team's test coverage — all in one place.
-        </p>
-        <div style="display:flex;flex-direction:column;gap:var(--sp-3);align-items:center">
-          
+      <div style="max-width:600px">
+        <div class="panel" style="margin-bottom:var(--sp-5)">
+          <div class="section-title" style="margin-bottom:var(--sp-2)">Create your workspace</div>
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.7;margin-bottom:var(--sp-5)">
+            Give your team a name. This helps identify your sessions and will be used
+            when invite links and shared history launch.
+          </p>
+          <div class="field" style="margin-bottom:var(--sp-4)">
+            <label class="field-label">Workspace name</label>
+            <input type="text" id="orgNameInput" placeholder="e.g. Acme QA Team" autocomplete="organization" style="max-width:400px">
+            <div class="field-hint">Your company, team, or project name.</div>
+          </div>
+          <button class="btn btn-primary" onclick="createWorkspace()" id="createWsBtn">Create Workspace →</button>
+          <div class="status" id="wsStatus" style="margin-top:var(--sp-3)"></div>
         </div>
-        <div style="margin-top:var(--sp-8);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);text-align:left">
-          <div class="card" style="padding:var(--sp-4)">
-            <div class="card-label" style="margin-bottom:6px">Invite teammates</div>
-            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Add anyone from your org with a single link.</div>
-          </div>
-          <div class="card" style="padding:var(--sp-4)">
-            <div class="card-label" style="margin-bottom:6px">Shared history</div>
-            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Your whole team's checklists in one place.</div>
-          </div>
-          <div class="card" style="padding:var(--sp-4)">
-            <div class="card-label" style="margin-bottom:6px">Role management</div>
-            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Admin, member, and viewer roles.</div>
-          </div>
+
+        <div class="panel" style="opacity:.6">
+          <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Sessions</div>
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim)">Already available — start a shared session from the checklist tool and share the 6-character code with your team. Create a workspace first to unlock team features.</p>
         </div>
       </div>`;
     return;
   }
 
-  // Pro user — placeholder for future team management
+  // Has workspace — show team hub
   el.innerHTML = `
-    <div class="empty" style="padding:var(--sp-10)">
-      <div style="font-size:24px;margin-bottom:var(--sp-3)">🚧</div>
-      Team management is coming soon.<br>
-      <span style="font-size:clamp(12px,.82vw,14px);color:var(--muted);margin-top:var(--sp-2);display:block">
-        You'll be able to invite teammates and manage your org here.
-      </span>
-    </div>`;
-})();
-</script>
+    <div style="max-width:760px">
 
-<div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:240px">
-  <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
-    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms</a>
-    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy</a>
-  </div>
-  <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
-</div>
+      <!-- Workspace header -->
+      <div class="panel" style="margin-bottom:var(--sp-5);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4)">
+        <div>
+          <div class="section-title" style="margin-bottom:var(--sp-1)">Workspace</div>
+          <div style="font-family:var(--font-display);font-size:clamp(1.2rem,1.6vw,1.8rem);font-weight:600;color:var(--text)">${esc(_profile.organization)}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="showRenameWs()">Rename →</button>
+      </div>
+
+      <div id="renamePanel" style="display:none;margin-bottom:var(--sp-5)">
+        <div class="panel">
+          <div class="section-title" style="margin-bottom:var(--sp-3)">Rename workspace</div>
+          <div style="display:flex;gap:var(--sp-3);align-items:flex-end">
+            <div class="field" style="flex:1;margin-bottom:0">
+              <label class="field-label">New name</label>
+              <input type="text" id="renameInput" placeholder="New workspace name" value="${esc(_profile.organization)}">
+            </div>
+            <button class="btn btn-primary" onclick="renameWorkspace()">Save</button>
+            <button class="btn btn-ghost" onclick="hideRenameWs()">Cancel</button>
+          </div>
+          <div class="status" id="renameStatus" style="margin-top:var(--sp-3)"></div>
+        </div>
+      </div>
+
+      <!-- Shared sessions -->
+      <div class="panel" style="margin-bottom:var(--sp-5)">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Sessions</div>
+        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.7;margin-bottom:var(--sp-4)">
+          Start a shared session from the checklist tool and share the 6-character code with any teammate.
+          Everyone with the code can join and mark outcomes in real time — no account required on their end.
+        </p>
+        <a href="/app/" class="btn btn-primary">Start a Shared Session →</a>
+      </div>
+
+      <!-- Coming soon -->
+      <div class="panel" style="border-color:rgba(16,185,129,.12)">
+        <div class="section-title" style="margin-bottom:var(--sp-4)">Coming Soon</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)">
+          <div>
+            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Invite Links</div>
+            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">Add teammates directly to your workspace with a link.</p>
+          </div>
+          <div>
+            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Team History</div>
+            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">See all your workspace's sessions in one place.</p>
+          </div>
+          <div>
+            <div class="label" style="color:var(--green);margin-bottom:var(--sp-2)">Roles</div>
+            <p style="font-size:clamp(12px,.82vw,14px);color:var(--muted);line-height:1.6">Admin, member, and viewer roles for your team.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function createWorkspace() {
+  const name = document.getElementById('orgNameInput')?.value.trim();
+  if (!name) { showSt('wsStatus','Enter a workspace name.','error'); return; }
+  const btn = document.getElementById('createWsBtn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  try {
+    await updateProfile({ organization: name, updated_at: new Date().toISOString() });
+    _profile = { ..._profile, organization: name };
+    showSt('wsStatus','✓ Workspace created!','success');
+    setTimeout(() => renderTeam(), 800);
+  } catch(e) {
+    showSt('wsStatus', 'Failed: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Create Workspace →';
+  }
+}
+
+function showRenameWs() { document.getElementById('renamePanel').style.display = 'block'; }
+function hideRenameWs() { document.getElementById('renamePanel').style.display = 'none'; }
+
+async function renameWorkspace() {
+  const name = document.getElementById('renameInput')?.value.trim();
+  if (!name) { showSt('renameStatus','Enter a name.','error'); return; }
+  try {
+    await updateProfile({ organization: name, updated_at: new Date().toISOString() });
+    _profile = { ..._profile, organization: name };
+    showSt('renameStatus','✓ Renamed!','success');
+    setTimeout(() => renderTeam(), 800);
+  } catch(e) {
+    showSt('renameStatus', 'Failed: ' + e.message, 'error');
+  }
+}
+
+function showSt(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg; el.className = 'status ' + type;
+}
+</script>
 </body>
 </html>
