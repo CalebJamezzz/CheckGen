@@ -1340,7 +1340,7 @@ input[type="password"] {
   justify-content: space-between;
   gap: var(--sp-4);
   padding: var(--sp-4) 0;
-  font-size: clamp(14px,1vw,16px);
+  font-size: clamp(15px,1.1vw,18px);
   color: var(--text);
   font-weight: 500;
   font-family: var(--font-display);
@@ -1359,7 +1359,7 @@ input[type="password"] {
 .faq-details[open] .faq-chevron { transform: rotate(180deg); }
 .faq-details[open] .faq-summary { color: var(--green); }
 .faq-body {
-  font-size: clamp(13px,.9vw,15px);
+  font-size: clamp(14px,.95vw,16px);
   color: var(--dim);
   line-height: 1.75;
   padding-bottom: var(--sp-4);
@@ -1532,19 +1532,19 @@ input[type="password"] {
   flex: 1;
   background: linear-gradient(135deg, var(--bg2) 0%, var(--bg) 100%);
   border-right: 1px solid var(--border);
-  padding: var(--sp-10) var(--sp-10);
+  padding: var(--sp-10) clamp(var(--sp-10), 5vw, var(--sp-16));
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
 }
 .auth-side-right {
-  width: min(500px, 100%);
+  width: clamp(420px, 38vw, 560px);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-8) var(--sp-8);
+  padding: var(--sp-8) clamp(var(--sp-8), 4vw, var(--sp-12));
   background: var(--bg);
 }
 .auth-card {

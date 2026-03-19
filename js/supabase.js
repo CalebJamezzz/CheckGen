@@ -1,6 +1,6 @@
 /* supabase.js — CheckGen v2 */
-const SB_URL = 'https://mxqdfsrrxxvwihkeqgcr.supabase.co';
-const SB_KEY = 'sb_publishable_g9bh9q3NmOqhBodXwuHVnw_bgh8f_8x';
+const SB_URL = 'https://YOUR_PROJECT.supabase.co';
+const SB_KEY = 'YOUR_ANON_KEY';
 
 let _sb = null;
 function getSB() {
@@ -31,7 +31,15 @@ async function signIn(email, password) {
 async function signOut() { const sb = getSB(); if (sb) await sb.auth.signOut(); }
 async function resetPassword(email) {
   const sb = getSB(); if (!sb) throw new Error('Supabase not loaded');
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/auth/reset.html` });
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/reset-password.html` });
+  if (error) throw error;
+}
+
+
+async function upsertProfile(data) {
+  const sb = getSB(); if (!sb) throw new Error('Supabase not loaded');
+  const user = await getUser(); if (!user) throw new Error('Not logged in');
+  const { error } = await sb.from('profiles').upsert({ id: user.id, ...data }, { onConflict: 'id' });
   if (error) throw error;
 }
 

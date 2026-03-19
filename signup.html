@@ -135,7 +135,7 @@ async function handleSignup() {
       options: { emailRedirectTo: location.origin + '/confirmed.html' }
     });
     if (error) throw error;
-    if (data?.user) await updateProfile({ name }).catch(() => {});
+    if (data?.user) await upsertProfile({ name }).catch(() => {});
     const { data: sess } = await sb.auth.getSession();
     if (sess?.session) {
       showSt('✓ Account created! Taking you to the app…', 'success');

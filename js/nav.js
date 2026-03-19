@@ -21,13 +21,13 @@ function renderNav(user, profile) {
         New Checklist
       </a>
 
-      <a href="${isAnon ? '/signup.html?reason=history' : '/app/history.html'}" class="nav-link ${isActive('/app/history.html')}">
+      <a href="${isAnon ? '/signup.html?reason=history' : '/history.html'}" class="nav-link ${isActive('/history.html')}">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         History
         ${isAnon ? '<span class="nav-lock">🔒</span>' : ''}
       </a>
 
-      <a href="${isAnon ? '/signup.html?reason=team' : '/app/team.html'}" class="nav-link ${isActive('/app/team.html')}">
+      <a href="${isAnon ? '/signup.html?reason=team' : '/team.html'}" class="nav-link ${isActive('/team.html')}">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5.5" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="11" cy="5.5" r="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 13c0-2 1.8-3.5 4-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10 13c0-2 1.8-3.5 4-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         Team
         ${isAnon ? '<span class="nav-lock">🔒</span>' : (!hasWs ? '<span style="font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;color:var(--muted);margin-left:auto">Setup</span>' : '')}
@@ -35,7 +35,7 @@ function renderNav(user, profile) {
     </nav>
 
     <div class="nav-bottom">
-      <a href="${isAnon ? '/signup.html?reason=account' : '/app/account.html'}" class="nav-user ${isActive('/app/account.html')}">
+      <a href="${isAnon ? '/signup.html?reason=account' : '/account.html'}" class="nav-user ${isActive('/account.html')}">
         <div class="nav-avatar">${isAnon ? '?' : name.charAt(0).toUpperCase()}</div>
         <div class="nav-user-info">
           <div class="nav-user-name">${isAnon ? 'Guest' : escNav(name)}</div>
