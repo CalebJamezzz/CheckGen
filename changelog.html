@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Changelog — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .changelog-body { padding: var(--sp-10) 0 var(--sp-16); }
+    .changelog-entry { display: grid; grid-template-columns: 200px 1fr; gap: var(--sp-8); padding: var(--sp-8) 0; border-top: 1px solid var(--border); }
+    .changelog-entry:first-child { border-top: none; padding-top: var(--sp-4); }
+    .changelog-meta { padding-top: 4px; }
+    .changelog-date { font-family: var(--font-mono); font-size: clamp(11px,.75vw,13px); letter-spacing: .08em; color: var(--soft); margin-bottom: var(--sp-2); }
+    .changelog-tag { display: inline-block; font-family: var(--font-mono); font-size: clamp(9px,.62vw,11px); letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; border: 1px solid; }
+    .changelog-tag.launch { color: var(--green); border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); }
+    .changelog-tag.update { color: var(--dim); border-color: var(--border); background: rgba(255,255,255,.03); }
+    .changelog-tag.fix { color: var(--blocked); border-color: rgba(251,191,36,.3); background: rgba(251,191,36,.08); }
+    .changelog-version { font-family: var(--font-mono); font-size: clamp(10px,.7vw,12px); color: var(--muted); margin-top: var(--sp-2); }
+    .changelog-content h2 { font-family: var(--font-display); font-size: clamp(1.1rem,1.4vw,1.5rem); font-weight: 600; color: var(--text); margin-bottom: var(--sp-3); }
+    .changelog-content p { font-size: clamp(14px,.92vw,15px); color: var(--dim); line-height: 1.75; margin-bottom: var(--sp-3); }
+    .changelog-content ul { padding-left: var(--sp-5); display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--sp-3); }
+    .changelog-content li { font-size: clamp(13px,.9vw,15px); color: var(--dim); line-height: 1.6; }
+    .changelog-content li strong { color: var(--text); font-weight: 500; }
+    @media (max-width: 680px) {
+      .changelog-entry { grid-template-columns: 1fr; gap: var(--sp-3); }
+    }
+  </style>
+</head>
+<body>
+<div class="shell" style="padding-top:var(--sp-6)">
+
+  <nav class="nav">
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-5);align-items:center">
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">About</a>
+      <a href="/login.html" class="btn btn-ghost" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Sign In</a>
+      <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
+    </div>
+  </nav>
+
+  <div class="changelog-body">
+    <div style="margin-bottom:var(--sp-10)">
+      <p class="eyebrow" style="margin-bottom:var(--sp-3)">Changelog</p>
+      <h1 style="font-size:clamp(2rem,3.5vw,4rem);margin-bottom:var(--sp-3)">What's new</h1>
+      <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);max-width:520px;line-height:1.7">Updates, improvements, and fixes to CheckGen.</p>
+    </div>
+
+    <!-- v2.0 -->
+    <div class="changelog-entry">
+      <div class="changelog-meta">
+        <div class="changelog-date">March 2026</div>
+        <span class="changelog-tag launch">Launch</span>
+        <div class="changelog-version">v2.0</div>
+      </div>
+      <div class="changelog-content">
+        <h2>CheckGen v2 — Accounts &amp; Cloud History</h2>
+        <p>The biggest update yet. CheckGen v2 adds user accounts, cloud-saved history, and a redesigned interface built to scale.</p>
+        <ul>
+          <li><strong>Accounts</strong> — Create a free account with email/password or Google SSO. Your profile, history, and sessions are tied to your account.</li>
+          <li><strong>Cloud history</strong> — Saved checklists sync across devices. Pick up exactly where you left off from any browser.</li>
+          <li><strong>Team page</strong> — Start shared sessions and see your organization. Full team management (invite links, roles, shared history) is coming soon.</li>
+          <li><strong>Left navigation</strong> — New sidebar in the app for New Checklist, History, Team, and Account.</li>
+          <li><strong>Redesigned landing page</strong> — New homepage, about page with FAQ, pricing, terms, privacy policy, and changelog.</li>
+          <li><strong>Password requirements</strong> — Minimum 8 characters, one uppercase, one number, one special character.</li>
+          <li><strong>Anonymous limit</strong> — Guests can generate 3 checklists before being prompted to create an account.</li>
+          <li><strong>Outcome buttons</strong> — Pass, Fail, Blocked now display horizontally with full labels.</li>
+          <li><strong>Green design system</strong> — Emerald green replaces indigo as the primary brand color throughout.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.2 -->
+    <div class="changelog-entry">
+      <div class="changelog-meta">
+        <div class="changelog-date">Feb 2026</div>
+        <span class="changelog-tag update">Update</span>
+        <div class="changelog-version">v1.2</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Viewport scaling &amp; polish</h2>
+        <ul>
+          <li><strong>Responsive text</strong> — All font sizes now use clamp() to scale across screen sizes from 13" to 27" monitors.</li>
+          <li><strong>History improvements</strong> — Clear all history button, P/F/B stats in history cards, live sync between active session and history entry.</li>
+          <li><strong>End session reset</strong> — Ending a session now fully clears all form fields, selects, and checkboxes.</li>
+          <li><strong>Back button guard</strong> — Going back to edit AC while testing now warns before discarding progress.</li>
+          <li><strong>Shared session error handling</strong> — If Supabase is unavailable, the session falls back gracefully to personal mode.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.1 -->
+    <div class="changelog-entry">
+      <div class="changelog-meta">
+        <div class="changelog-date">Jan 2026</div>
+        <span class="changelog-tag update">Update</span>
+        <div class="changelog-version">v1.1</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Notes, CSV export, and time estimates</h2>
+        <ul>
+          <li><strong>Notes per item</strong> — Add notes to individual test steps. Notes persist in localStorage and export with CSV.</li>
+          <li><strong>CSV export</strong> — Filter by outcome (all, no outcome, has outcome) and export. Notes, priority, type, and time estimate included per row.</li>
+          <li><strong>Time summary</strong> — Total estimated time for the session shown as a pill before you start.</li>
+          <li><strong>Add custom steps</strong> — Add your own test steps to any section of the checklist.</li>
+          <li><strong>Delete items</strong> — Remove individual items from the checklist.</li>
+          <li><strong>Regen by section</strong> — Regenerate just one section without touching the rest.</li>
+          <li><strong>Shared sessions</strong> — Real-time P/F/B sync via Supabase with a 6-character join code.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- v1.0 -->
+    <div class="changelog-entry">
+      <div class="changelog-meta">
+        <div class="changelog-date">Dec 2025</div>
+        <span class="changelog-tag launch">Launch</span>
+        <div class="changelog-version">v1.0</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Initial launch</h2>
+        <p>CheckGen started as an internal QA tool — a way to stop writing the same test cases from scratch every sprint.</p>
+        <ul>
+          <li><strong>AI generation</strong> — Paste AC, select testing areas, get 15–25 grouped test cases from Claude Haiku.</li>
+          <li><strong>Grouped checklist</strong> — Items organized by section (Functional, Permissions, Validation, Edge Cases, etc.).</li>
+          <li><strong>Pass / Fail / Blocked</strong> — Mark outcomes per item as you test.</li>
+          <li><strong>Progress bar</strong> — Live count of actioned vs total items.</li>
+          <li><strong>localStorage persistence</strong> — Session survives page refresh.</li>
+          <li><strong>Ticket ID, environment, checklist name</strong> — Optional metadata fields shown in the checklist header.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="site-footer-grid">
+      <div class="site-footer-brand">
+        <a href="/" class="nav-logo">Check<span>Gen</span></a>
+        <p>AI-powered QA checklist generator. Paste your ticket or AC and get grouped test cases in seconds.</p>
+      </div>
+      <div>
+        <div class="site-footer-col-title">Product</div>
+        <div class="site-footer-links">
+          <a href="/app/">Generate Checklist</a>
+          <a href="/app/">Shared Sessions</a>
+          <a href="/app/history.html">History</a>
+        </div>
+      </div>
+      <div>
+        <div class="site-footer-col-title">Company</div>
+        <div class="site-footer-links">
+          <a href="/about.html">About</a>
+          <a href="/about.html#pricing">Pricing</a>
+          <a href="/changelog.html">Changelog</a>
+          <a href="/about.html#faq">FAQ</a>
+        </div>
+      </div>
+      <div>
+        <div class="site-footer-col-title">Account</div>
+        <div class="site-footer-links">
+          <a href="/login.html">Sign In</a>
+          <a href="/signup.html">Create Free Account</a>
+          <a href="https://calebthede.com" target="_blank">Built by Caleb Thede</a>
+        </div>
+      </div>
+    </div>
+    <div class="site-footer-bottom">
+      <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
+      <div style="display:flex;gap:var(--sp-4)">
+        <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+        <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  var shell = document.querySelector('.shell');
+  if (!nav) return;
+  var sticky = false;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 60 && !sticky) {
+      sticky = true;
+      nav.classList.add('sticky');
+      if (shell) shell.classList.add('nav-offset');
+    } else if (window.scrollY <= 60 && sticky) {
+      sticky = false;
+      nav.classList.remove('sticky');
+      if (shell) shell.classList.remove('nav-offset');
+    }
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>

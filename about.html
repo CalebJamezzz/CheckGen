@@ -7,12 +7,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <style>
-    .about-section { padding:var(--sp-12) 0; border-top:1px solid var(--border); }
-    .about-section:first-child { border-top:none; padding-top:var(--sp-8); }
-    .about-inner { max-width:100%; }
-    .prose { font-size:clamp(15px,1.05vw,17px); color:var(--text); opacity:.82; line-height:1.8; }
+    .prose { font-size:clamp(15px,1.05vw,17px); color:var(--text); opacity:.82; line-height:1.8; max-width:680px; }
     .prose p { margin-bottom:var(--sp-4); }
-    footer { padding:var(--sp-8) 0 var(--sp-6); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--sp-4); }
   </style>
 </head>
 <body>
@@ -20,17 +16,17 @@
 
   <nav class="nav">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
-    <div style="display:flex;gap:var(--sp-3);align-items:center">
-      <a href="/login.html" class="btn btn-ghost">Sign In</a>
-      <a href="/app/" class="btn btn-primary">Open App →</a>
+    <div style="display:flex;gap:var(--sp-5);align-items:center">
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--green);transition:color .15s">About</a>
+      <a href="/login.html" class="btn btn-ghost" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Sign In</a>
+      <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
 
   <div style="height:var(--sp-2)"></div>
   <!-- Intro -->
   <section class="about-section" style="padding-top:var(--sp-8)">
-    <div class="about-inner">
-    <p class="eyebrow" style="margin-bottom:var(--sp-4)">About CheckGen</p>
+        <p class="eyebrow" style="margin-bottom:var(--sp-4)">About CheckGen</p>
     <h1 style="font-size:clamp(2.2rem,4vw,4rem);margin-bottom:var(--sp-6)">Built for QA engineers<br>who test seriously.</h1>
     <div class="prose">
       <p>CheckGen started as an internal tool — a way to stop writing the same test cases from scratch every sprint. Paste acceptance criteria, get a grouped checklist, mark outcomes, export. That's it.</p>
@@ -41,24 +37,23 @@
 
   <!-- How it works -->
   <section class="about-section">
-    <div class="about-inner">
-      <div class="eyebrow" style="margin-bottom:var(--sp-3)">How it works</div>
+          <div class="eyebrow" style="margin-bottom:var(--sp-3)">How it works</div>
       <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Three steps to a complete test plan.</h2>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)">
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border-md);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card about-card-md">
           <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">01</div>
           <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Paste your AC</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Paste your ticket, user story, or acceptance criteria. Full AC works best — a short description still generates useful steps.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border-md);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card about-card-md">
           <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">02</div>
           <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Pick your areas</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Choose which testing areas matter — functional, permissions, edge cases, UI, integrations, error handling, and more.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border-md);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card about-card-md">
           <div style="font-family:var(--font-display);font-size:clamp(3rem,4vw,5rem);font-weight:700;color:rgba(16,185,129,.12);line-height:1;margin-bottom:var(--sp-3);letter-spacing:-.04em">03</div>
           <div style="font-family:var(--font-display);font-size:clamp(1rem,1.2vw,1.3rem);font-weight:600;margin-bottom:var(--sp-2)">Test and export</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(14px,.95vw,16px);line-height:1.75">Mark items pass, fail, or blocked as you go. Add notes, regenerate any section, and export to CSV when done.</p>
@@ -70,42 +65,41 @@
 
   <!-- Feature cards -->
   <section class="about-section">
-    <div class="about-inner">
-      <div class="eyebrow" style="margin-bottom:var(--sp-3)">What's included</div>
+          <div class="eyebrow" style="margin-bottom:var(--sp-3)">What's included</div>
       <h2 style="margin-bottom:var(--sp-8);color:var(--text)">Everything a test session needs.</h2>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)">
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">🤖</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI from your AC</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">15–25 specific, grouped test cases in seconds. Edge cases, validations, break-it scenarios — all from your ticket.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">👥</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Sessions</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Share a 6-character code and your whole team works from the same checklist. Pass, Fail, Blocked sync live.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">✎</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Notes Per Item</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Capture context as you test. Notes export with your CSV so nothing gets lost between sessions.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">↺</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Regen Any Section</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Not happy with a section? Regenerate just that group. The rest of your checklist stays untouched.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">📊</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Live Progress</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Pass, Fail, and Blocked counts update in real time. Time estimates tell you how long a session will take.</p>
         </div>
 
-        <div style="padding:var(--sp-5);border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%)">
+        <div class="about-card">
           <div style="font-size:22px;margin-bottom:var(--sp-3)">↓</div>
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,13px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Export to CSV</div>
           <p style="color:var(--text);opacity:.78;font-size:clamp(13px,.88vw,15px);line-height:1.7">Filter by outcome and export. Notes, priorities, and types all export with each row.</p>
@@ -142,7 +136,7 @@
   <!-- Pricing -->
   <section class="about-section" id="pricing">
     <div class="eyebrow" style="margin-bottom:var(--sp-4)">Pricing</div>
-    <h2 style="margin-bottom:var(--sp-4);color:var(--text)">Free forever. Pro when you need it.</h2>
+    <h2 style="margin-bottom:var(--sp-4);color:var(--text)">Free. Always.</h2>
     <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);margin-bottom:var(--sp-8);max-width:560px">You can try CheckGen without an account. Create a free account for shared sessions and cloud history. Pro adds team management and integrations.</p>
     <div class="pricing-grid">
       <div class="pricing-card">
@@ -175,8 +169,7 @@
 
   <!-- FAQ -->
   <section class="about-section" id="faq">
-    <div class="about-inner">
-      <div class="eyebrow" style="margin-bottom:var(--sp-4)">FAQ</div>
+          <div class="eyebrow" style="margin-bottom:var(--sp-4)">FAQ</div>
       <h2 style="margin-bottom:var(--sp-6);color:var(--text)">Common questions</h2>
       <div class="faq-accordion">
 
@@ -226,20 +219,67 @@
     </div>
   </section>
 
-  <footer>
-    <a href="/" class="nav-logo">Check<span>Gen</span></a>
-    <div style="display:flex;gap:var(--sp-5);flex-wrap:wrap">
-      <a href="/#pricing" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Pricing</a>
-      <a href="/about.html#faq" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">FAQ</a>
-      <a href="/login.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Sign In</a>
-    </div>
-    <div style="display:flex;gap:var(--sp-4)">
-      <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none;transition:color .15s" onmouseover="this.style.color='var(--soft)'" onmouseout="this.style.color='var(--muted)'">Terms</a>
-      <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none;transition:color .15s" onmouseover="this.style.color='var(--soft)'" onmouseout="this.style.color='var(--muted)'">Privacy</a>
-    </div>
-    <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
-  </footer>
-
 </div>
+
+<footer class="site-footer">
+    <div class="shell">
+      <div class="site-footer-grid">
+        <div class="site-footer-brand">
+          <a href="/" class="nav-logo">Check<span>Gen</span></a>
+          <p>AI-powered QA checklist generator. Paste your ticket or AC and get grouped test cases in seconds.</p>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Product</div>
+          <div class="site-footer-links">
+            <a href="/app/">Generate Checklist</a>
+            <a href="/app/">Shared Sessions</a>
+            <a href="/app/history.html">History</a>
+          </div>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Company</div>
+          <div class="site-footer-links">
+            <a href="/about.html">About</a>
+            <a href="/about.html#pricing">Pricing</a>
+            <a href="/about.html#faq">FAQ</a>
+          </div>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Account</div>
+          <div class="site-footer-links">
+            <a href="/login.html">Sign In</a>
+            <a href="/signup.html">Create Free Account</a>
+            <a href="https://calebthede.com" target="_blank">Built by Caleb Thede</a>
+          </div>
+        </div>
+      </div>
+      <div class="site-footer-bottom">
+        <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
+        <div style="display:flex;gap:var(--sp-4)">
+          <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+          <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  var shell = document.querySelector('.shell');
+  if (!nav) return;
+  var sticky = false;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 60 && !sticky) {
+      sticky = true;
+      nav.classList.add('sticky');
+      if (shell) shell.classList.add('nav-offset');
+    } else if (window.scrollY <= 60 && sticky) {
+      sticky = false;
+      nav.classList.remove('sticky');
+      if (shell) shell.classList.remove('nav-offset');
+    }
+  }, { passive: true });
+})();
+</script>
 </body>
 </html>

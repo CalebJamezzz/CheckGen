@@ -127,7 +127,10 @@ async function handleSignup() {
   btn.disabled = true; btn.textContent = 'Creating account…';
   try {
     const sb = getSB();
-    const { data, error } = await sb.auth.signUp({ email, password: pw });
+    const { data, error } = await sb.auth.signUp({
+        email, password: pw,
+        options: { emailRedirectTo: window.location.origin + '/confirmed.html' }
+      });
     if (error) throw error;
     if (data?.user) {
       await updateProfile({ name, organization: org || null }).catch(() => {});
