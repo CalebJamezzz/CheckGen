@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>History — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+  <aside id="appNav"></aside>
+  <main class="app-content">
+
+    <div class="page-header">
+      <h1 class="page-title">History</h1>
+      <p class="page-sub">Your cloud-saved checklists. Pick up where you left off.</p>
+    </div>
+
+    <div id="historyContent">
+      <div class="empty" style="padding:var(--sp-10)">
+        <div style="font-size:24px;margin-bottom:var(--sp-3)">⏳</div>
+        Loading your history…
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+(async () => {
+  const ctx = await initPage(true);
+  if (!ctx) return;
+  const { user, profile } = ctx;
+  const tier = profile?.tier || 'free';
+  const isPro = tier === 'pro';
+  const FREE_LIMIT = 25;
+
+  const el = document.getElementById('historyContent');
+
+  try {
+    const sessions = await sbGet('checklist_sessions', 'user_id', user.id);
+
+    if (!sessions.length) {
+      el.innerHTML = `
+        <div class="empty" style="padding:var(--sp-10)">
+          <div style="font-size:24px;margin-bottom:var(--sp-3)">📋</div>
+          No saved checklists yet.<br>
+          <a href="/app/" style="color:var(--green)">Generate your first one →</a>
+        </div>`;
+      return;
+    }
+
+    const capped = !isPro && sessions.length >= FREE_LIMIT;
+
+    el.innerHTML = `
+      ${capped ? `
+        <div class="anon-gate" style="margin-bottom:var(--sp-5)">
+          <div class="anon-gate-text">
+            <strong>Free accounts save the last ${FREE_LIMIT} checklists.</strong>
+            Upgrade to Pro for unlimited history.
+          </div>
+          <a href="/about.html#pricing" class="btn btn-outline" style="flex-shrink:0">Upgrade →</a>
+        </div>` : ''}
+      <div class="history-grid" id="historyGrid"></div>`;
+
+    const grid = document.getElementById('historyGrid');
+    const display = isPro ? sessions : sessions.slice(0, FREE_LIMIT);
+
+    grid.innerHTML = display.map(s => {
+      const items = s.items || [];
+      const pass    = items.filter(i => i.outcome === 'pass').length;
+      const fail    = items.filter(i => i.outcome === 'fail').length;
+      const blocked = items.filter(i => i.outcome === 'blocked').length;
+      const total   = items.length;
+      const ago     = Math.round((Date.now() - new Date(s.created_at)) / 60000);
+      const agoStr  = ago < 60 ? ago + 'm ago' : Math.round(ago/60) + 'h ago';
+      const label   = (s.ticket_id ? s.ticket_id + ' · ' : '') + (s.name || 'Checklist');
+
+      return `
+        <div class="history-card" onclick="loadSession('${s.id}')">
+          <div class="hc-meta">
+            <div class="hc-title">${esc(label)}</div>
+            <div class="hc-sub">${total} items · ${agoStr}${s.environment ? ' · ' + esc(s.environment) : ''}</div>
+          </div>
+          <div class="hc-stats">
+            <span class="hc-stat pass">${pass}P</span>
+            <span class="hc-stat fail">${fail}F</span>
+            <span class="hc-stat blocked">${blocked}B</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;color:var(--muted)">
+            <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    el.innerHTML = `<div class="empty">Failed to load history: ${e.message}</div>`;
+  }
+})();
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function loadSession(id) {
+  localStorage.setItem('cg_resume_session_id', id);
+  location.href = '/app/';
+}
+</script>
+</body>
+</html>

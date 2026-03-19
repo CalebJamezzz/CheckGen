@@ -3,6 +3,11 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+[[redirects]]
+  from = "/app"
+  to = "/app/"
+  status = 301
+
 [functions]
   directory = "netlify/functions"
 

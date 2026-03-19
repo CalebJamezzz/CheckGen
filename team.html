@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Team — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+  <aside id="appNav"></aside>
+  <main class="app-content">
+
+    <div class="page-header">
+      <h1 class="page-title">Team</h1>
+      <p class="page-sub">Invite teammates, manage your org, and run shared sessions at scale.</p>
+    </div>
+
+    <div id="teamContent">
+      <div class="empty" style="padding:var(--sp-4)">Loading…</div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+(async () => {
+  const ctx = await initPage(true);
+  if (!ctx) return;
+  const { profile } = ctx;
+  const isPro = profile?.tier === 'pro';
+  const el = document.getElementById('teamContent');
+
+  if (!isPro) {
+    el.innerHTML = `
+      <div class="pro-gate-card">
+        <div class="pro-gate-icon">👥</div>
+        <h2 class="pro-gate-title">Team management is a Pro feature</h2>
+        <p class="pro-gate-desc">
+          Invite teammates to your organization, manage shared session permissions,
+          and see your team's test coverage — all in one place.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-3);align-items:center">
+          <a href="/about.html#pricing" class="btn btn-primary" style="padding:var(--sp-3) var(--sp-8)">Upgrade to Pro →</a>
+          <span class="label">Coming soon with Pro launch</span>
+        </div>
+        <div style="margin-top:var(--sp-8);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);text-align:left">
+          ${[
+            ['Invite teammates', 'Add anyone from your org with a single link.'],
+            ['Shared history', 'Your whole team\'s checklists in one place.'],
+            ['Role management', 'Admin, member, and viewer roles.'],
+          ].map(([t,d]) => `
+            <div class="card" style="padding:var(--sp-4)">
+              <div class="card-label" style="margin-bottom:6px">${t}</div>
+              <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">${d}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Pro user — placeholder for future team management
+  el.innerHTML = `
+    <div class="empty" style="padding:var(--sp-10)">
+      <div style="font-size:24px;margin-bottom:var(--sp-3)">🚧</div>
+      Team management is coming soon.<br>
+      <span style="font-size:clamp(12px,.82vw,14px);color:var(--muted);margin-top:var(--sp-2);display:block">
+        You'll be able to invite teammates and manage your org here.
+      </span>
+    </div>`;
+})();
+</script>
+</body>
+</html>

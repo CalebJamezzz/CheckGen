@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Account — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+  <aside id="appNav"></aside>
+  <main class="app-content">
+
+    <div class="page-header">
+      <h1 class="page-title">Account</h1>
+      <p class="page-sub">Manage your profile and subscription.</p>
+    </div>
+
+    <div style="max-width:640px">
+
+      <!-- Profile -->
+      <div class="account-section">
+        <div class="account-section-title">Profile</div>
+        <div class="grid-2" style="gap:var(--sp-4);margin-bottom:var(--sp-4)">
+          <div class="field">
+            <label class="field-label">Name</label>
+            <input type="text" id="fieldName" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label class="field-label">Organization <span style="font-family:var(--font-body);text-transform:none;letter-spacing:0;color:var(--muted)">optional</span></label>
+            <input type="text" id="fieldOrg" placeholder="Acme Inc.">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:var(--sp-4)">
+          <label class="field-label">Email</label>
+          <input type="email" id="fieldEmail" disabled style="opacity:.5;cursor:not-allowed">
+          <div class="field-hint">Email changes are not yet supported. Contact support if needed.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+        <div class="status" id="profileStatus" style="margin-top:var(--sp-3)"></div>
+      </div>
+
+      <!-- Password -->
+      <div class="account-section">
+        <div class="account-section-title">Password</div>
+        <div class="field" style="margin-bottom:var(--sp-4)">
+          <label class="field-label">New Password</label>
+          <input type="password" id="fieldPassword" placeholder="8+ characters" autocomplete="new-password">
+        </div>
+        <div class="field" style="margin-bottom:var(--sp-4)">
+          <label class="field-label">Confirm Password</label>
+          <input type="password" id="fieldPasswordConfirm" placeholder="Repeat password" autocomplete="new-password">
+        </div>
+        <button class="btn btn-ghost" onclick="savePassword()">Update Password</button>
+        <div class="status" id="passwordStatus" style="margin-top:var(--sp-3)"></div>
+      </div>
+
+      <!-- Plan -->
+      <div class="account-section">
+        <div class="account-section-title">Plan</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-4)">
+          <div>
+            <div id="planName" style="font-size:clamp(1rem,1.2vw,1.3rem);font-family:var(--font-display);font-weight:600;margin-bottom:4px">Free</div>
+            <div id="planDesc" style="font-size:clamp(13px,.88vw,15px);color:var(--dim)">Cloud history (last 25), shared sessions, unlimited generation.</div>
+          </div>
+          <div id="planCta"></div>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="account-section" style="border-color:rgba(248,113,113,.2)">
+        <div class="account-section-title" style="color:var(--fail)">Danger Zone</div>
+        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-4)">Signing out will end your session on this device. Your data will be preserved.</p>
+        <button class="btn btn-danger" style="padding:9px 18px;font-size:clamp(11px,.75vw,13px)" onclick="handleSignOut()">Sign out of all devices</button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let _user = null;
+
+(async () => {
+  const ctx = await initPage(true);
+  if (!ctx) return;
+  const { user, profile } = ctx;
+  _user = user;
+
+  // Populate fields
+  document.getElementById('fieldName').value  = profile?.name || '';
+  document.getElementById('fieldOrg').value   = profile?.organization || '';
+  document.getElementById('fieldEmail').value = user.email || '';
+
+  // Plan section
+  const isPro = profile?.tier === 'pro';
+  document.getElementById('planName').textContent = isPro ? 'Pro' : 'Free';
+  document.getElementById('planDesc').textContent = isPro
+    ? 'Unlimited history, Jira/Linear export, team management, priority generation.'
+    : 'Cloud history (last 25), shared sessions, unlimited generation.';
+  document.getElementById('planCta').innerHTML = isPro
+    ? '<span class="pill" style="color:var(--green);border-color:rgba(16,185,129,.3)">Active</span>'
+    : '<a href="/about.html#pricing" class="btn btn-outline">Upgrade to Pro →</a>';
+})();
+
+async function saveProfile() {
+  const name = document.getElementById('fieldName').value.trim();
+  const org  = document.getElementById('fieldOrg').value.trim();
+  const btn  = event.target;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await updateProfile({ name, organization: org, updated_at: new Date().toISOString() });
+    showSt('profileStatus', '✓ Profile updated.', 'success');
+  } catch(e) {
+    showSt('profileStatus', 'Failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+  }
+}
+
+async function savePassword() {
+  const pw1 = document.getElementById('fieldPassword').value;
+  const pw2 = document.getElementById('fieldPasswordConfirm').value;
+  if (!pw1) { showSt('passwordStatus', 'Enter a new password.', 'error'); return; }
+  if (pw1.length < 8) { showSt('passwordStatus', 'Password must be at least 8 characters.', 'error'); return; }
+  if (pw1 !== pw2) { showSt('passwordStatus', 'Passwords don\'t match.', 'error'); return; }
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Updating…';
+  try {
+    const sb = getSB();
+    const { error } = await sb.auth.updateUser({ password: pw1 });
+    if (error) throw error;
+    showSt('passwordStatus', '✓ Password updated.', 'success');
+    document.getElementById('fieldPassword').value = '';
+    document.getElementById('fieldPasswordConfirm').value = '';
+  } catch(e) {
+    showSt('passwordStatus', 'Failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Update Password';
+  }
+}
+
+function showSt(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'status ' + type;
+}
+</script>
+</body>
+</html>
