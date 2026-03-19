@@ -257,77 +257,71 @@
 })();
 </script>
 <script>
-/* Marketing nav auth state */
+/* Marketing nav — auth state */
 (function() {
-  function initMarketingNav() {
-    var SB_URL = '', SB_KEY = '';
-    // Read from already-loaded supabase.js globals if available
-    // Otherwise just check localStorage for a session token
+  function getSession() {
     try {
+      // Supabase v2 stores session as: sb-{projectRef}-auth-token
       var keys = Object.keys(localStorage);
-      var sessionKey = keys.find(function(k) { return k.includes('auth-token') || (k.includes('supabase') && k.includes('session')); });
-      if (!sessionKey) return;
-      var raw = localStorage.getItem(sessionKey);
-      if (!raw) return;
-      var parsed = JSON.parse(raw);
-      var session = parsed?.currentSession || parsed;
-      var user = session?.user;
-      var token = session?.access_token;
-      if (!user || !token) return;
-      var name = user.user_metadata?.name || user.email?.split('@')[0] || '?';
-      var initial = name.charAt(0).toUpperCase();
-      var signInBtn = document.querySelector('a[href="/login.html"].btn');
-      if (!signInBtn) return;
-      // Replace sign-in button with avatar + dropdown
-      var wrapper = document.createElement('div');
-      wrapper.style.cssText = 'position:relative;display:inline-block';
-      wrapper.innerHTML = '<button id="navAvatarBtn" onclick="toggleNavDropdown()" style="width:36px;height:36px;border-radius:50%;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green);font-family:var(--font-display);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center">' + initial + '</button>'
-        + '<div id="navDropdown" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border-md);border-radius:var(--r-lg);min-width:180px;padding:6px;z-index:200;box-shadow:0 16px 40px rgba(0,0,0,.5)">'
-        + '<div style="padding:8px 12px 6px;border-bottom:1px solid var(--border);margin-bottom:4px">'
-        + '<div style="font-size:clamp(12px,.82vw,14px);color:var(--text);font-weight:500">' + name + '</div>'
-        + '<div style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,11px);color:var(--muted);letter-spacing:.06em">Free account</div>'
-        + '</div>'
-        + '<a href="/app/" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:clamp(12px,.82vw,14px);color:var(--dim);text-decoration:none;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Open App</a>'
-        + '<a href="/account.html" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:clamp(12px,.82vw,14px);color:var(--dim);text-decoration:none;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Account</a>'
-        + '<button onclick="signOutMarketing()" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border-radius:6px;font-size:clamp(12px,.82vw,14px);color:var(--dim);background:none;border:none;cursor:pointer;text-align:left;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Sign out</button>'
-        + '</div>';
-      signInBtn.parentNode.replaceChild(wrapper, signInBtn);
-      // Close on outside click
-      document.addEventListener('click', function(e) {
-        if (!wrapper.contains(e.target)) {
-          var dd = document.getElementById('navDropdown');
-          if (dd) dd.style.display = 'none';
-        }
+      // Try the specific key first
+      var key = keys.find(function(k) {
+        return (k.startsWith('sb-') && k.endsWith('-auth-token')) ||
+               (k.includes('supabase') && k.includes('auth') && k.includes('token'));
       });
-    } catch(e) { /* silent */ }
+      if (!key) return null;
+      var raw = localStorage.getItem(key);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      // Supabase v2 wraps in { currentSession: {...}, expiresAt: N }
+      return parsed?.currentSession || parsed?.session || (parsed?.access_token ? parsed : null);
+    } catch(e) { return null; }
   }
 
-  window.toggleNavDropdown = function() {
-    var dd = document.getElementById('navDropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  function initMarketingNav() {
+    var session = getSession();
+    if (!session?.user) return;
+    var user = session.user;
+    var name = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || '?';
+    var initial = name.charAt(0).toUpperCase();
+    // Find the Sign In button
+    var signInBtn = document.querySelector('a[href="/login.html"]');
+    if (!signInBtn) return;
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;display:inline-block;vertical-align:middle';
+    wrapper.innerHTML =
+      '<button onclick="toggleNavDropdown(event)" style="width:36px;height:36px;border-radius:50%;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:var(--green);font-family:var(--font-display);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s">' + initial + '</button>' +
+      '<div id="mktNavDrop" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border-md);border-radius:var(--r-lg);min-width:190px;padding:6px;z-index:1000;box-shadow:0 16px 40px rgba(0,0,0,.5)">' +
+        '<div style="padding:8px 12px 8px;border-bottom:1px solid var(--border);margin-bottom:4px">' +
+          '<div style="font-size:14px;color:var(--text);font-weight:500">' + name + '</div>' +
+          '<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:2px">Free account</div>' +
+        '</div>' +
+        '<a href="/app/" style="display:block;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--dim);text-decoration:none" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Open App</a>' +
+        '<a href="/account.html" style="display:block;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--dim);text-decoration:none" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Account</a>' +
+        '<button onclick="mktSignOut()" style="display:block;width:100%;padding:8px 12px;border-radius:6px;font-size:14px;color:var(--dim);background:none;border:none;cursor:pointer;text-align:left" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">Sign out</button>' +
+      '</div>';
+    signInBtn.parentNode.replaceChild(wrapper, signInBtn);
+    document.addEventListener('click', function(e) {
+      if (!wrapper.contains(e.target)) {
+        var d = document.getElementById('mktNavDrop'); if (d) d.style.display = 'none';
+      }
+    });
+  }
+
+  window.toggleNavDropdown = function(e) {
+    e.stopPropagation();
+    var d = document.getElementById('mktNavDrop');
+    if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
   };
 
-  window.signOutMarketing = async function() {
-    try {
-      // Try using Supabase SDK if loaded
-      if (typeof window.supabase !== 'undefined' && typeof getSB === 'function') {
-        await getSB().auth.signOut();
-      } else {
-        // Manual localStorage clear
-        Object.keys(localStorage).forEach(function(k) {
-          if (k.includes('supabase')) localStorage.removeItem(k);
-        });
-      }
-    } catch(e) {}
+  window.mktSignOut = function() {
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+    });
     location.href = '/';
   };
 
-  // Run after DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMarketingNav);
-  } else {
-    initMarketingNav();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMarketingNav);
+  else initMarketingNav();
 })();
 </script>
 </body>
