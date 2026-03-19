@@ -51,15 +51,18 @@
           <span class="label">Coming soon with Pro launch</span>
         </div>
         <div style="margin-top:var(--sp-8);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4);text-align:left">
-          ${[
-            ['Invite teammates', 'Add anyone from your org with a single link.'],
-            ['Shared history', 'Your whole team\'s checklists in one place.'],
-            ['Role management', 'Admin, member, and viewer roles.'],
-          ].map(([t,d]) => `
-            <div class="card" style="padding:var(--sp-4)">
-              <div class="card-label" style="margin-bottom:6px">${t}</div>
-              <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">${d}</div>
-            </div>`).join('')}
+          <div class="card" style="padding:var(--sp-4)">
+            <div class="card-label" style="margin-bottom:6px">Invite teammates</div>
+            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Add anyone from your org with a single link.</div>
+          </div>
+          <div class="card" style="padding:var(--sp-4)">
+            <div class="card-label" style="margin-bottom:6px">Shared history</div>
+            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Your whole team's checklists in one place.</div>
+          </div>
+          <div class="card" style="padding:var(--sp-4)">
+            <div class="card-label" style="margin-bottom:6px">Role management</div>
+            <div class="card-desc" style="font-size:clamp(12px,.82vw,14px);color:var(--text);opacity:.72">Admin, member, and viewer roles.</div>
+          </div>
         </div>
       </div>`;
     return;

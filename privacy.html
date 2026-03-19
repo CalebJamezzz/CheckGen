@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Privacy Policy — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .legal-body { max-width:720px; margin:0 auto; padding:var(--sp-10) 0 var(--sp-16); }
+    .legal-body h2 { font-family:var(--font-display); font-size:clamp(1.1rem,1.3vw,1.4rem); font-weight:600; color:var(--text); margin:var(--sp-8) 0 var(--sp-3); }
+    .legal-body h2:first-of-type { margin-top:var(--sp-6); }
+    .legal-body p, .legal-body li { font-size:clamp(14px,.95vw,16px); color:var(--dim); line-height:1.8; margin-bottom:var(--sp-3); }
+    .legal-body ul { padding-left:var(--sp-5); }
+    .legal-body li { margin-bottom:var(--sp-2); }
+    .legal-meta { font-family:var(--font-mono); font-size:clamp(10px,.7vw,12px); letter-spacing:.1em; color:var(--muted); margin-bottom:var(--sp-8); }
+    footer { padding:var(--sp-6) 0; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--sp-4); }
+  </style>
+</head>
+<body>
+<div class="shell" style="padding-top:var(--sp-6)">
+
+  <nav class="nav">
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-3);align-items:center">
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none">About</a>
+      <a href="/login.html" class="btn btn-ghost">Sign In</a>
+      <a href="/app/" class="btn btn-primary">Open App →</a>
+    </div>
+  </nav>
+
+  <div class="legal-body">
+    <h1 style="font-size:clamp(1.8rem,3vw,3rem);margin-bottom:var(--sp-3)">Privacy Policy</h1>
+    <p class="legal-meta">Last updated: March 2026</p>
+
+    <p>This policy explains what data CheckGen collects, how it is used, and your choices. We take your privacy seriously and collect only what is necessary to provide the service.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p><strong style="color:var(--text)">Account information:</strong> When you create an account, we collect your name, email address, and optionally your organization name.</p>
+    <p><strong style="color:var(--text)">Usage data:</strong> When you use CheckGen, we store your saved checklists (items, outcomes, notes, ticket metadata) in our database. Anonymous users have no data stored on our servers.</p>
+    <p><strong style="color:var(--text)">Ticket content:</strong> Text you paste into the generator is sent to the Anthropic API to produce your checklist. We do not permanently store this input unless you save the resulting session.</p>
+
+    <h2>2. How We Use Your Data</h2>
+    <ul>
+      <li>To provide and improve the CheckGen service</li>
+      <li>To save your checklists and history across devices</li>
+      <li>To enable shared sessions with your team</li>
+      <li>To send transactional emails (account confirmation, password reset)</li>
+    </ul>
+    <p>We do not sell your data. We do not use your data for advertising.</p>
+
+    <h2>3. Third-Party Services</h2>
+    <p><strong style="color:var(--text)">Supabase:</strong> We use Supabase for authentication and database storage. Your account and session data is stored in Supabase infrastructure. See <a href="https://supabase.com/privacy" style="color:var(--green)">Supabase Privacy Policy</a>.</p>
+    <p><strong style="color:var(--text)">Anthropic:</strong> Ticket content is sent to Anthropic to generate checklists. See <a href="https://www.anthropic.com/privacy" style="color:var(--green)">Anthropic Privacy Policy</a>.</p>
+    <p><strong style="color:var(--text)">Netlify:</strong> The service is hosted on Netlify. See <a href="https://www.netlify.com/privacy/" style="color:var(--green)">Netlify Privacy Policy</a>.</p>
+
+    <h2>4. Cookies and Local Storage</h2>
+    <p>We use browser localStorage to store your session state and anonymous history. No tracking cookies are used. Authentication tokens are stored in localStorage by Supabase's client library.</p>
+
+    <h2>5. Data Retention</h2>
+    <p>Account data is retained until you delete your account. Saved checklists are retained until you delete them. Shared session data expires after 30 days of inactivity.</p>
+
+    <h2>6. Your Rights</h2>
+    <p>You may request deletion of your account and associated data at any time by contacting us. You may also export your history via CSV export from within the app.</p>
+
+    <h2>7. Security</h2>
+    <p>We use industry-standard practices including HTTPS, Supabase row-level security, and Netlify's secure infrastructure. No system is completely secure, and we cannot guarantee absolute security of your data.</p>
+
+    <h2>8. Contact</h2>
+    <p>Questions about this policy? Contact us at <a href="mailto:calebthede@gmail.com" style="color:var(--green)">calebthede@gmail.com</a>.</p>
+  </div>
+
+  <footer>
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-4);flex-wrap:wrap">
+      <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Terms of Service</a>
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">About</a>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
+  </footer>
+
+</div>
+</body>
+</html>

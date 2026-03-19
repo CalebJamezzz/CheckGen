@@ -6,102 +6,66 @@
   <title>Sign In — CheckGen</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js">
-async function signInWithGoogle() {
-  await waitForSB();
-  const sb = getSB();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/app/' }
-  });
-  if (error) showStatus('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
-}
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
-<div class="auth-shell">
+<div class="auth-wrap">
   <div class="auth-card">
     <a href="/" class="auth-logo">Check<span>Gen</span></a>
     <h1 class="auth-title">Welcome back</h1>
-    <p class="auth-sub">Sign in to your account to access your checklists and history.</p>
+    <p class="auth-sub">Sign in to access your checklists and history.</p>
 
     <button type="button" class="btn-google" onclick="signInWithGoogle()">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
       Continue with Google
     </button>
+
     <div class="auth-divider"><span>or</span></div>
+
     <div class="field">
       <label class="field-label">Email</label>
-      <input type="email" id="email" placeholder="you@company.com" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email">
     </div>
-    <div class="field">
+    <div class="field" style="margin-bottom:var(--sp-2)">
       <label class="field-label">Password</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div style="text-align:right;margin-bottom:var(--sp-5)">
+      <a href="/forgot.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--soft);text-decoration:none">Forgot password?</a>
     </div>
 
-    <div style="text-align:right;margin-bottom:var(--sp-4)">
-      <a href="/forgot.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);color:var(--soft);text-decoration:none">Forgot password?</a>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="handleLogin()">Sign In</button>
+    <div class="status" id="loginStatus" style="margin-top:var(--sp-3)"></div>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="/signup.html">Create one free</a>
     </div>
-
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-4)" id="loginBtn" onclick="handleLogin()">Sign In</button>
-
-    <div class="status" id="status"></div>
-
-    <p class="auth-footer">Don't have an account? <a href="/signup.html">Create one free</a></p>
-    <div class="auth-divider"><div class="auth-divider-line"></div><span class="auth-divider-text">or</span><div class="auth-divider-line"></div></div>
-    <a href="/app/" class="btn btn-ghost" style="width:100%;justify-content:center">Continue without account</a>
+    <div class="auth-footer" style="margin-top:var(--sp-3)">
+      <a href="/app/" style="color:var(--muted);font-size:clamp(11px,.72vw,13px)">Continue without an account →</a>
+    </div>
   </div>
 </div>
-<script src="/js/supabase.js">
-async function signInWithGoogle() {
-  await waitForSB();
-  const sb = getSB();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/app/' }
-  });
-  if (error) showStatus('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
-}
-</script>
-<script src="/js/auth.js">
-async function signInWithGoogle() {
-  await waitForSB();
-  const sb = getSB();
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin + '/app/' }
-  });
-  if (error) showStatus('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
-}
-</script>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
 <script>
-  redirectIfAuthed();
+(async () => { await redirectIfAuthed(); })();
 
-  async function handleLogin() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('loginBtn');
-    const status = document.getElementById('status');
-    if (!email || !password) { showSt('Enter your email and password.', 'error'); return; }
-    btn.disabled = true; btn.textContent = 'Signing in…';
-    try {
-      await waitForSB();
-      await signIn(email, password);
-      location.href = getReturnTo();
-    } catch(e) {
-      showSt(e.message || 'Sign in failed. Check your email and password.', 'error');
-      btn.disabled = false; btn.textContent = 'Sign In';
-    }
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPassword').value;
+  if (!email || !pw) { showSt('loginStatus','Enter your email and password.','error'); return; }
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const sb = getSB();
+    const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (error) throw error;
+    location.href = getReturnTo();
+  } catch(e) {
+    showSt('loginStatus', e.message || 'Sign in failed.', 'error');
+    btn.disabled = false; btn.textContent = 'Sign In';
   }
-
-  function showSt(msg, type) {
-    const el = document.getElementById('status');
-    el.textContent = msg; el.className = 'status ' + type;
-  }
-
-  document.getElementById('password').addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleLogin();
-  });
+}
 
 async function signInWithGoogle() {
   await waitForSB();
@@ -110,8 +74,17 @@ async function signInWithGoogle() {
     provider: 'google',
     options: { redirectTo: window.location.origin + '/app/' }
   });
-  if (error) showStatus('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
+  if (error) showSt('loginStatus', 'Google sign-in failed: ' + error.message, 'error');
 }
+
+function showSt(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'status ' + type;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
 </script>
 </body>
 </html>
