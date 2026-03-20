@@ -131,23 +131,29 @@ async function handleSignup() {
   try {
     const sb = getSB();
     const { data, error } = await sb.auth.signUp({
-      email, password: pw,
+      email,
+      password: pw,
       options: {
         emailRedirectTo: location.origin + '/confirmed.html',
-        data: { name }  // stored in raw_user_meta_data → picked up by trigger
+        data: { name }  // goes into raw_user_meta_data for the trigger
       }
     });
     if (error) throw error;
-    // Save name directly using the user from signup response (works before email confirm)
-    if (data?.user) {
+
+    // Save name directly using the user ID from signup response
+    // Works even before email confirmation (no getUser() needed)
+    if (data?.user?.id) {
       try {
-        const sb2 = getSB();
-        await sb2.from('profiles').upsert(
+        await sb.from('profiles').upsert(
           { id: data.user.id, name, updated_at: new Date().toISOString() },
           { onConflict: 'id' }
         );
-      } catch(e) { /* silent — trigger will handle it on confirm */ }
+      } catch(profileErr) {
+        // Non-fatal — trigger will handle it
+        console.warn('Profile save:', profileErr.message);
+      }
     }
+
     const { data: sess } = await sb.auth.getSession();
     if (sess?.session) {
       showSt('✓ Account created! Taking you to the app…', 'success');
@@ -157,13 +163,26 @@ async function handleSignup() {
       setTimeout(() => location.href = '/login.html', 2500);
     }
   } catch(e) {
-    showSt(e.message || 'Signup failed.', 'error');
+    // Sanitize Supabase errors — don't reveal if email already exists
+    const msg = e.message || '';
+    let userMsg;
+    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('User already registered') || msg.includes('email address is already')) {
+      // Vague — don't confirm the email exists
+      userMsg = 'Something went wrong. Please try a different email or sign in instead.';
+    } else if (msg.includes('invalid') || msg.includes('Invalid')) {
+      userMsg = 'Please check your email address and try again.';
+    } else if (msg.includes('Password') || msg.includes('password')) {
+      userMsg = 'Password does not meet requirements. Please try again.';
+    } else {
+      userMsg = 'Something went wrong. Please try again.';
+    }
+    showSt(userMsg, 'error');
     btn.disabled = false; btn.textContent = 'Create Free Account';
   }
 }
 async function signUpWithGoogle() {
   const { error } = await getSB().auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/app/' } });
-  if (error) showSt('Google sign-up failed: ' + error.message, 'error');
+  if (error) showSt('Google sign-in is not available right now. Please try email signup.', 'error');
 }
 function showSt(msg, type) {
   const el = document.getElementById('signupStatus');

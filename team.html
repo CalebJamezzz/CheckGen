@@ -349,16 +349,30 @@ async function sendInvites() {
   btn.disabled=true; btn.textContent='Sending…';
   const sb = getSB();
   let sent=0, failed=[];
+  // Get current member emails to check for duplicates
+  const memberEmails = new Set(_members.map(m => (m.email||'').toLowerCase()));
+  const pendingEmails = new Set(_invites.filter(i=>i.status==='pending').map(i => (i.email||'').toLowerCase()));
+
   for (const email of _pendingEmails) {
+    const emailLower = email.toLowerCase();
+    // Check if already a member
+    if (memberEmails.has(emailLower)) {
+      failed.push(email + ' (already a member)');
+      continue;
+    }
+    // Check if already has a pending invite
+    if (pendingEmails.has(emailLower)) {
+      failed.push(email + ' (invite already sent)');
+      continue;
+    }
     try {
-      // Insert invite row — Supabase handles uniqueness
-      const { error } = await sb.from('workspace_invites').upsert({
+      const { error } = await sb.from('workspace_invites').insert({
         workspace_id: _workspace.id,
         invited_by: _user.id,
-        email: email.toLowerCase(),
+        email: emailLower,
         role,
         status: 'pending',
-      }, { onConflict: 'workspace_id,email' });
+      });
       if (error) throw error;
 
       // Send email via Supabase edge function OR show the invite link for now

@@ -41,7 +41,7 @@
       showSt('✓ Reset link sent — check your inbox.', 'success');
       btn.textContent = 'Link Sent';
     } catch(e) {
-      showSt(e.message || 'Something went wrong. Try again.', 'error');
+      showSt('If an account exists for that email, a reset link has been sent.', 'success');
       btn.disabled = false; btn.textContent = 'Send Reset Link';
     }
   }
