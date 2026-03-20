@@ -49,8 +49,24 @@ function setMode(mode) {
   sessionMode = mode;
   $('cardPersonal').classList.toggle('active', mode === 'personal');
   $('cardShared').classList.toggle('active', mode === 'shared');
-  if (mode === 'personal') $('sharedPanel').classList.remove('visible');
-  else $('sharedPanel').classList.add('visible');
+  if (mode === 'personal') {
+    $('sharedPanel').classList.remove('visible');
+  } else {
+    $('sharedPanel').classList.add('visible');
+    // Show email view for signed-in, code view for anon
+    (async () => {
+      const s = await getSession().catch(()=>null);
+      const anonView = document.getElementById('sharedAnonView');
+      const authView = document.getElementById('sharedAuthView');
+      if (s?.user) {
+        if (anonView) anonView.style.display = 'none';
+        if (authView) { authView.style.display = 'block'; loadTeamMemberChips(s.user.id); }
+      } else {
+        if (anonView) anonView.style.display = 'block';
+        if (authView) authView.style.display = 'none';
+      }
+    })();
+  }
   $('startBtn').textContent = (mode === 'shared' && sharedSub === 'join') ? 'Join Session →' : 'Start Session →';
 }
 
@@ -640,6 +656,73 @@ async function joinSharedSession() {
   } catch(e) { alert('Error joining session: ' + e.message); }
 }
 
+
+
+/* ── Shared session email invites ───────────────────────────────────────────── */
+let _shareEmails = [];
+
+async function loadTeamMemberChips(userId) {
+  try {
+    const sb = getSB(); if (!sb) return;
+    const { data: profile } = await sb.from('profiles').select('workspace_id').eq('id', userId).single();
+    if (!profile?.workspace_id) return;
+    const { data: members } = await sb.from('workspace_member_details').select('email,name').eq('workspace_id', profile.workspace_id);
+    if (!members?.length) return;
+    const chipList = document.getElementById('teamChipList');
+    const chipsWrap = document.getElementById('teamMemberChips');
+    if (!chipList || !chipsWrap) return;
+    const mySession = await getSession();
+    const myEmail = mySession?.user?.email;
+    const others = members.filter(m => m.email !== myEmail);
+    if (!others.length) return;
+    chipList.innerHTML = others.map(m => {
+      const label = m.name || m.email;
+      const email = m.email;
+      return `<button type="button" onclick="addShareEmailChip('${email}')" 
+        style="font-size:clamp(11px,.75vw,13px);padding:4px 12px;border-radius:999px;background:var(--bg3);border:1px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s"
+        onmouseover="this.style.borderColor='rgba(16,185,129,.4)';this.style.color='var(--green)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'"
+        >${label}</button>`;
+    }).join('');
+    chipsWrap.style.display = 'block';
+  } catch(e) {}
+}
+
+function addShareEmailChip(email) {
+  if (!email || _shareEmails.includes(email)) return;
+  _shareEmails.push(email);
+  const tag = document.createElement('span');
+  tag.style.cssText = 'display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:999px;padding:2px 10px;font-size:clamp(11px,.75vw,13px);color:var(--green)';
+  tag.dataset.email = email;
+  // Build with DOM methods to avoid quoting issues
+  const emailText = document.createTextNode(email);
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.style.cssText = 'background:none;border:none;color:var(--green);cursor:pointer;padding:0;font-size:14px;opacity:.7;margin-left:2px';
+  closeBtn.textContent = '×';
+  closeBtn.addEventListener('click', function() { removeShareEmail(email); });
+  tag.appendChild(emailText); tag.appendChild(closeBtn);
+  const box = document.getElementById('shareEmailTags');
+  if (box) box.insertBefore(tag, document.getElementById('shareEmailInput'));
+}
+
+function handleShareEmailKey(e) {
+  if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') { e.preventDefault(); addShareEmail(); }
+}
+
+function addShareEmail() {
+  const input = document.getElementById('shareEmailInput');
+  const val = input?.value.trim().replace(/,$/, '');
+  if (!val || !val.includes('@')) { if (val) return; return; }
+  addShareEmailChip(val);
+  if (input) input.value = '';
+}
+
+function removeShareEmail(email) {
+  _shareEmails = _shareEmails.filter(e => e !== email);
+  const box = document.getElementById('shareEmailTags');
+  box?.querySelectorAll('[data-email]').forEach(t => { if (t.dataset.email === email) t.remove(); });
+}
 
 /* ── Cloud save (Supabase) ──────────────────────────────── */
 let _cloudSaveId = null;   // Supabase row ID for current session

@@ -137,7 +137,7 @@ async function loadWorkspace() {
   _isAdmin = _myRole === 'admin';
 
   document.getElementById('wsTitle').textContent = ws.name;
-  document.getElementById('wsSub').textContent = `${_members.length} member${_members.length !== 1 ? 's' : ''} · ${ROLES[_myRole] || _myRole}`;
+  document.getElementById('wsSub').textContent = `${_members.length} Member${_members.length !== 1 ? 's' : ''} · ${ROLES[_myRole] || _myRole}`;
   renderWorkspace();
 }
 

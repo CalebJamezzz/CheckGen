@@ -81,24 +81,47 @@
 
       <div class="shared-panel" id="sharedPanel">
         <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-        <div class="shared-sub-opts">
-          <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New Session</button>
-          <button class="sub-btn"        id="subJoin"  onclick="setSharedSub('join')"  type="button">↗ Join Existing Session</button>
+
+        <!-- Anonymous: show code-based join (no account needed) -->
+        <div id="sharedAnonView">
+          <div class="shared-sub-opts">
+            <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New</button>
+            <button class="sub-btn"        id="subJoin"  onclick="setSharedSub('join')"  type="button">↗ Join by Code</button>
+          </div>
+          <div class="field">
+            <label class="field-label">Your Name</label>
+            <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
+            <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
+          </div>
+          <div class="join-section" id="joinSection">
+            <label class="field-label" style="margin-bottom:7px">Session Code</label>
+            <div class="join-row">
+              <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
+              <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
+            </div>
+          </div>
         </div>
-        <div class="field">
-          <label class="field-label">Your Name</label>
-          <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-          <div class="field-hint" style="color:var(--soft)">Required for shared sessions. Shown next to your outcomes.</div>
-        </div>
-        <div class="join-section" id="joinSection">
-          <label class="field-label" style="margin-bottom:7px">Session Code</label>
-          <div class="join-row">
-            <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
-            <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
+
+        <!-- Signed-in: email invite flow -->
+        <div id="sharedAuthView" style="display:none">
+          <div class="field" style="margin-bottom:var(--sp-3)">
+            <label class="field-label">Invite teammates by email</label>
+            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
+              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
+                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
+                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
+            </div>
+            <div class="field-hint" style="margin-top:6px">Press Enter or comma after each email. Teammates will get an invite link.</div>
+          </div>
+          <!-- Also show team members as quick-add chips -->
+          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
+            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
+            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           </div>
         </div>
       </div>
 
+      <!-- Recent Checklists: only shown for anonymous users -->
       <div class="history-section" id="historySection" style="display:none">
         <div class="history-toggle" onclick="toggleHistory()">
           <span class="history-toggle-label">Recent Checklists</span>
@@ -302,6 +325,9 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
   if (user) {
     if (pDesc) pDesc.textContent = 'Just you. Saved to your cloud history.';
     if (sDesc) sDesc.textContent = 'Invite teammates. Requires a workspace.';
+    // Hide local history for signed-in users — they use History page instead
+    const histSection = document.getElementById('historySection');
+    if (histSection) histSection.style.setProperty('display', 'none', 'important');
     loadResumePanel(user.id);
   } else {
     if (pDesc) pDesc.textContent = 'Just you. Saves to your browser.';
