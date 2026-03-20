@@ -303,16 +303,16 @@ function updateTimeSummary() {
 }
 
 /* ── API ────────────────────────────────────────────────── */
-async function callClaude(prompt, maxT) {
+async function callClaude(prompt, maxT, systemPrompt) {
   const attempt = async () => {
     const r = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(Object.assign({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: maxT || 4000,
         messages: [{ role: 'user', content: prompt }],
-      }),
+      }, systemPrompt ? { system: systemPrompt } : {})),
     });
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
@@ -370,13 +370,50 @@ async function generateChecklist() {
       ? 'Lean heavily toward edge cases and boundary conditions.'
       : 'Balance happy-path, validation, and edge cases evenly.';
 
-  const areaList = areas.join(', ') + (brk ? ', Break-It' : '') + (dat ? ', Test Data' : '');
-  const prompt = `QA checklist for this ticket:\n${ticket}\n\nAreas: ${areaList}\nFocus: ${focusNote}\n${
-    detail === 'concise' ? 'Concise items (1 sentence each).' : 'Clear actionable steps (1-2 sentences each).'
-  }\n\nReturn ONLY a valid JSON array. Each object: {"section":"specific name","text":"test step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}\n\nBe specific to this ticket. 15-25 items.`;
+  // Areas the user selected — these are the ONLY sections allowed
+  const selectedAreas = [...areas];
+  if (brk) selectedAreas.push('Break-It');
+  if (dat) selectedAreas.push('Test Data');
+  const areaList = selectedAreas.join(', ');
+
+  // Item count: let Claude decide the right number, but give a range
+  // based on areas selected so fewer areas = fewer items
+  const areaCount = selectedAreas.length;
+  const minItems  = Math.max(5,  areaCount * 2);
+  const maxItems  = Math.min(30, areaCount * 4);
+
+  const detailNote = detail === 'concise'
+    ? 'Write each item in 1 concise sentence.'
+    : 'Write each item as a clear 1-2 sentence actionable step.';
+
+  // System prompt goes into the messages array as a system role
+  const systemPrompt = (
+    'You are a precise QA engineer generating test checklists as JSON arrays. ' +
+    'RULES: ' +
+    '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
+    '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
+    '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
+    '4. Every item must be specific to the ticket, never generic. ' +
+    '5. Each object must have: section, text, priority (High|Medium|Low), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
+  );
+
+  const userPrompt = [
+    'Generate a QA test checklist for this ticket:',
+    '',
+    ticket,
+    '',
+    'TESTING AREAS (use ONLY these as section names, no others):',
+    selectedAreas.map(a => '- ' + a).join('\n'),
+    '',
+    'Focus style: ' + focusNote,
+    detailNote,
+  ].join('\n');
+
+  const prompt = userPrompt; // kept for callClaude signature compat
+  const messages = [{ role: 'user', content: userPrompt }];
 
   try {
-    const items = await callClaude(prompt, 4000);
+    const items = await callClaude(prompt, 4000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     clearInterval(sublabelTimer);
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
