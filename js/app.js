@@ -249,6 +249,8 @@ function loadSession() {
 
 /* ── End session ────────────────────────────────────────── */
 function endSession() {
+  // Cancel any pending cloud save timer
+  if (_cloudSaveTimer) { clearTimeout(_cloudSaveTimer); _cloudSaveTimer = null; }
   _cloudSaveId = null;
   stopPolling();
   sharedSessionId = null; sharedCode = null;
@@ -267,6 +269,9 @@ function endSession() {
   $('shareCodeBadge').style.display = 'none';
   $('liveIndicator').style.display  = 'none';
   $('exportBar').style.display      = 'none';
+  // Reset export filter + share emails
+  const csvSel = $('exportCsvMode'); if (csvSel) csvSel.value = 'all';
+  _shareEmails = [];
   loadHistory();
   updateSummary();
   goTo(1);
@@ -341,6 +346,40 @@ async function generateChecklist() {
   if (!ticket) { showStatus('status2', 'Paste a ticket or AC first.', 'error'); return; }
   const areas = Array.from(document.querySelectorAll('.areaCheck:checked')).map(e => e.value);
   if (!areas.length) { showStatus('status2', 'Select at least one testing area.', 'error'); return; }
+
+  // Anon limit check — guests get 3 free generations
+  const session = await getSession().catch(() => null);
+  if (!session?.user) {
+    if (anonLimitReached()) {
+      showStatus('status2', '', '');
+      // Show the anon gate banner
+      const gate = $('anonGate');
+      if (gate) {
+        gate.style.display = 'flex';
+        const rem = $('anonRemaining');
+        if (rem) rem.textContent = '0 free generations';
+        const pips = $('anonPips');
+        if (pips) {
+          pips.innerHTML = '';
+          for (let i = 0; i < 3; i++) {
+            const pip = document.createElement('div');
+            pip.className = 'anon-pip used';
+            pips.appendChild(pip);
+          }
+        }
+      }
+      goTo(1); // send back to start
+      return;
+    }
+    incAnonCount();
+    // Update the gate display
+    const remaining = 3 - getAnonCount();
+    const rem = $('anonRemaining');
+    if (rem) rem.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '');
+    const gate = $('anonGate');
+    if (gate) gate.style.display = remaining > 0 ? 'flex' : 'none';
+    updateAnonPips();
+  }
 
   const btn = $('generateBtn');
   btn.disabled = true; btn.textContent = 'Generating…';
@@ -813,6 +852,19 @@ function debouncedCloudSave() {
   _cloudSaveTimer = setTimeout(cloudSaveSession, 2000);
 }
 
+
+function updateAnonPips() {
+  const count = getAnonCount();
+  const pips = $('anonPips');
+  if (!pips) return;
+  pips.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'anon-pip' + (i < count ? ' used' : '');
+    pips.appendChild(pip);
+  }
+}
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved name
@@ -829,6 +881,22 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSession();
   loadHistory();
   updateSummary();
+
+  // Show anon gate and pip count if guest has used generations
+  (async () => {
+    const s = await getSession().catch(() => null);
+    if (!s?.user) {
+      const count = getAnonCount();
+      if (count > 0) {
+        const gate = $('anonGate');
+        if (gate) gate.style.display = 'flex';
+        const remaining = 3 - count;
+        const rem = $('anonRemaining');
+        if (rem) rem.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '');
+        updateAnonPips();
+      }
+    }
+  })();
 
   // Auto-fill name from account if signed in
   (async () => {
