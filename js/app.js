@@ -92,6 +92,15 @@ function setSharedSub(sub) {
 }
 
 async function startSession() {
+  // Block guests who've hit the limit before they even reach screen2
+  const _sess = await getSession().catch(() => null);
+  if (!_sess?.user && anonLimitReached()) {
+    // Show gate on screen1 and scroll to it
+    updateAnonGate(0);
+    const gate = $('anonGate');
+    if (gate) { gate.style.display = 'flex'; gate.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    return;
+  }
   if (sessionMode === 'shared' && sharedSub === 'join') {
     await joinSharedSession(); return;
   }
@@ -351,34 +360,27 @@ async function generateChecklist() {
   const session = await getSession().catch(() => null);
   if (!session?.user) {
     if (anonLimitReached()) {
-      showStatus('status2', '', '');
-      // Show the anon gate banner
-      const gate = $('anonGate');
-      if (gate) {
-        gate.style.display = 'flex';
-        const rem = $('anonRemaining');
-        if (rem) rem.textContent = '0 free generations';
-        const pips = $('anonPips');
-        if (pips) {
-          pips.innerHTML = '';
-          for (let i = 0; i < 3; i++) {
-            const pip = document.createElement('div');
-            pip.className = 'anon-pip used';
-            pips.appendChild(pip);
-          }
-        }
+      // Stay on screen2, show hard block with sign-up CTA
+      showStatus('status2',
+        'You\'ve used all 3 free generations. Create a free account for unlimited access.',
+        'error'
+      );
+      // Inject sign-up buttons into the status
+      const st = $('status2');
+      if (st) {
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap';
+        btns.innerHTML = '<a href="/signup.html" class="btn btn-primary btn-sm">Create free account</a>' +
+                         '<a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>';
+        st.appendChild(btns);
       }
-      goTo(1); // send back to start
-      return;
+      return; // hard stop — don't generate
     }
+    // Count this generation
     incAnonCount();
-    // Update the gate display
+    // Update the gate banner on screen1
     const remaining = 3 - getAnonCount();
-    const rem = $('anonRemaining');
-    if (rem) rem.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '');
-    const gate = $('anonGate');
-    if (gate) gate.style.display = remaining > 0 ? 'flex' : 'none';
-    updateAnonPips();
+    updateAnonGate(remaining);
   }
 
   const btn = $('generateBtn');
@@ -853,15 +855,31 @@ function debouncedCloudSave() {
 }
 
 
-function updateAnonPips() {
-  const count = getAnonCount();
+function updateAnonPips() { updateAnonGate(3 - getAnonCount()); }
+
+function updateAnonGate(remaining) {
+  const gate = $('anonGate');
+  const remEl = $('anonRemaining');
   const pips = $('anonPips');
-  if (!pips) return;
-  pips.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'anon-pip' + (i < count ? ' used' : '');
-    pips.appendChild(pip);
+  if (!gate) return;
+
+  if (remaining <= 0) {
+    // Limit hit — show gate with upgrade CTA
+    gate.style.display = 'flex';
+    if (remEl) remEl.textContent = '0 free generations';
+  } else {
+    gate.style.display = 'flex';
+    if (remEl) remEl.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '') + ' left';
+  }
+
+  if (pips) {
+    pips.innerHTML = '';
+    const used = 3 - remaining;
+    for (let i = 0; i < 3; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'anon-pip' + (i < used ? ' used' : '');
+      pips.appendChild(pip);
+    }
   }
 }
 
@@ -882,19 +900,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadHistory();
   updateSummary();
 
-  // Show anon gate and pip count if guest has used generations
+  // Show anon gate if guest has used any generations
   (async () => {
     const s = await getSession().catch(() => null);
-    if (!s?.user) {
-      const count = getAnonCount();
-      if (count > 0) {
-        const gate = $('anonGate');
-        if (gate) gate.style.display = 'flex';
-        const remaining = 3 - count;
-        const rem = $('anonRemaining');
-        if (rem) rem.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '');
-        updateAnonPips();
-      }
+    if (!s?.user && getAnonCount() > 0) {
+      updateAnonGate(3 - getAnonCount());
     }
   })();
 
