@@ -220,6 +220,7 @@ function loadSession() {
 
 /* ── End session ────────────────────────────────────────── */
 function endSession() {
+  _cloudSaveId = null;
   stopPolling();
   sharedSessionId = null; sharedCode = null;
   currentChecklist = [];
@@ -362,6 +363,8 @@ async function generateChecklist() {
       ts:        Date.now(),
     });
     loadHistory();
+    // Save to cloud if signed in
+    cloudSaveSession();
     if (sessionMode === 'shared' && sharedSub === 'start') {
       try { await createSharedSession(); startPolling(); }
       catch(e) {
@@ -425,6 +428,7 @@ function setOutcome(id, outcome) {
     });
   }
   updateProgress(); saveSession();
+  debouncedCloudSave(); // debounced cloud save
 }
 
 function toggleNote(id) {
@@ -636,6 +640,46 @@ async function joinSharedSession() {
   } catch(e) { alert('Error joining session: ' + e.message); }
 }
 
+
+/* ── Cloud save (Supabase) ──────────────────────────────── */
+let _cloudSaveId = null;   // Supabase row ID for current session
+let _cloudSaveTimer = null;
+
+async function cloudSaveSession() {
+  if (typeof getSB !== 'function') return;
+  const sb = getSB(); if (!sb) return;
+  if (!currentChecklist.length) return;
+  try {
+    const s = await getSession(); if (!s?.user) return;
+    const payload = {
+      user_id:      s.user.id,
+      session_type: 'personal',
+      name:         $('checklistName')?.value || null,
+      ticket_id:    $('ticketId')?.value || null,
+      environment:  $('envBranch')?.value || null,
+      items:        currentChecklist,
+      updated_at:   new Date().toISOString(),
+    };
+    if (_cloudSaveId) {
+      // Update existing row
+      await sb.from('checklist_sessions').update(payload).eq('id', _cloudSaveId);
+    } else {
+      // Create new row
+      const { data, error } = await sb
+        .from('checklist_sessions')
+        .insert({ ...payload, created_at: new Date().toISOString() })
+        .select('id').single();
+      if (!error && data?.id) _cloudSaveId = data.id;
+    }
+  } catch(e) { /* silent */ }
+}
+
+// Debounced version for outcome changes
+function debouncedCloudSave() {
+  if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer = setTimeout(cloudSaveSession, 2000);
+}
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved name
@@ -652,4 +696,23 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSession();
   loadHistory();
   updateSummary();
+
+  // Auto-fill name from account if signed in
+  (async () => {
+    try {
+      if (typeof getSession !== 'function') return;
+      const s = await getSession();
+      if (!s?.user) return;
+      const nameField = $('userName');
+      if (!nameField || nameField.value) return;
+      // Try profile name first
+      if (typeof getProfile === 'function') {
+        const p = await getProfile();
+        if (p?.name) { nameField.value = p.name; return; }
+      }
+      // Fall back to email prefix
+      const emailName = s.user.email?.split('@')[0] || '';
+      if (emailName) nameField.value = emailName;
+    } catch(e) {}
+  })();
 });
