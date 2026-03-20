@@ -132,10 +132,22 @@ async function handleSignup() {
     const sb = getSB();
     const { data, error } = await sb.auth.signUp({
       email, password: pw,
-      options: { emailRedirectTo: location.origin + '/confirmed.html' }
+      options: {
+        emailRedirectTo: location.origin + '/confirmed.html',
+        data: { name }  // stored in raw_user_meta_data → picked up by trigger
+      }
     });
     if (error) throw error;
-    if (data?.user) await upsertProfile({ name }).catch(() => {});
+    // Save name directly using the user from signup response (works before email confirm)
+    if (data?.user) {
+      try {
+        const sb2 = getSB();
+        await sb2.from('profiles').upsert(
+          { id: data.user.id, name, updated_at: new Date().toISOString() },
+          { onConflict: 'id' }
+        );
+      } catch(e) { /* silent — trigger will handle it on confirm */ }
+    }
     const { data: sess } = await sb.auth.getSession();
     if (sess?.session) {
       showSt('✓ Account created! Taking you to the app…', 'success');

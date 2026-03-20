@@ -354,9 +354,34 @@ async function sendInvites() {
       const { data: invite } = await sb.from('workspace_invites').select('token').eq('workspace_id',_workspace.id).eq('email',email.toLowerCase()).single();
       const joinUrl = `${location.origin}/join.html?token=${invite?.token}`;
 
-      // For now show the link — in production this would be emailed
-      console.log(`Invite link for ${email}: ${joinUrl}`);
-      sent++;
+      // Send via Netlify function (calls Resend)
+      try {
+        const inviterName = _profile?.name || _user.email?.split('@')[0] || 'A teammate';
+        const res = await fetch('/.netlify/functions/send-invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: email,
+            inviterName,
+            workspaceName: _workspace.name,
+            inviteUrl: joinUrl
+          })
+        });
+        const result = await res.json();
+        if (result.ok) {
+          sent++;
+        } else if (result.reason === 'no_smtp') {
+          // Resend not configured — show link for manual sharing
+          sent++;
+          showSt('inviteStatus', `Invite saved. No email configured — share this link manually: ${joinUrl}`, 'warn');
+        } else {
+          failed.push(email + ' (' + (result.error || 'send failed') + ')');
+        }
+      } catch(fetchErr) {
+        // Function call failed — still count as saved, show link
+        sent++;
+        console.log('Invite link (manual share):', joinUrl);
+      }
     } catch(e) { failed.push(email+' ('+e.message+')'); }
   }
   await loadWorkspace(); // reload members+invites
