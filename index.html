@@ -313,7 +313,7 @@
     // Hover styles via JS (avoids inline quote issues)
     wrapper.querySelectorAll('._navItem').forEach(function(el) {
       el.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,.06)'; });
-      el.addEventListener('mouseout',  function() { this.style.background = ''; });
+      el.addEventListener('mouseout',  function() { this.style.background = 'transparent'; });
     });
 
     document.addEventListener('click', function(e) {

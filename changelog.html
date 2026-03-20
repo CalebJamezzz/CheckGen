@@ -136,7 +136,7 @@
 </div>
 
 <footer class="site-footer">
-  <div class="shell">
+  <div class="footer-inner">
     <div class="site-footer-grid">
       <div class="site-footer-brand">
         <a href="/" class="nav-logo">Check<span>Gen</span></a>
@@ -147,7 +147,7 @@
         <div class="site-footer-links">
           <a href="/app/">Generate Checklist</a>
           <a href="/app/">Shared Sessions</a>
-          <a href="/app/history.html">History</a>
+          <a href="/history.html">History</a>
         </div>
       </div>
       <div>
@@ -195,6 +195,90 @@
       if (shell) shell.classList.remove('nav-offset');
     }
   }, { passive: true });
+})();
+</script>
+<script src="/js/supabase.js"></script>
+<script>
+/* Marketing nav — profile avatar */
+(function() {
+  function getSession() {
+    try {
+      var keys = Object.keys(localStorage);
+      var key = keys.find(function(k) { return k.startsWith('sb-') && k.endsWith('-auth-token'); });
+      if (!key) return null;
+      var parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!parsed) return null;
+      if (parsed.user && parsed.access_token) return parsed;
+      if (parsed.currentSession) return parsed.currentSession;
+      return null;
+    } catch(e) { return null; }
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function initMarketingNav() {
+    var session = getSession();
+    if (!session || !session.user) return;
+    var user = session.user;
+    var meta = user.user_metadata || {};
+    var name = meta.name || meta.full_name || (user.email||'').split('@')[0] || '?';
+    var initial = name.charAt(0).toUpperCase();
+    var signInBtn = document.querySelector('a[href="/login.html"], a[href="/login"]');
+    if (!signInBtn) return;
+
+    // Build dropdown HTML without inner quotes inside attributes
+    var dropHtml = [
+      '<div id="_navDrop" style="display:none;position:absolute;top:calc(100% + 10px);right:0;',
+        'min-width:200px;background:var(--bg2);border:1px solid var(--border-md);',
+        'border-radius:12px;padding:6px;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.6)">',
+        '<div style="padding:10px 14px;border-bottom:1px solid var(--border);margin-bottom:4px">',
+          '<div style="font-size:14px;font-weight:500;color:var(--text)">' + esc(name) + '</div>',
+          '<div style="font-family:monospace;font-size:11px;color:var(--muted);margin-top:2px">' + esc(user.email||'') + '</div>',
+        '</div>',
+        '<a href="/app/" class="_navItem" style="display:block;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);text-decoration:none">Open App \u2192</a>',
+        '<a href="/account.html" class="_navItem" style="display:block;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);text-decoration:none">Account</a>',
+        '<button class="_navItem" onclick="window._mktSignOut()" style="display:block;width:100%;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);background:none;border:none;cursor:pointer;text-align:left">Sign out</button>',
+      '</div>'
+    ].join('');
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;display:inline-flex;align-items:center';
+    wrapper.innerHTML =
+      '<button id="_navAvatarBtn" onclick="window._toggleNavDrop(event)" title="' + esc(name) + '"' +
+      ' style="width:36px;height:36px;border-radius:50%;background:rgba(16,185,129,.15);' +
+      'border:1.5px solid rgba(16,185,129,.4);color:var(--green);font-family:var(--font-display);' +
+      'font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center">' +
+      initial + '</button>' + dropHtml;
+
+    signInBtn.parentNode.replaceChild(wrapper, signInBtn);
+
+    // Hover styles via JS (avoids inline quote issues)
+    wrapper.querySelectorAll('._navItem').forEach(function(el) {
+      el.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,.06)'; });
+      el.addEventListener('mouseout',  function() { this.style.background = 'transparent'; });
+    });
+
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('_navDrop');
+      if (d && !wrapper.contains(e.target)) d.style.display = 'none';
+    });
+  }
+
+  window._toggleNavDrop = function(e) {
+    e.stopPropagation();
+    var d = document.getElementById('_navDrop');
+    if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window._mktSignOut = function() {
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+    });
+    location.href = '/';
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMarketingNav);
+  else setTimeout(initMarketingNav, 50);
 })();
 </script>
 </body>
