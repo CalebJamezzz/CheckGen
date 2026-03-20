@@ -51,19 +51,32 @@ function setMode(mode) {
   $('cardShared').classList.toggle('active', mode === 'shared');
   if (mode === 'personal') {
     $('sharedPanel').classList.remove('visible');
+    // Hide login prompt if visible
+    const prompt = $('sharedLoginPrompt');
+    if (prompt) prompt.style.display = 'none';
   } else {
-    $('sharedPanel').classList.add('visible');
-    // Show email view for signed-in, code view for anon
+    // Check session before showing anything
     (async () => {
-      const s = await getSession().catch(()=>null);
+      const s = await getSession().catch(() => null);
+      const panel  = $('sharedPanel');
+      const prompt = $('sharedLoginPrompt');
       const anonView = document.getElementById('sharedAnonView');
       const authView = document.getElementById('sharedAuthView');
+
       if (s?.user) {
+        // Signed-in: show email invite panel, hide login prompt
+        if (prompt) prompt.style.display = 'none';
+        if (panel)  panel.classList.add('visible');
         if (anonView) anonView.style.display = 'none';
         if (authView) { authView.style.display = 'block'; loadTeamMemberChips(s.user.id); }
       } else {
-        if (anonView) anonView.style.display = 'block';
-        if (authView) authView.style.display = 'none';
+        // Guest: block shared, show sign-up prompt instead
+        if (panel)  panel.classList.remove('visible');
+        if (prompt) prompt.style.display = 'block';
+        // Revert card to personal
+        sessionMode = 'personal';
+        $('cardPersonal').classList.add('active');
+        $('cardShared').classList.remove('active');
       }
     })();
   }
