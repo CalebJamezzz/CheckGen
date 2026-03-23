@@ -6,7 +6,22 @@
   <title>History — CheckGen</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
 </head>
 <body>
 <div class="app-shell">
@@ -29,9 +44,54 @@
   </main>
 </div>
 
-<script src="/js/supabase.js"></script>
-<script src="/js/auth.js"></script>
-<script src="/js/nav.js"></script>
+<script src="/js/supabase.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+<script src="/js/auth.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+<script src="/js/nav.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
 <script>
 (async () => {
   const ctx = await initPage(true);
@@ -41,93 +101,90 @@
   const sb = getSB();
 
   try {
-    // Load from Supabase
+    // ── Cloud sessions (primary source for signed-in users) ──────────────────
     const { data: cloudSessions, error } = await sb
       .from('checklist_sessions')
       .select('*')
       .eq('user_id', user.id)
-      .eq('session_type', 'personal')
       .order('updated_at', { ascending: false })
       .limit(50);
 
     if (error) throw new Error(error.message);
 
-    // Also load localStorage sessions as fallback
-    let localSessions = [];
-    try {
-      const hist = JSON.parse(localStorage.getItem('cg_history') || '[]');
-      localSessions = hist.map(h => ({
-        id: 'local-' + h.ts,
-        name: h.name || null,
-        ticket_id: h.ticketId || null,
-        environment: h.env || null,
-        items: h.checklist || [],
-        created_at: new Date(h.ts).toISOString(),
-        updated_at: new Date(h.ts).toISOString(),
-        _local: true,
-      }));
-    } catch(e) {}
-
-    // Merge: cloud first, then local sessions not in cloud
-    const allSessions = [...(cloudSessions || [])];
-    // Add local sessions that don't have a cloud counterpart
-    if (!allSessions.length && localSessions.length) {
-      allSessions.push(...localSessions);
-    }
-
-    if (!allSessions.length) {
+    if (!cloudSessions?.length) {
       el.innerHTML = `
-        <div class="empty" style="padding:var(--sp-10)">
-          <div style="font-size:24px;margin-bottom:var(--sp-3)">📋</div>
-          No saved checklists yet.<br>
-          <a href="/app/" style="color:var(--green)">Generate your first one →</a>
+        <div class="empty" style="padding:var(--sp-10);text-align:center">
+          <div style="font-size:32px;margin-bottom:var(--sp-3)">📋</div>
+          <div style="font-size:clamp(15px,1.1vw,18px);color:var(--text);font-weight:500;margin-bottom:var(--sp-2)">No saved checklists yet</div>
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);max-width:360px;margin:0 auto var(--sp-5)">
+            Every checklist you generate is automatically saved to your account and accessible here.
+          </p>
+          <a href="/app/" class="btn btn-primary">Generate your first checklist →</a>
         </div>`;
       return;
     }
 
-    // Render sessions
-    el.innerHTML = `<div class="history-grid" id="historyGrid"></div>`;
+    // Render cloud sessions — no "Local/Cloud" badge needed, always cloud
+    el.innerHTML = `<div class="history-grid" id="historyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4)"></div>`;
     const grid = document.getElementById('historyGrid');
 
-    allSessions.forEach(s => {
-      const items = Array.isArray(s.items) ? s.items : [];
-      const total = items.length;
-      const pass = items.filter(i => i.outcome === 'pass').length;
-      const fail = items.filter(i => i.outcome === 'fail').length;
+    cloudSessions.forEach(s => {
+      const items   = Array.isArray(s.items) ? s.items : [];
+      const total   = items.length;
+      const pass    = items.filter(i => i.outcome === 'pass').length;
+      const fail    = items.filter(i => i.outcome === 'fail').length;
       const blocked = items.filter(i => i.outcome === 'blocked').length;
       const actioned = pass + fail + blocked;
-      const pct = total ? Math.round((actioned / total) * 100) : 0;
+      const pct     = total ? Math.round((actioned / total) * 100) : 0;
       const isComplete = total > 0 && actioned === total;
-      const date = new Date(s.updated_at || s.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+      const isTeam  = s.session_type === 'team';
+      const date    = new Date(s.updated_at || s.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 
       const card = document.createElement('div');
       card.className = 'history-card card';
       card.style.cursor = 'pointer';
+      card.title = 'Click to open';
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-2)">
-          <div style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.1em;text-transform:uppercase;color:${s._local ? 'var(--muted)' : 'var(--green)'}">${s._local ? 'Local' : 'Cloud'}</div>
+          <span style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.1em;text-transform:uppercase;color:${isTeam ? 'var(--green)' : 'var(--soft)'};padding:2px 8px;border:1px solid ${isTeam ? 'rgba(16,185,129,.3)' : 'var(--border)'};border-radius:999px">${isTeam ? 'Team' : 'Personal'}</span>
           <span style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);color:var(--muted)">${date}</span>
         </div>
-        <div style="font-size:clamp(13px,.88vw,15px);font-weight:500;color:var(--text);margin-bottom:var(--sp-1)">${esc(s.name || 'Untitled checklist')}</div>
+        <div style="font-size:clamp(14px,.95vw,16px);font-weight:500;color:var(--text);margin-bottom:4px">${esc(s.name || 'Untitled checklist')}</div>
         ${s.ticket_id ? `<div style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted);margin-bottom:var(--sp-2)">${esc(s.ticket_id)}</div>` : ''}
         ${total > 0 ? `
-          <div style="display:flex;gap:var(--sp-2);font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.06em;margin-bottom:var(--sp-2)">
-            <span style="color:var(--pass)">${pass}P</span>
-            <span style="color:var(--fail)">${fail}F</span>
-            <span style="color:var(--blocked)">${blocked}B</span>
-            <span style="color:var(--muted)">${actioned}/${total}</span>
+          <div style="display:flex;gap:var(--sp-2);align-items:center;font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.06em;margin-bottom:var(--sp-2);flex-wrap:wrap">
+            ${pass    ? `<span style="color:var(--pass)">${pass}P</span>` : ''}
+            ${fail    ? `<span style="color:var(--fail)">${fail}F</span>` : ''}
+            ${blocked ? `<span style="color:var(--blocked)">${blocked}B</span>` : ''}
+            <span style="color:var(--muted)">${actioned}/${total} actioned</span>
             ${isComplete ? '<span style="color:var(--green)">✓ Complete</span>' : ''}
           </div>
           <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--green);transition:width .3s"></div>
+            <div style="height:100%;width:${pct}%;background:${isComplete ? 'var(--green)' : 'var(--soft)'};transition:width .3s"></div>
           </div>
         ` : '<div style="font-size:clamp(11px,.72vw,13px);color:var(--muted)">0 items</div>'}`;
+
+      card.addEventListener('click', () => openHistorySession(s));
       grid.appendChild(card);
     });
   } catch(e) {
-    el.innerHTML = `<div class="status error">Failed to load history: ${e.message}</div>`;
+    el.innerHTML = `<div class="status error" style="margin:var(--sp-6)">Failed to load history: ${e.message}</div>`;
   }
 })();
+
+function openHistorySession(session) {
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:           session.id,
+      name:         session.name,
+      ticket_id:    session.ticket_id,
+      environment:  session.environment,
+      items:        session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>

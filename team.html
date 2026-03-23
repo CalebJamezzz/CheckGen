@@ -261,7 +261,7 @@ async function loadTeamHistory() {
     const { data, error } = await query;
     if (error) throw error;
     if (!data?.length) {
-      el.innerHTML = `<div class="empty" style="padding:var(--sp-6)">No team sessions yet.<br><a href="/app/" class="btn btn-primary" style="margin-top:var(--sp-4);display:inline-flex">Start a Shared Session →</a></div>`;
+      el.innerHTML = `<div class="empty" style="padding:var(--sp-6)">No team sessions yet.<br><a href="/app/?mode=shared" class="btn btn-primary" style="margin-top:var(--sp-4);display:inline-flex">Start a Shared Session →</a></div>`;
       return;
     }
     el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4)">

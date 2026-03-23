@@ -908,7 +908,7 @@ async function cloudSaveSession() {
         .select('id').single();
       if (!error && data?.id) _cloudSaveId = data.id;
     }
-  } catch(e) { /* silent */ }
+  } catch(e) { console.warn('[CheckGen] cloudSaveSession failed:', e.message); }
 }
 
 // Debounced version for outcome changes
@@ -960,8 +960,68 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   loadSession();
+
+  // For signed-in users: sync any localStorage sessions to cloud
+  (async () => {
+    try {
+      const s = await getSession().catch(() => null);
+      if (!s?.user) return;
+      const sb = getSB(); if (!sb) return;
+      const localHist = JSON.parse(localStorage.getItem(HSK) || '[]');
+      if (!localHist.length) return;
+      // Check if user already has cloud sessions
+      const { data: existing } = await sb
+        .from('checklist_sessions')
+        .select('id')
+        .eq('user_id', s.user.id)
+        .limit(1);
+      // Only sync if no cloud sessions yet (first time sign-in migration)
+      if (existing?.length) return;
+      // Sync each local session to cloud
+      for (const h of localHist.slice(0, 10)) {
+        if (!h.checklist?.length) continue;
+        await sb.from('checklist_sessions').insert({
+          user_id:      s.user.id,
+          session_type: 'personal',
+          name:         h.name || null,
+          ticket_id:    h.ticketId || null,
+          environment:  h.env || null,
+          items:        h.checklist,
+          created_at:   new Date(h.ts || Date.now()).toISOString(),
+          updated_at:   new Date(h.ts || Date.now()).toISOString(),
+        }).catch(() => {});
+      }
+      console.log('[CheckGen] Synced', localHist.length, 'local sessions to cloud');
+    } catch(e) {}
+  })();
+
+  // Restore session opened from History page
+  const _restoreRaw = sessionStorage.getItem('cg_restore_session');
+  if (_restoreRaw) {
+    sessionStorage.removeItem('cg_restore_session');
+    try {
+      const _r = JSON.parse(_restoreRaw);
+      currentChecklist = Array.isArray(_r.items) ? _r.items : [];
+      if (_r.name)        $('checklistName') && ($('checklistName').value = _r.name);
+      if (_r.ticket_id)   $('ticketId') && ($('ticketId').value = _r.ticket_id);
+      if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
+      if (currentChecklist.length) {
+        goTo(3);
+        renderChecklist(); updateProgress(); updateTimeSummary();
+        $('exportBar').style.display = '';
+      }
+    } catch(e) {}
+  }
+
   loadHistory();
   updateSummary();
+
+  // Handle ?mode=shared (from team history page)
+  const modeParam = new URLSearchParams(location.search).get('mode');
+  if (modeParam === 'shared') {
+    // Wait for auth to resolve then set shared mode
+    setTimeout(() => setMode('shared'), 300);
+  }
 
   // Auto-join from ?join=CODE URL param (from session invite email)
   const joinParam = new URLSearchParams(location.search).get('join');
@@ -986,11 +1046,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 400);
   }
 
-  // Show anon gate if guest has used any generations
+  // Show anon gate + hide join card for guests
   (async () => {
     const s = await getSession().catch(() => null);
-    if (!s?.user && getAnonCount() > 0) {
-      updateAnonGate(3 - getAnonCount());
+    if (!s?.user) {
+      // Hide the Join card — shared/join requires an account
+      const joinCard = $('cardJoin');
+      if (joinCard) joinCard.style.display = 'none';
+      // Show anon gate if they've used generations
+      if (getAnonCount() > 0) updateAnonGate(3 - getAnonCount());
     }
   })();
 
