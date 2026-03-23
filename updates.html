@@ -250,6 +250,18 @@
     var meta = user.user_metadata || {};
     var name = meta.name || meta.full_name || (user.email||'').split('@')[0] || '?';
     var initial = name.charAt(0).toUpperCase();
+    // Swap all "Create Free Account" CTAs to "Open App →" since user is signed in
+    document.querySelectorAll('a[href="/signup.html"]').forEach(function(el) {
+      if (el.closest('.site-footer')) return;
+      el.href = '/app/';
+      el.textContent = 'Open App →';
+    });
+    // Also swap "Try without an account" ghost btn
+    document.querySelectorAll('a[href="/app/"].btn-ghost').forEach(function(el) {
+      if (el.closest('.site-footer')) return;
+      el.style.display = 'none';
+    });
+
     var signInBtn = document.querySelector('a[href="/login.html"], a[href="/login"]');
     if (!signInBtn) return;
 
@@ -288,6 +300,11 @@
     document.addEventListener('click', function(e) {
       var d = document.getElementById('_navDrop');
       if (d && !wrapper.contains(e.target)) d.style.display = 'none';
+    });
+
+    // Also swap "Try without signing up" ghost btn
+    document.querySelectorAll('a[href="/app/"].btn-ghost').forEach(function(el) {
+      el.style.display = 'none';
     });
   }
 
