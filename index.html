@@ -73,7 +73,7 @@
     <p class="hero-sub">Paste your ticket or acceptance criteria. CheckGen surfaces the edge cases, validations, permissions, and break-it scenarios that don't always make it into the AC.</p>
     <div class="hero-cta">
       <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create Free Account →</a>
-      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without signing up</a>
+      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without an account</a>
     </div>
     <div style="margin-top:var(--sp-4)">
       <span class="hero-note">Free to start · No credit card required</span>
@@ -146,14 +146,14 @@
   <section class="section" id="pricing">
     <div class="eyebrow">Pricing</div>
     <h2 style="margin-top:var(--sp-3);color:var(--text)">Simple. Start free.</h2>
-    <p style="color:var(--text);opacity:.65;font-size:clamp(14px,.95vw,16px);max-width:520px;margin-top:var(--sp-3);line-height:1.7">Try it without an account. Create a free account for cloud history and shared sessions. No credit card, no commitment.</p>
+    <p style="color:var(--text);opacity:.65;font-size:clamp(14px,.95vw,16px);max-width:520px;margin-top:var(--sp-3);line-height:1.7">Start with a free account for cloud history, shared sessions, and team workspaces. No credit card required.</p>
     <div class="pricing-grid">
 
       <!-- Anonymous -->
       <div class="pricing-card">
         <div class="pricing-tier">Try it out</div>
         <div class="pricing-price">Free<span style="font-size:1rem"> · No account</span></div>
-        <p class="pricing-desc">Kick the tyres without signing up.</p>
+        <p class="pricing-desc">Try it without an account.</p>
         <ul class="pricing-features">
           <li>3 AI checklist generations</li>
           <li>Personal sessions only</li>
@@ -192,7 +192,7 @@
     <p style="color:var(--text);opacity:.72;font-size:clamp(15px,1.1vw,17px);margin-bottom:var(--sp-8)">Free account. No credit card. Takes 30 seconds.</p>
     <div style="display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap">
       <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create Free Account →</a>
-      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without signing up</a>
+      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without an account</a>
     </div>
   </section>
 
@@ -323,6 +323,18 @@
     document.addEventListener('click', function(e) {
       var d = document.getElementById('_navDrop');
       if (d && !wrapper.contains(e.target)) d.style.display = 'none';
+    });
+
+    // Swap all "Create Free Account" CTAs to "Open App →" since user is signed in
+    document.querySelectorAll('a[href="/signup.html"]').forEach(function(el) {
+      // Skip footer links (they're in site-footer)
+      if (el.closest('.site-footer')) return;
+      el.href = '/app/';
+      el.textContent = 'Open App →';
+    });
+    // Also swap "Try without an account" ghost btn
+    document.querySelectorAll('a[href="/app/"].btn-ghost').forEach(function(el) {
+      el.style.display = 'none';
     });
   }
 

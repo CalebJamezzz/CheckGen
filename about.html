@@ -132,13 +132,13 @@
   <!-- Pricing -->
   <section class="about-section" id="pricing">
     <div class="eyebrow" style="margin-bottom:var(--sp-3)">Pricing</div>
-    <h2 style="margin-bottom:var(--sp-3);color:var(--text)">Free. Always.</h2>
-    <p style="color:var(--text);opacity:.65;font-size:clamp(14px,.95vw,16px);max-width:520px;margin-bottom:var(--sp-8);line-height:1.7">Try it without an account. Create a free account to unlock cloud history and shared sessions — no credit card required.</p>
+    <h2 style="margin-bottom:var(--sp-3);color:var(--text)">Free to start.</h2>
+    <p style="color:var(--text);opacity:.65;font-size:clamp(14px,.95vw,16px);max-width:520px;margin-bottom:var(--sp-8);line-height:1.7">Start with a free account for cloud history, shared sessions, and team workspaces — no credit card required.</p>
     <div class="pricing-grid">
       <div class="pricing-card">
         <div class="pricing-tier">No Account</div>
         <div class="pricing-price">Free</div>
-        <p class="pricing-desc">Kick the tyres without signing up.</p>
+        <p class="pricing-desc">Try it without an account.</p>
         <ul class="pricing-features">
           <li>3 AI generations</li>
           <li>Personal sessions only</li>
@@ -371,6 +371,18 @@
     document.addEventListener('click', function(e) {
       var d = document.getElementById('_navDrop');
       if (d && !wrapper.contains(e.target)) d.style.display = 'none';
+    });
+
+    // Swap all "Create Free Account" CTAs to "Open App →" since user is signed in
+    document.querySelectorAll('a[href="/signup.html"]').forEach(function(el) {
+      // Skip footer links (they're in site-footer)
+      if (el.closest('.site-footer')) return;
+      el.href = '/app/';
+      el.textContent = 'Open App →';
+    });
+    // Also swap "Try without an account" ghost btn
+    document.querySelectorAll('a[href="/app/"].btn-ghost').forEach(function(el) {
+      el.style.display = 'none';
     });
   }
 
