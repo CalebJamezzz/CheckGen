@@ -532,6 +532,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .session-cards { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-5); }
 .session-card {
   flex: 1;
+  min-width: 160px;
   padding: var(--sp-5) var(--sp-5);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);

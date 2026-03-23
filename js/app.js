@@ -46,37 +46,47 @@ function backToSetup() {
 
 /* ── Screen 1 — Session mode ────────────────────────────── */
 function setMode(mode) {
-  sessionMode = mode;
+  sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
   $('cardShared').classList.toggle('active', mode === 'shared');
+  if ($('cardJoin')) $('cardJoin').classList.toggle('active', mode === 'join');
+
+  // Hide both panels first
+  const sharedPanel = $('sharedPanel');
+  const joinPanel   = $('joinPanel');
+  if (sharedPanel) sharedPanel.classList.remove('visible');
+  if (joinPanel)   joinPanel.classList.remove('visible');
+
   if (mode === 'personal') {
-    $('sharedPanel').classList.remove('visible');
-    // Hide login prompt if visible
-    const prompt = $('sharedLoginPrompt');
-    if (prompt) prompt.style.display = 'none';
-  } else {
-    // Check session before showing anything
+    // nothing extra
+  } else if (mode === 'join') {
+    // Join panel — visible for everyone
+    if (joinPanel) joinPanel.classList.add('visible');
+    // Auto-fill name if signed in
     (async () => {
       const s = await getSession().catch(() => null);
-      const panel  = $('sharedPanel');
-      const prompt = $('sharedLoginPrompt');
+      if (s?.user) {
+        const un = $('userName');
+        if (un && !un.value) {
+          const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
+          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+        }
+      }
+    })();
+  } else if (mode === 'shared') {
+    (async () => {
+      const s = await getSession().catch(() => null);
       const anonView = document.getElementById('sharedAnonView');
       const authView = document.getElementById('sharedAuthView');
-
       if (s?.user) {
-        // Signed-in: show email invite panel, hide login prompt
-        if (prompt) prompt.style.display = 'none';
-        if (panel)  panel.classList.add('visible');
+        if (sharedPanel) sharedPanel.classList.add('visible');
         if (anonView) anonView.style.display = 'none';
         if (authView) { authView.style.display = 'block'; loadTeamMemberChips(s.user.id); }
       } else {
-        // Guest: block shared, show sign-up prompt instead
-        if (panel)  panel.classList.remove('visible');
-        if (prompt) prompt.style.display = 'block';
-        // Revert card to personal
-        sessionMode = 'personal';
-        $('cardPersonal').classList.add('active');
-        $('cardShared').classList.remove('active');
+        // Guest: show sign-up prompt inside shared panel
+        if (sharedPanel) sharedPanel.classList.add('visible');
+        if (anonView) anonView.style.display = 'block';
+        if (authView) authView.style.display = 'none';
       }
     })();
   }
@@ -101,18 +111,14 @@ async function startSession() {
     if (gate) { gate.style.display = 'flex'; gate.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     return;
   }
-  if (sessionMode === 'shared' && sharedSub === 'join') {
+  // 'join' card sets sessionMode='shared' + subJoin flow
+  const activeCard = document.querySelector('.session-card.active');
+  const isJoinCard = activeCard?.id === 'cardJoin';
+  if (isJoinCard || (sessionMode === 'shared' && sharedSub === 'join')) {
     await joinSharedSession(); return;
   }
   if (sessionMode === 'shared') {
-    const name = $('userName').value.trim();
-    if (!name) {
-      $('userName').focus();
-      $('userName').style.borderColor = 'rgba(248,113,113,.6)';
-      setTimeout(() => $('userName').style.borderColor = '', 3000);
-      return;
-    }
-    localStorage.setItem('cg_user_name', name);
+    // Shared create — go to setup
   }
   goTo(2);
   updateSummary();
@@ -767,9 +773,35 @@ async function joinSharedSession() {
     $('exportBar').style.display = '';
     showShareBadge(); startPolling();
     showStatus('status3', '✓ Joined shared session.', 'success');
-    // Save to cloud history for this user
-    cloudSaveSession();
+    // Save to this user's history
+    await saveJoinedSession(s);
   } catch(e) { alert('Error joining session: ' + e.message); }
+}
+
+async function saveJoinedSession(sessionRow) {
+  // Save a personal copy of the joined session to the user's history
+  try {
+    const sess = await getSession().catch(() => null);
+    if (!sess?.user) return;
+    const sb = getSB(); if (!sb) return;
+    const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', sess.user.id).single();
+    const workspaceId = prof?.workspace_id || null;
+    const payload = {
+      user_id:      sess.user.id,
+      session_type: 'team',
+      workspace_id: workspaceId,
+      name:         sessionRow?.name || $('checklistName')?.value || null,
+      ticket_id:    sessionRow?.ticket_id || $('ticketId')?.value || null,
+      environment:  sessionRow?.environment || $('envBranch')?.value || null,
+      items:        currentChecklist,
+      share_code:   sharedCode,
+      updated_at:   new Date().toISOString(),
+    };
+    const { data, error } = await sb.from('checklist_sessions')
+      .insert({ ...payload, created_at: new Date().toISOString() })
+      .select('id').single();
+    if (!error && data?.id) _cloudSaveId = data.id;
+  } catch(e) { /* silent */ }
 }
 
 
@@ -935,8 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const joinParam = new URLSearchParams(location.search).get('join');
   if (joinParam && joinParam.length === 6) {
     // Pre-fill join code and switch to shared join mode
-    setMode('shared');
-    setSharedSub('join');
+    setMode('join');
     const jc = $('joinCode');
     if (jc) { jc.value = joinParam.toUpperCase(); }
     // Auto-trigger join after a short delay (let page settle)

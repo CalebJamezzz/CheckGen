@@ -59,25 +59,69 @@
         <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
           <div class="card-icon">🔒</div>
           <div class="card-label">Personal</div>
-          <div class="card-desc" id="personalDesc" style="color:var(--text);opacity:.72">Just you. Saves to your browser.</div>
+          <div class="card-desc" id="personalDesc" style="color:var(--text);opacity:.72">Just you. Saved to your cloud history.</div>
         </button>
         <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button">
           <div class="card-icon">👥</div>
           <div class="card-label">Shared</div>
-          <div class="card-desc" id="sharedDesc" style="color:var(--text);opacity:.72">Real-time sync with your team.</div>
+          <div class="card-desc" id="sharedDesc" style="color:var(--text);opacity:.72">Create a live session with your team.</div>
+        </button>
+        <button class="session-card" id="cardJoin" onclick="setMode('join')" type="button">
+          <div class="card-icon">↗</div>
+          <div class="card-label">Join</div>
+          <div class="card-desc" style="color:var(--text);opacity:.72">Enter a code to join an active session.</div>
         </button>
       </div>
 
-      <!-- Shared requires account -->
-      <div id="sharedLoginPrompt" style="display:none;padding:var(--sp-4) var(--sp-5);background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.18);border-radius:var(--r-lg);margin-bottom:var(--sp-5)">
-        <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3)">
-          Shared sessions require a free account to sync with teammates.
-        </p>
-        <div style="display:flex;gap:var(--sp-3)">
-          <a href="/signup.html" class="btn btn-primary">Create free account</a>
-          <a href="/login.html" class="btn btn-ghost">Sign in</a>
+      <!-- Join panel — always visible for all users -->
+      <div class="shared-panel" id="joinPanel">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Join Session</div>
+        <div class="field">
+          <label class="field-label">Your Name</label>
+          <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
+          <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Session Code</label>
+          <div class="join-row">
+            <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em;font-family:var(--font-mono)" maxlength="6">
+            <button class="btn btn-primary" onclick="joinSharedSession()" type="button">Join →</button>
+          </div>
         </div>
       </div>
+
+      <!-- Shared panel — signed-in users only -->
+      <div class="shared-panel" id="sharedPanel">
+        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
+        <!-- Email invite for signed-in users -->
+        <div id="sharedAuthView" style="display:none">
+          <div class="field" style="margin-bottom:var(--sp-3)">
+            <label class="field-label">Invite teammates by email</label>
+            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
+              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
+                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
+                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
+            </div>
+            <div class="field-hint" style="margin-top:6px">Press Enter after each email. They'll get an invite link.</div>
+          </div>
+          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
+            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
+            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+        </div>
+        <!-- Guest: prompt to sign up -->
+        <div id="sharedAnonView" style="display:none">
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3);line-height:1.6">
+            Shared sessions require a free account to invite teammates.
+          </p>
+          <div style="display:flex;gap:var(--sp-3)">
+            <a href="/signup.html" class="btn btn-primary btn-sm">Create free account</a>
+            <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
+          </div>
+        </div>
+      </div>
+
+
 
       <div class="shared-panel" id="sharedPanel">
         <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
