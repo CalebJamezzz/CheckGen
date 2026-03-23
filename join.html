@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Join Workspace — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="auth-wrap" style="align-items:center;justify-content:center">
+  <div class="auth-card" style="text-align:center">
+    <a href="/" class="auth-logo" style="display:block;text-align:left;margin-bottom:var(--sp-6)">Check<span>Gen</span></a>
+
+    <div id="loadingView">
+      <div style="font-size:40px;margin-bottom:var(--sp-4)">⏳</div>
+      <h1 class="auth-title">Looking up invite…</h1>
+    </div>
+
+    <div id="joinView" style="display:none">
+      <div style="font-size:40px;margin-bottom:var(--sp-4)">👥</div>
+      <h1 class="auth-title">You've been invited</h1>
+      <p class="auth-sub">Join <strong id="wsName" style="color:var(--text)"></strong> on CheckGen.</p>
+      <button class="btn btn-primary" id="joinBtn" style="width:100%;justify-content:center;padding:var(--sp-3);margin-top:var(--sp-4)" onclick="handleJoin()">
+        Accept Invite →
+      </button>
+      <div class="status" id="joinStatus" style="margin-top:var(--sp-3)"></div>
+      <div class="auth-footer" style="margin-top:var(--sp-5)">
+        Need an account first? <a href="/signup.html">Create one free →</a>
+      </div>
+    </div>
+
+    <div id="errorView" style="display:none">
+      <div style="font-size:40px;margin-bottom:var(--sp-4)">✗</div>
+      <h1 class="auth-title">Invalid invite</h1>
+      <p class="auth-sub" id="errorMsg">This invite link has expired or is invalid.</p>
+      <a href="/" class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);margin-top:var(--sp-4)">← Back to CheckGen</a>
+    </div>
+  </div>
+</div>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+let _invite = null;
+let _workspace = null;
+
+// Support both ?token= (from workspace_invites) and ?code= (legacy workspace invite_code)
+const params = new URLSearchParams(location.search);
+const token = params.get('token');
+const code  = params.get('code');
+
+(async () => {
+  if (!token && !code) { showError('No invite found in this link.'); return; }
+
+  await waitForSB();
+  const sb = getSB();
+
+  if (token) {
+    // New flow: look up workspace_invites by token
+    const { data: invite, error } = await sb
+      .from('workspace_invites')
+      .select('*, workspaces(id, name)')
+      .eq('token', token)
+      .single();
+
+    if (error || !invite) { showError('This invite link is invalid or has expired.'); return; }
+    if (invite.status === 'accepted') {
+      showError('This invite has already been accepted.'); return;
+    }
+
+    _invite = invite;
+    _workspace = invite.workspaces;
+
+  } else {
+    // Legacy flow: look up workspace by invite_code
+    const { data: ws, error } = await sb
+      .from('workspaces').select('id, name').eq('invite_code', code).single();
+    if (error || !ws) { showError('This invite link is invalid or has expired.'); return; }
+    _workspace = ws;
+  }
+
+  document.getElementById('wsName').textContent = _workspace.name;
+  document.getElementById('loadingView').style.display = 'none';
+  document.getElementById('joinView').style.display = 'block';
+
+  // If already signed in, check membership
+  const session = await getSession();
+  if (session?.user) {
+    const { data: existing } = await sb
+      .from('workspace_members')
+      .select('id')
+      .eq('workspace_id', _workspace.id)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+
+    if (existing) {
+      document.getElementById('joinStatus').textContent = "You're already a member of this workspace.";
+      document.getElementById('joinStatus').className = 'status success';
+      const btn = document.getElementById('joinBtn');
+      btn.textContent = 'Open Team Page →';
+      btn.onclick = () => location.href = '/team.html';
+    }
+  }
+})();
+
+async function handleJoin() {
+  const session = await getSession();
+  if (!session?.user) {
+    location.href = '/signup.html?returnTo=' + encodeURIComponent(location.href);
+    return;
+  }
+  const user = session.user;
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true; btn.textContent = 'Joining…';
+
+  try {
+    const sb = getSB();
+    const role = _invite?.role || 'user';
+
+    // Add as workspace member
+    const { error } = await sb.from('workspace_members').insert({
+      workspace_id: _workspace.id,
+      user_id: user.id,
+      role,
+      invited_by: _invite?.invited_by || null
+    });
+    if (error && !error.message.includes('duplicate')) throw error;
+
+    // Update invite status to accepted
+    if (_invite?.id) {
+      await sb.from('workspace_invites')
+        .update({ status: 'accepted', accepted_at: new Date().toISOString() })
+        .eq('id', _invite.id);
+    }
+
+    // Update profile
+    await upsertProfile({
+      workspace_id: _workspace.id,
+      organization: _workspace.name,
+      role,
+      updated_at: new Date().toISOString()
+    });
+
+    document.getElementById('joinStatus').textContent = `✓ Joined ${_workspace.name}! Taking you to your team…`;
+    document.getElementById('joinStatus').className = 'status success';
+    setTimeout(() => location.href = '/team.html', 1500);
+  } catch(e) {
+    document.getElementById('joinStatus').textContent = 'Failed to join: ' + e.message;
+    document.getElementById('joinStatus').className = 'status error';
+    btn.disabled = false; btn.textContent = 'Accept Invite →';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('loadingView').style.display = 'none';
+  document.getElementById('errorMsg').textContent = msg;
+  document.getElementById('errorView').style.display = 'block';
+}
+</script>
+</body>
+</html>

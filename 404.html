@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Page Not Found — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .not-found {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: var(--sp-8);
+      position: relative;
+      z-index: 1;
+    }
+    .not-found-code {
+      font-family: var(--font-mono);
+      font-size: clamp(6rem, 15vw, 12rem);
+      font-weight: 700;
+      color: rgba(16,185,129,.1);
+      line-height: 1;
+      letter-spacing: -.05em;
+      margin-bottom: var(--sp-4);
+      user-select: none;
+    }
+    .not-found-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: var(--sp-3);
+    }
+    .not-found-sub {
+      font-size: clamp(14px,.95vw,16px);
+      color: var(--dim);
+      max-width: 400px;
+      line-height: 1.7;
+      margin-bottom: var(--sp-8);
+    }
+    .not-found-links {
+      display: flex;
+      gap: var(--sp-3);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+<div class="not-found">
+  <div class="not-found-code">404</div>
+  <h1 class="not-found-title">Page not found</h1>
+  <p class="not-found-sub">This page doesn't exist or was moved. Head back home or open the app to keep testing.</p>
+  <div class="not-found-links">
+    <a href="/" class="btn btn-ghost" style="padding:var(--sp-3) var(--sp-6)">← Home</a>
+    <a href="/app/" class="btn btn-primary" style="padding:var(--sp-3) var(--sp-6)">Open App →</a>
+  </div>
+  <div style="margin-top:var(--sp-10)">
+    <a href="/" class="nav-logo" style="font-size:clamp(16px,1.2vw,20px)">Check<span>Gen</span></a>
+  </div>
+</div>
+</body>
+</html>

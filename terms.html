@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Terms of Service | CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .legal-body { max-width:800px; padding:var(--sp-10) 0 var(--sp-16); }
+
+    .legal-body h2:first-of-type { margin-top:var(--sp-6); }
+    .legal-body p, .legal-body li { font-size:clamp(14px,.95vw,16px); color:var(--dim); line-height:1.8; margin-bottom:var(--sp-3); }
+    .legal-body ul { padding-left:var(--sp-5); }
+    .legal-body li { margin-bottom:var(--sp-2); }
+    .legal-meta { font-family:var(--font-mono); font-size:clamp(10px,.7vw,12px); letter-spacing:.1em; color:var(--muted); margin-bottom:var(--sp-8); }
+    
+  
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="shell" style="padding-top:var(--sp-6)">
+
+  <nav class="nav" aria-label="Main navigation">
+    <a href="/" class="nav-logo">Check<span>Gen</span></a>
+    <div style="display:flex;gap:var(--sp-5);align-items:center">
+      <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">About</a>
+      <a href="/updates.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">Updates</a>
+      <a href="/login.html" class="btn btn-ghost" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Sign In</a>
+      <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
+    </div>
+  </nav>
+  <main id="main-content">
+
+  <div class="legal-body">
+    <h1 style="font-size:clamp(1.8rem,3vw,3rem);margin-bottom:var(--sp-3)">Terms of Service</h1>
+    <p class="legal-meta">Last updated: March 2026</p>
+
+    <p>By using CheckGen ("the service", "we", "us"), you agree to these terms. Please read them carefully.</p>
+
+    <h2>1. Use of the Service</h2>
+    <p>CheckGen provides an AI-powered QA checklist generation tool. You may use the service for personal and commercial QA testing purposes. You agree not to:</p>
+    <ul>
+      <li>Attempt to reverse engineer, modify, or redistribute the service</li>
+      <li>Use the service to generate harmful, illegal, or deceptive content</li>
+      <li>Abuse the free generation tier through automated scripts or bots</li>
+      <li>Share account credentials with others</li>
+    </ul>
+
+    <h2>2. Accounts</h2>
+    <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. You must provide accurate information when creating an account.</p>
+    <p>Free accounts may create a team workspace and invite other users by email. By sending an invite, you confirm you have a legitimate reason to contact the recipient and that they would reasonably expect to receive an invitation from you.</p>
+
+    <h2>3. Your Content</h2>
+    <p>Ticket descriptions and acceptance criteria you submit are sent to the Anthropic API for processing. We do not store this input text beyond your active session unless you explicitly save a session to your account. You retain ownership of any content you submit.</p>
+
+    <h2>4. Availability</h2>
+    <p>We aim to keep CheckGen available but cannot guarantee uninterrupted access. The service may be unavailable due to maintenance, updates, or factors outside our control. We reserve the right to modify or discontinue the service with reasonable notice.</p>
+
+    <h2>5. Free Tier Limits</h2>
+    <p>Anonymous use is limited to 3 AI generations. Free accounts are limited to 25 saved checklists in history. These limits exist to ensure fair use and may change over time.</p>
+
+    <h2>6. Disclaimer</h2>
+    <p>CheckGen is provided "as is" without warranties of any kind. AI-generated checklists are suggestions and should be reviewed by qualified QA professionals before use in production testing.</p>
+
+    <h2>7. Limitation of Liability</h2>
+    <p>To the fullest extent permitted by law, CheckGen and its creator shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>
+
+    <h2>8. Changes to Terms</h2>
+    <p>We may update these terms from time to time. Continued use of the service after changes constitutes acceptance of the new terms.</p>
+
+    <h2>9. Contact</h2>
+    <p>Questions about these terms? Contact us at <a href="mailto:calebthede@gmail.com" style="color:var(--green)">calebthede@gmail.com</a>.</p>
+  </div>
+
+</div>
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  var shell = document.querySelector('.shell');
+  if (!nav) return;
+  var sticky = false;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 60 && !sticky) {
+      sticky = true;
+      nav.classList.add('sticky');
+      if (shell) shell.classList.add('nav-offset');
+    } else if (window.scrollY <= 60 && sticky) {
+      sticky = false;
+      nav.classList.remove('sticky');
+      if (shell) shell.classList.remove('nav-offset');
+    }
+  }, { passive: true });
+})();
+</script>
+
+  
+  </main>
+<footer class="site-footer" aria-label="Site footer">
+    <div class="footer-inner">
+      <div class="site-footer-grid">
+        <div class="site-footer-brand">
+          <a href="/" class="nav-logo">Check<span>Gen</span></a>
+          <p>AI-powered QA checklist generator. Paste your ticket or AC and get grouped test cases in seconds.</p>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Product</div>
+          <div class="site-footer-links">
+            <a href="/app/">Generate Checklist</a>
+            <a href="/app/">Shared Sessions</a>
+            <a href="/history.html">History</a>
+          </div>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Company</div>
+          <div class="site-footer-links">
+            <a href="/about.html">About</a>
+            <a href="/about.html#pricing">Pricing</a>
+            <a href="/updates.html">Updates &amp; Contact</a>
+            <a href="/about.html#faq">FAQ</a>
+          </div>
+        </div>
+        <div>
+          <div class="site-footer-col-title">Account</div>
+          <div class="site-footer-links">
+            <a href="/login.html">Sign In</a>
+            <a href="/signup.html">Create Free Account</a>
+            <a href="https://calebthede.com" target="_blank">Built by Caleb Thede</a>
+          </div>
+        </div>
+      </div>
+      <div class="site-footer-bottom">
+        <span>© 2026 <a href="https://calebthede.com">Caleb Thede</a></span>
+        <div style="display:flex;gap:var(--sp-4)">
+          <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+          <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  var shell = document.querySelector('.shell');
+  if (!nav) return;
+  var sticky = false;
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 60 && !sticky) {
+      sticky = true; nav.classList.add('sticky');
+      if (shell) shell.classList.add('nav-offset');
+    } else if (window.scrollY <= 60 && sticky) {
+      sticky = false; nav.classList.remove('sticky');
+      if (shell) shell.classList.remove('nav-offset');
+    }
+  }, { passive: true });
+})();
+</script>
+<script src="/js/supabase.js"></script>
+<script>
+/* Marketing nav — profile avatar */
+(function() {
+  function getSession() {
+    try {
+      var keys = Object.keys(localStorage);
+      var key = keys.find(function(k) { return k.startsWith('sb-') && k.endsWith('-auth-token'); });
+      if (!key) return null;
+      var parsed = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!parsed) return null;
+      if (parsed.user && parsed.access_token) return parsed;
+      if (parsed.currentSession) return parsed.currentSession;
+      return null;
+    } catch(e) { return null; }
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function initMarketingNav() {
+    var session = getSession();
+    if (!session || !session.user) return;
+    var user = session.user;
+    var meta = user.user_metadata || {};
+    var name = meta.name || meta.full_name || (user.email||'').split('@')[0] || '?';
+    var initial = name.charAt(0).toUpperCase();
+    var signInBtn = document.querySelector('a[href="/login.html"], a[href="/login"]');
+    if (!signInBtn) return;
+
+    // Build dropdown HTML without inner quotes inside attributes
+    var dropHtml = [
+      '<div id="_navDrop" style="display:none;position:absolute;top:calc(100% + 10px);right:0;',
+        'min-width:200px;background:var(--bg2);border:1px solid var(--border-md);',
+        'border-radius:12px;padding:6px;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.6)">',
+        '<div style="padding:10px 14px;border-bottom:1px solid var(--border);margin-bottom:4px">',
+          '<div style="font-size:14px;font-weight:500;color:var(--text)">' + esc(name) + '</div>',
+          '<div style="font-family:monospace;font-size:11px;color:var(--muted);margin-top:2px">' + esc(user.email||'') + '</div>',
+        '</div>',
+        '<a href="/app/" class="_navItem" style="display:block;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);text-decoration:none">Open App \u2192</a>',
+        '<a href="/account.html" class="_navItem" style="display:block;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);text-decoration:none">Account</a>',
+        '<button class="_navItem" onclick="window._mktSignOut()" style="display:block;width:100%;padding:9px 14px;border-radius:8px;font-size:14px;color:var(--dim);background:none;border:none;cursor:pointer;text-align:left">Sign out</button>',
+      '</div>'
+    ].join('');
+
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;display:inline-flex;align-items:center';
+    wrapper.innerHTML =
+      '<button id="_navAvatarBtn" onclick="window._toggleNavDrop(event)" title="' + esc(name) + '"' +
+      ' style="width:36px;height:36px;border-radius:50%;background:rgba(16,185,129,.15);' +
+      'border:1.5px solid rgba(16,185,129,.4);color:var(--green);font-family:var(--font-display);' +
+      'font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center">' +
+      initial + '</button>' + dropHtml;
+
+    signInBtn.parentNode.replaceChild(wrapper, signInBtn);
+
+    // Hover styles via JS (avoids inline quote issues)
+    wrapper.querySelectorAll('._navItem').forEach(function(el) {
+      el.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,.06)'; });
+      el.addEventListener('mouseout',  function() { this.style.background = 'transparent'; });
+    });
+
+    document.addEventListener('click', function(e) {
+      var d = document.getElementById('_navDrop');
+      if (d && !wrapper.contains(e.target)) d.style.display = 'none';
+    });
+  }
+
+  window._toggleNavDrop = function(e) {
+    e.stopPropagation();
+    var d = document.getElementById('_navDrop');
+    if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window._mktSignOut = function() {
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+    });
+    location.href = '/';
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMarketingNav);
+  else setTimeout(initMarketingNav, 50);
+})();
+</script>
+</body>
+</html>

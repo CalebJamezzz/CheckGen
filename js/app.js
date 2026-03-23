@@ -7,6 +7,7 @@ let sharedSub    = 'start';
 let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
+let _currentUserName = null; // set when session starts, used for markedBy
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -46,10 +47,50 @@ function backToSetup() {
 
 /* ── Screen 1 — Session mode ────────────────────────────── */
 function setMode(mode) {
-  sessionMode = mode;
+  sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
   $('cardShared').classList.toggle('active', mode === 'shared');
-  $('sharedPanel').classList.toggle('visible', mode === 'shared');
+  if ($('cardJoin')) $('cardJoin').classList.toggle('active', mode === 'join');
+
+  // Hide both panels first
+  const sharedPanel = $('sharedPanel');
+  const joinPanel   = $('joinPanel');
+  if (sharedPanel) sharedPanel.classList.remove('visible');
+  if (joinPanel)   joinPanel.classList.remove('visible');
+
+  if (mode === 'personal') {
+    // nothing extra
+  } else if (mode === 'join') {
+    // Join panel — visible for everyone
+    if (joinPanel) joinPanel.classList.add('visible');
+    // Auto-fill name if signed in
+    (async () => {
+      const s = await getSession().catch(() => null);
+      if (s?.user) {
+        const un = $('userName');
+        if (un && !un.value) {
+          const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
+          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+        }
+      }
+    })();
+  } else if (mode === 'shared') {
+    (async () => {
+      const s = await getSession().catch(() => null);
+      const anonView = document.getElementById('sharedAnonView');
+      const authView = document.getElementById('sharedAuthView');
+      if (s?.user) {
+        if (sharedPanel) sharedPanel.classList.add('visible');
+        if (anonView) anonView.style.display = 'none';
+        if (authView) { authView.style.display = 'block'; loadTeamMemberChips(s.user.id); }
+      } else {
+        // Guest: show sign-up prompt inside shared panel
+        if (sharedPanel) sharedPanel.classList.add('visible');
+        if (anonView) anonView.style.display = 'block';
+        if (authView) authView.style.display = 'none';
+      }
+    })();
+  }
   $('startBtn').textContent = (mode === 'shared' && sharedSub === 'join') ? 'Join Session →' : 'Start Session →';
 }
 
@@ -62,18 +103,25 @@ function setSharedSub(sub) {
 }
 
 async function startSession() {
-  if (sessionMode === 'shared' && sharedSub === 'join') {
+  // Clear any stale session data so screen2 is always fresh
+  localStorage.removeItem(SK);
+  // Block guests who've hit the limit before they even reach screen2
+  const _sess = await getSession().catch(() => null);
+  if (!_sess?.user && anonLimitReached()) {
+    // Show gate on screen1 and scroll to it
+    updateAnonGate(0);
+    const gate = $('anonGate');
+    if (gate) { gate.style.display = 'flex'; gate.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    return;
+  }
+  // 'join' card sets sessionMode='shared' + subJoin flow
+  const activeCard = document.querySelector('.session-card.active');
+  const isJoinCard = activeCard?.id === 'cardJoin';
+  if (isJoinCard || (sessionMode === 'shared' && sharedSub === 'join')) {
     await joinSharedSession(); return;
   }
   if (sessionMode === 'shared') {
-    const name = $('userName').value.trim();
-    if (!name) {
-      $('userName').focus();
-      $('userName').style.borderColor = 'rgba(248,113,113,.6)';
-      setTimeout(() => $('userName').style.borderColor = '', 3000);
-      return;
-    }
-    localStorage.setItem('cg_user_name', name);
+    // Shared create — go to setup
   }
   goTo(2);
   updateSummary();
@@ -219,6 +267,9 @@ function loadSession() {
 
 /* ── End session ────────────────────────────────────────── */
 function endSession() {
+  // Cancel any pending cloud save timer
+  if (_cloudSaveTimer) { clearTimeout(_cloudSaveTimer); _cloudSaveTimer = null; }
+  _cloudSaveId = null;
   stopPolling();
   sharedSessionId = null; sharedCode = null;
   currentChecklist = [];
@@ -236,6 +287,11 @@ function endSession() {
   $('shareCodeBadge').style.display = 'none';
   $('liveIndicator').style.display  = 'none';
   $('exportBar').style.display      = 'none';
+  // Reset export filter + share emails
+  const csvSel = $('exportCsvMode'); if (csvSel) csvSel.value = 'all';
+  _shareEmails = [];
+  // Clear any sessionStorage session restore (history → app navigation)
+  sessionStorage.removeItem('cg_restore_session');
   loadHistory();
   updateSummary();
   goTo(1);
@@ -272,16 +328,16 @@ function updateTimeSummary() {
 }
 
 /* ── API ────────────────────────────────────────────────── */
-async function callClaude(prompt, maxT) {
+async function callClaude(prompt, maxT, systemPrompt) {
   const attempt = async () => {
     const r = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(Object.assign({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: maxT || 4000,
         messages: [{ role: 'user', content: prompt }],
-      }),
+      }, systemPrompt ? { system: systemPrompt } : {})),
     });
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
@@ -311,6 +367,33 @@ async function generateChecklist() {
   const areas = Array.from(document.querySelectorAll('.areaCheck:checked')).map(e => e.value);
   if (!areas.length) { showStatus('status2', 'Select at least one testing area.', 'error'); return; }
 
+  // Anon limit check — guests get 3 free generations
+  const session = await getSession().catch(() => null);
+  if (!session?.user) {
+    if (anonLimitReached()) {
+      // Stay on screen2, show hard block with sign-up CTA
+      showStatus('status2',
+        'You\'ve used all 3 free generations. Create a free account for unlimited access.',
+        'error'
+      );
+      // Inject sign-up buttons into the status
+      const st = $('status2');
+      if (st) {
+        const btns = document.createElement('div');
+        btns.style.cssText = 'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap';
+        btns.innerHTML = '<a href="/signup.html" class="btn btn-primary btn-sm">Create free account</a>' +
+                         '<a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>';
+        st.appendChild(btns);
+      }
+      return; // hard stop — don't generate
+    }
+    // Count this generation
+    incAnonCount();
+    // Update the gate banner on screen1
+    const remaining = 3 - getAnonCount();
+    updateAnonGate(remaining);
+  }
+
   const btn = $('generateBtn');
   btn.disabled = true; btn.textContent = 'Generating…';
   goTo(25);
@@ -339,13 +422,50 @@ async function generateChecklist() {
       ? 'Lean heavily toward edge cases and boundary conditions.'
       : 'Balance happy-path, validation, and edge cases evenly.';
 
-  const areaList = areas.join(', ') + (brk ? ', Break-It' : '') + (dat ? ', Test Data' : '');
-  const prompt = `QA checklist for this ticket:\n${ticket}\n\nAreas: ${areaList}\nFocus: ${focusNote}\n${
-    detail === 'concise' ? 'Concise items (1 sentence each).' : 'Clear actionable steps (1-2 sentences each).'
-  }\n\nReturn ONLY a valid JSON array. Each object: {"section":"specific name","text":"test step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}\n\nBe specific to this ticket. 15-25 items.`;
+  // Areas the user selected — these are the ONLY sections allowed
+  const selectedAreas = [...areas];
+  if (brk) selectedAreas.push('Break-It');
+  if (dat) selectedAreas.push('Test Data');
+  const areaList = selectedAreas.join(', ');
+
+  // Item count: let Claude decide the right number, but give a range
+  // based on areas selected so fewer areas = fewer items
+  const areaCount = selectedAreas.length;
+  const minItems  = Math.max(5,  areaCount * 2);
+  const maxItems  = Math.min(30, areaCount * 4);
+
+  const detailNote = detail === 'concise'
+    ? 'Write each item in 1 concise sentence.'
+    : 'Write each item as a clear 1-2 sentence actionable step.';
+
+  // System prompt goes into the messages array as a system role
+  const systemPrompt = (
+    'You are a precise QA engineer generating test checklists as JSON arrays. ' +
+    'RULES: ' +
+    '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
+    '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
+    '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
+    '4. Every item must be specific to the ticket, never generic. ' +
+    '5. Each object must have: section, text, priority (High|Medium|Low), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
+  );
+
+  const userPrompt = [
+    'Generate a QA test checklist for this ticket:',
+    '',
+    ticket,
+    '',
+    'TESTING AREAS (use ONLY these as section names, no others):',
+    selectedAreas.map(a => '- ' + a).join('\n'),
+    '',
+    'Focus style: ' + focusNote,
+    detailNote,
+  ].join('\n');
+
+  const prompt = userPrompt; // kept for callClaude signature compat
+  const messages = [{ role: 'user', content: userPrompt }];
 
   try {
-    const items = await callClaude(prompt, 4000);
+    const items = await callClaude(prompt, 4000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     clearInterval(sublabelTimer);
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
@@ -361,9 +481,34 @@ async function generateChecklist() {
       ts:        Date.now(),
     });
     loadHistory();
+    // Save to cloud if signed in
+    cloudSaveSession();
     if (sessionMode === 'shared' && sharedSub === 'start') {
-      try { await createSharedSession(); startPolling(); }
-      catch(e) {
+      try {
+        await createSharedSession();
+        startPolling();
+        // Email invited users
+        if (_shareEmails.length > 0) {
+          const s = await getSession().catch(() => null);
+          const inviterName = s?.user?.user_metadata?.name || s?.user?.email?.split('@')[0] || 'A teammate';
+          const origin = location.origin;
+          for (const email of _shareEmails) {
+            fetch('/.netlify/functions/send-session-invite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email,
+                inviterName,
+                sessionName: $('checklistName')?.value?.trim() || null,
+                ticketId:    $('ticketId')?.value?.trim()    || null,
+                shareCode:   sharedCode,
+                sessionUrl:  origin + '/app/?join=' + sharedCode,
+              })
+            }).catch(() => {}); // fire and forget
+          }
+          showStatus('status3', `✓ ${currentChecklist.length} items generated. Invites sent to ${_shareEmails.length} teammate${_shareEmails.length !== 1 ? 's' : ''}.`, 'success');
+        }
+      } catch(e) {
         showStatus('status3', '⚠ Could not create shared session — running as personal. Check your connection.', 'warn');
       }
     }
@@ -415,15 +560,23 @@ function deleteItem(id) {
 function setOutcome(id, outcome) {
   const item = currentChecklist.find(i => i.id === id);
   if (!item) return;
-  item.outcome = item.outcome === outcome ? null : outcome;
+  const toggling = item.outcome === outcome;
+  item.outcome  = toggling ? null : outcome;
+  item.markedBy = toggling ? null : (_currentUserName || null);
   const row = document.querySelector(`.item[data-id="${id}"]`);
   if (row) {
     row.className = 'item' + (item.outcome ? ' ' + item.outcome : '');
     row.querySelectorAll('.ob').forEach(b => {
       b.className = 'ob' + (b.dataset.o === item.outcome ? ` a${b.dataset.o[0]}` : '');
     });
+    // Update markedBy label
+    const byEl = row.querySelector('.marked-by');
+    if (byEl) {
+      byEl.style.display = (sessionMode === 'shared' && item.markedBy) ? 'inline' : 'none';
+    }
   }
   updateProgress(); saveSession();
+  debouncedCloudSave(); // debounced cloud save
 }
 
 function toggleNote(id) {
@@ -498,7 +651,8 @@ function renderChecklist() {
                 <div class="outcome-btns">
                   <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
                   <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blk</button>
+                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
             </div>
@@ -617,6 +771,7 @@ async function joinSharedSession() {
     return;
   }
   localStorage.setItem('cg_user_name', name);
+  _currentUserName = name;
   try {
     const rows = await sbGet('checklist_sessions', 'code', code);
     if (!rows.length) { alert('Session not found. Check the code and try again.'); return; }
@@ -632,8 +787,238 @@ async function joinSharedSession() {
     $('exportBar').style.display = '';
     showShareBadge(); startPolling();
     showStatus('status3', '✓ Joined shared session.', 'success');
+    // Save to this user's history
+    await saveJoinedSession(s);
   } catch(e) { alert('Error joining session: ' + e.message); }
 }
+
+async function saveJoinedSession(sessionRow) {
+  // Save a personal copy of the joined session to the user's history
+  try {
+    const sess = await getSession().catch(() => null);
+    if (!sess?.user) return;
+    const sb = getSB(); if (!sb) return;
+    const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', sess.user.id).single();
+    const workspaceId = prof?.workspace_id || null;
+    const payload = {
+      user_id:      sess.user.id,
+      session_type: 'team',
+      workspace_id: workspaceId,
+      name:         sessionRow?.name || $('checklistName')?.value || null,
+      ticket_id:    sessionRow?.ticket_id || $('ticketId')?.value || null,
+      environment:  sessionRow?.environment || $('envBranch')?.value || null,
+      items:        currentChecklist,
+      share_code:   sharedCode,
+      updated_at:   new Date().toISOString(),
+    };
+    const { data, error } = await sb.from('checklist_sessions')
+      .insert({ ...payload, created_at: new Date().toISOString() })
+      .select('id').single();
+    if (!error && data?.id) _cloudSaveId = data.id;
+  } catch(e) { /* silent */ }
+}
+
+
+
+/* ── Shared session email invites ───────────────────────────────────────────── */
+let _shareEmails = [];
+
+async function loadTeamMemberChips(userId) {
+  try {
+    const sb = getSB(); if (!sb) return;
+    const { data: profile } = await sb.from('profiles').select('workspace_id').eq('id', userId).single();
+    if (!profile?.workspace_id) return;
+    const { data: members } = await sb.from('workspace_member_details').select('email,name').eq('workspace_id', profile.workspace_id);
+    if (!members?.length) return;
+    const chipList = document.getElementById('teamChipList');
+    const chipsWrap = document.getElementById('teamMemberChips');
+    if (!chipList || !chipsWrap) return;
+    const mySession = await getSession();
+    const myEmail = mySession?.user?.email;
+    const others = members.filter(m => m.email !== myEmail);
+    if (!others.length) return;
+    chipList.innerHTML = others.map(m => {
+      const label = m.name || m.email;
+      const email = m.email;
+      return `<button type="button" onclick="addShareEmailChip('${email}')" 
+        style="font-size:clamp(11px,.75vw,13px);padding:4px 12px;border-radius:999px;background:var(--bg3);border:1px solid var(--border);color:var(--dim);cursor:pointer;transition:all .15s"
+        onmouseover="this.style.borderColor='rgba(16,185,129,.4)';this.style.color='var(--green)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--dim)'"
+        >${label}</button>`;
+    }).join('');
+    chipsWrap.style.display = 'block';
+  } catch(e) {}
+}
+
+function addShareEmailChip(email) {
+  if (!email || _shareEmails.includes(email)) return;
+  _shareEmails.push(email);
+  const tag = document.createElement('span');
+  tag.style.cssText = 'display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:999px;padding:2px 10px;font-size:clamp(11px,.75vw,13px);color:var(--green)';
+  tag.dataset.email = email;
+  // Build with DOM methods to avoid quoting issues
+  const emailText = document.createTextNode(email);
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.style.cssText = 'background:none;border:none;color:var(--green);cursor:pointer;padding:0;font-size:14px;opacity:.7;margin-left:2px';
+  closeBtn.textContent = '×';
+  closeBtn.addEventListener('click', function() { removeShareEmail(email); });
+  tag.appendChild(emailText); tag.appendChild(closeBtn);
+  const box = document.getElementById('shareEmailTags');
+  if (box) box.insertBefore(tag, document.getElementById('shareEmailInput'));
+}
+
+function handleShareEmailKey(e) {
+  if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') { e.preventDefault(); addShareEmail(); }
+}
+
+function addShareEmail() {
+  const input = document.getElementById('shareEmailInput');
+  const val = input?.value.trim().replace(/,$/, '');
+  if (!val || !val.includes('@')) { if (val) return; return; }
+  addShareEmailChip(val);
+  if (input) input.value = '';
+}
+
+function removeShareEmail(email) {
+  _shareEmails = _shareEmails.filter(e => e !== email);
+  const box = document.getElementById('shareEmailTags');
+  box?.querySelectorAll('[data-email]').forEach(t => { if (t.dataset.email === email) t.remove(); });
+}
+
+/* ── Cloud save (Supabase) ──────────────────────────────── */
+let _cloudSaveId = null;   // Supabase row ID for current session
+let _cloudSaveTimer = null;
+
+async function cloudSaveSession() {
+  if (typeof getSB !== 'function') return;
+  const sb = getSB(); if (!sb) return;
+  if (!currentChecklist.length) return;
+  try {
+    const s = await getSession(); if (!s?.user) return;
+    // Get workspace_id from profile for team sessions
+    const isShared = sessionMode === 'shared';
+    let workspaceId = null;
+    if (isShared) {
+      const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', s.user.id).single();
+      workspaceId = prof?.workspace_id || null;
+    }
+    const payload = {
+      user_id:      s.user.id,
+      session_type: isShared ? 'team' : 'personal',
+      workspace_id: workspaceId,
+      name:         $('checklistName')?.value || null,
+      ticket_id:    $('ticketId')?.value || null,
+      environment:  $('envBranch')?.value || null,
+      items:        currentChecklist,
+      updated_at:   new Date().toISOString(),
+    };
+    if (_cloudSaveId) {
+      await sb.from('checklist_sessions').update(payload).eq('id', _cloudSaveId);
+    } else {
+      const { data, error } = await sb
+        .from('checklist_sessions')
+        .insert({ ...payload, created_at: new Date().toISOString() })
+        .select('id').single();
+      if (!error && data?.id) _cloudSaveId = data.id;
+    }
+  } catch(e) { console.warn('[CheckGen] cloudSaveSession failed:', e.message); }
+}
+
+// Debounced version for outcome changes
+function debouncedCloudSave() {
+  if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer = setTimeout(cloudSaveSession, 2000);
+}
+
+
+function updateAnonPips() { updateAnonGate(3 - getAnonCount()); }
+
+function updateAnonGate(remaining) {
+  const gate = $('anonGate');
+  const remEl = $('anonRemaining');
+  const pips = $('anonPips');
+  if (!gate) return;
+
+  if (remaining <= 0) {
+    // Limit hit — show gate with upgrade CTA
+    gate.style.display = 'flex';
+    if (remEl) remEl.textContent = '0 free generations';
+  } else {
+    gate.style.display = 'flex';
+    if (remEl) remEl.textContent = remaining + ' free generation' + (remaining !== 1 ? 's' : '') + ' left';
+  }
+
+  if (pips) {
+    pips.innerHTML = '';
+    const used = 3 - remaining;
+    for (let i = 0; i < 3; i++) {
+      const pip = document.createElement('div');
+      pip.className = 'anon-pip' + (i < used ? ' used' : '');
+      pips.appendChild(pip);
+    }
+  }
+}
+
+
+/* ── Leave-session guard ────────────────────────────────── */
+let _pendingLeaveUrl = null;
+
+function hasActiveSession() {
+  return currentChecklist.length > 0;
+}
+
+function showLeaveModal(destinationUrl) {
+  _pendingLeaveUrl = destinationUrl;
+  const modal = document.getElementById('leaveSessionModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function leaveSessionModalCancel() {
+  _pendingLeaveUrl = null;
+  const modal = document.getElementById('leaveSessionModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function leaveSessionModalEndAndGo() {
+  const url = _pendingLeaveUrl;
+  leaveSessionModalCancel();
+  endSession(); // clears state, saves nothing new but clears SK
+  if (url) location.href = url;
+}
+
+function leaveSessionModalLeave() {
+  const url = _pendingLeaveUrl;
+  leaveSessionModalCancel();
+  if (url) location.href = url;
+}
+
+// Intercept all nav-link clicks inside the app-shell sidebar
+function initLeaveGuard() {
+  // Intercept nav links (History, Team, Account)
+  document.addEventListener('click', function(e) {
+    if (!hasActiveSession()) return;
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript')) return;
+    // Only intercept internal nav links (not buttons in the checklist itself)
+    const isNavLink = link.closest('#appNav') !== null || link.closest('.nav-link') !== null;
+    if (!isNavLink) return;
+    // Allow /app/ links — they're inside the tool
+    if (href === '/app/' || href === '/app/index.html') return;
+    e.preventDefault();
+    showLeaveModal(href);
+  });
+
+  // Intercept browser back/forward
+  window.addEventListener('beforeunload', function(e) {
+    if (!hasActiveSession()) return;
+    e.preventDefault();
+    e.returnValue = 'You have an active checklist session. Are you sure you want to leave?';
+  });
+}
+
 
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -648,7 +1033,128 @@ document.addEventListener('DOMContentLoaded', () => {
     $(id)?.addEventListener('input', () => { if (currentChecklist.length) renderChecklist(); });
   });
 
+  // Init leave-session guard
+  initLeaveGuard();
+
   loadSession();
+
+  // For signed-in users: sync any localStorage sessions to cloud
+  (async () => {
+    try {
+      const s = await getSession().catch(() => null);
+      if (!s?.user) return;
+      const sb = getSB(); if (!sb) return;
+      const localHist = JSON.parse(localStorage.getItem(HSK) || '[]');
+      if (!localHist.length) return;
+      // Check if user already has cloud sessions
+      const { data: existing } = await sb
+        .from('checklist_sessions')
+        .select('id')
+        .eq('user_id', s.user.id)
+        .limit(1);
+      // Only sync if no cloud sessions yet (first time sign-in migration)
+      if (existing?.length) return;
+      // Sync each local session to cloud
+      for (const h of localHist.slice(0, 10)) {
+        if (!h.checklist?.length) continue;
+        await sb.from('checklist_sessions').insert({
+          user_id:      s.user.id,
+          session_type: 'personal',
+          name:         h.name || null,
+          ticket_id:    h.ticketId || null,
+          environment:  h.env || null,
+          items:        h.checklist,
+          created_at:   new Date(h.ts || Date.now()).toISOString(),
+          updated_at:   new Date(h.ts || Date.now()).toISOString(),
+        }).catch(() => {});
+      }
+      console.log('[CheckGen] Synced', localHist.length, 'local sessions to cloud');
+    } catch(e) {}
+  })();
+
+  // Restore session opened from History page
+  const _restoreRaw = sessionStorage.getItem('cg_restore_session');
+  if (_restoreRaw) {
+    sessionStorage.removeItem('cg_restore_session');
+    try {
+      const _r = JSON.parse(_restoreRaw);
+      currentChecklist = Array.isArray(_r.items) ? _r.items : [];
+      if (_r.name)        $('checklistName') && ($('checklistName').value = _r.name);
+      if (_r.ticket_id)   $('ticketId') && ($('ticketId').value = _r.ticket_id);
+      if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
+      // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
+      if (_r.id) _cloudSaveId = _r.id;
+      if (_r.session_type === 'team') sessionMode = 'shared';
+      if (currentChecklist.length) {
+        goTo(3);
+        renderChecklist(); updateProgress(); updateTimeSummary();
+        $('exportBar').style.display = '';
+      }
+    } catch(e) {}
+  }
+
   loadHistory();
   updateSummary();
+
+  // Handle ?mode=shared (from team history page)
+  const modeParam = new URLSearchParams(location.search).get('mode');
+  if (modeParam === 'shared') {
+    // Wait for auth to resolve then set shared mode
+    setTimeout(() => setMode('shared'), 300);
+  }
+
+  // Auto-join from ?join=CODE URL param (from session invite email)
+  const joinParam = new URLSearchParams(location.search).get('join');
+  if (joinParam && joinParam.length === 6) {
+    // Pre-fill join code and switch to shared join mode
+    setMode('join');
+    const jc = $('joinCode');
+    if (jc) { jc.value = joinParam.toUpperCase(); }
+    // Auto-trigger join after a short delay (let page settle)
+    setTimeout(async () => {
+      const s = await getSession().catch(() => null);
+      if (s?.user) {
+        // Auto-fill name from profile
+        const p = typeof getProfile === 'function' ? await getProfile().catch(() => null) : null;
+        const un = $('userName');
+        if (un && !un.value) {
+          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+        }
+      }
+      // Show a hint
+      showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
+    }, 400);
+  }
+
+  // Show anon gate + hide join card for guests
+  (async () => {
+    const s = await getSession().catch(() => null);
+    if (!s?.user) {
+      // Hide the Join card — shared/join requires an account
+      const joinCard = $('cardJoin');
+      if (joinCard) joinCard.style.display = 'none';
+      // Show anon gate if they've used generations
+      if (getAnonCount() > 0) updateAnonGate(3 - getAnonCount());
+    }
+  })();
+
+  // Auto-fill name from account + set _currentUserName
+  (async () => {
+    try {
+      if (typeof getSession !== 'function') return;
+      const s = await getSession();
+      if (!s?.user) return;
+      let resolvedName = null;
+      // Try profile name first
+      if (typeof getProfile === 'function') {
+        const p = await getProfile();
+        resolvedName = p?.name || null;
+      }
+      // Fall back to email prefix
+      if (!resolvedName) resolvedName = s.user.email?.split('@')[0] || null;
+      _currentUserName = resolvedName;
+      const nameField = $('userName');
+      if (nameField && !nameField.value && resolvedName) nameField.value = resolvedName;
+    } catch(e) {}
+  })();
 });

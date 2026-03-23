@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Reset Password | CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="auth-shell">
+  <div class="auth-card">
+    <a href="/" class="auth-logo">Check<span>Gen</span></a>
+    <h1 class="auth-title">Reset password</h1>
+    <p class="auth-sub">Enter your email and we'll send you a reset link.</p>
+
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input type="email" id="email" placeholder="you@company.com" autocomplete="email">
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-4)" id="btn" onclick="handleReset()">Send Reset Link</button>
+
+    <div class="status" id="status"></div>
+
+    <p class="auth-footer"><a href="/login.html">← Back to sign in</a></p>
+  </div>
+</div>
+<script src="/js/supabase.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  async function handleReset() {
+    const email = document.getElementById('email').value.trim();
+    const btn = document.getElementById('btn');
+    if (!email) { showSt('Enter your email address.', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      await waitForSB();
+      await resetPassword(email);
+      showSt('✓ Reset link sent — check your inbox.', 'success');
+      btn.textContent = 'Link Sent';
+    } catch(e) {
+      showSt('If an account exists for that email, a reset link has been sent.', 'success');
+      btn.disabled = false; btn.textContent = 'Send Reset Link';
+    }
+  }
+  function showSt(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg; el.className = 'status ' + type;
+  }
+</script>
+
+    <div class="auth-terms" style="margin-top:var(--sp-5)">
+      <a href="/terms.html" target="_blank">Terms of Service</a> · <a href="/privacy.html" target="_blank">Privacy Policy</a>
+    </div>
+</main>
+</body>
+</html>

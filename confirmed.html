@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Email Confirmed — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card" style="text-align:center">
+    <a href="/" class="auth-logo" style="display:block;text-align:left">Check<span>Gen</span></a>
+
+    <div id="confirming">
+      <div style="font-size:48px;margin:var(--sp-6) 0 var(--sp-4)">⏳</div>
+      <h1 class="auth-title">Confirming your email…</h1>
+      <p class="auth-sub">Just a moment.</p>
+    </div>
+
+    <div id="confirmed" style="display:none">
+      <div style="font-size:48px;margin:var(--sp-6) 0 var(--sp-4)">✓</div>
+      <h1 class="auth-title" style="color:var(--green)">Email confirmed!</h1>
+      <p class="auth-sub">Your account is active. Taking you to the app…</p>
+      <a href="/app/" class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3);margin-top:var(--sp-4)">Open App →</a>
+    </div>
+
+    <div id="error" style="display:none">
+      <div style="font-size:48px;margin:var(--sp-6) 0 var(--sp-4)">✗</div>
+      <h1 class="auth-title">Something went wrong</h1>
+      <p class="auth-sub" id="errorMsg">The confirmation link may have expired. Try signing in or request a new link.</p>
+      <div style="display:flex;flex-direction:column;gap:var(--sp-3);margin-top:var(--sp-5)">
+        <a href="/login.html" class="btn btn-primary" style="justify-content:center;padding:var(--sp-3)">Sign In →</a>
+        <a href="/forgot.html" class="btn btn-ghost" style="justify-content:center;padding:var(--sp-3)">Resend confirmation</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/supabase.js"></script>
+<script>
+(async () => {
+  // Supabase handles the token in the URL hash automatically
+  // We just need to check the session after the SDK processes it
+  await new Promise(r => setTimeout(r, 800)); // give SDK time to process hash
+
+  try {
+    const sb = getSB();
+    // Check for error in hash params
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const error = hash.get('error_description') || hash.get('error');
+    if (error) throw new Error(decodeURIComponent(error.replace(/\+/g, ' ')));
+
+    const { data, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (data?.session) {
+      document.getElementById('confirming').style.display = 'none';
+      document.getElementById('confirmed').style.display = 'block';
+      setTimeout(() => location.href = '/app/', 2000);
+    } else {
+      // Token may have already been processed — try to sign in
+      document.getElementById('confirming').style.display = 'none';
+      document.getElementById('confirmed').style.display = 'block';
+      setTimeout(() => location.href = '/login.html', 2000);
+    }
+  } catch(e) {
+    document.getElementById('confirming').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('errorMsg').textContent = e.message || 'The confirmation link may have expired.';
+  }
+})();
+</script>
+</body>
+</html>

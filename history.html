@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>History — CheckGen</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+</head>
+<body>
+<div class="app-shell">
+  <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+  <aside id="appNav"></aside>
+  <main class="app-content">
+
+    <div class="page-header">
+      <h1 class="page-title">History</h1>
+      <p class="page-sub">Your cloud-saved checklists. Pick up where you left off.</p>
+    </div>
+
+    <div id="historyContent">
+      <div class="empty" style="padding:var(--sp-10)">
+        <div style="font-size:24px;margin-bottom:var(--sp-3)">⏳</div>
+        Loading your history…
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/js/supabase.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+<script src="/js/auth.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+<script src="/js/nav.js">
+function openHistorySession(session) {
+  // Store session in sessionStorage so app/index.html can restore it
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:          session.id,
+      name:        session.name,
+      ticket_id:   session.ticket_id,
+      environment: session.environment,
+      items:       session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+</script>
+<script>
+(async () => {
+  const ctx = await initPage(true);
+  if (!ctx) return;
+  const { user } = ctx;
+  const el = document.getElementById('historyContent');
+  const sb = getSB();
+
+  try {
+    // ── Cloud sessions (primary source for signed-in users) ──────────────────
+    const { data: cloudSessions, error } = await sb
+      .from('checklist_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw new Error(error.message);
+
+    if (!cloudSessions?.length) {
+      el.innerHTML = `
+        <div class="empty" style="padding:var(--sp-10);text-align:center">
+          <div style="font-size:32px;margin-bottom:var(--sp-3)">📋</div>
+          <div style="font-size:clamp(15px,1.1vw,18px);color:var(--text);font-weight:500;margin-bottom:var(--sp-2)">No saved checklists yet</div>
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);max-width:360px;margin:0 auto var(--sp-5)">
+            Every checklist you generate is automatically saved to your account and accessible here.
+          </p>
+          <a href="/app/" class="btn btn-primary">Generate your first checklist →</a>
+        </div>`;
+      return;
+    }
+
+    // Render cloud sessions — no "Local/Cloud" badge needed, always cloud
+    el.innerHTML = `<div class="history-grid" id="historyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-5)"></div>`;
+    const grid = document.getElementById('historyGrid');
+
+    cloudSessions.forEach(s => {
+      const items   = Array.isArray(s.items) ? s.items : [];
+      const total   = items.length;
+      const pass    = items.filter(i => i.outcome === 'pass').length;
+      const fail    = items.filter(i => i.outcome === 'fail').length;
+      const blocked = items.filter(i => i.outcome === 'blocked').length;
+      const actioned = pass + fail + blocked;
+      const pct     = total ? Math.round((actioned / total) * 100) : 0;
+      const isComplete = total > 0 && actioned === total;
+      const isTeam  = s.session_type === 'team';
+      const date    = new Date(s.updated_at || s.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+      const card = document.createElement('div');
+      card.className = 'history-card card';
+      card.style.cursor = 'pointer';
+      card.style.display = 'block';       // override flex from .history-card
+      card.style.padding = 'var(--sp-5)'; // consistent padding
+      card.style.transition = 'border-color .2s, transform .2s, box-shadow .2s';
+      card.title = 'Click to open';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-2)">
+          <span style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.1em;text-transform:uppercase;color:${isTeam ? 'var(--green)' : 'var(--soft)'};padding:2px 8px;border:1px solid ${isTeam ? 'rgba(16,185,129,.3)' : 'var(--border)'};border-radius:999px">${isTeam ? 'Team' : 'Personal'}</span>
+          <span style="font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);color:var(--muted)">${date}</span>
+        </div>
+        <div style="font-size:clamp(14px,.95vw,16px);font-weight:500;color:var(--text);margin-bottom:4px">${esc(s.name || 'Untitled checklist')}</div>
+        ${s.ticket_id ? `<div style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted);margin-bottom:var(--sp-2)">${esc(s.ticket_id)}</div>` : ''}
+        ${total > 0 ? `
+          <div style="display:flex;gap:var(--sp-2);align-items:center;font-family:var(--font-mono);font-size:clamp(9px,.62vw,11px);letter-spacing:.06em;margin-bottom:var(--sp-2);flex-wrap:wrap">
+            ${pass    ? `<span style="color:var(--pass)">${pass}P</span>` : ''}
+            ${fail    ? `<span style="color:var(--fail)">${fail}F</span>` : ''}
+            ${blocked ? `<span style="color:var(--blocked)">${blocked}B</span>` : ''}
+            <span style="color:var(--muted)">${actioned}/${total} actioned</span>
+            ${isComplete ? '<span style="color:var(--green)">✓ Complete</span>' : ''}
+          </div>
+          <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${isComplete ? 'var(--green)' : 'var(--soft)'};transition:width .3s"></div>
+          </div>
+        ` : '<div style="font-size:clamp(11px,.72vw,13px);color:var(--muted)">0 items</div>'}`;
+
+      card.addEventListener('click', () => openHistorySession(s));
+      card.addEventListener('mouseenter', () => {
+        card.style.borderColor = 'rgba(16,185,129,.3)';
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 24px rgba(0,0,0,.3)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.borderColor = '';
+        card.style.transform = '';
+        card.style.boxShadow = '';
+      });
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    el.innerHTML = `<div class="status error" style="margin:var(--sp-6)">Failed to load history: ${e.message}</div>`;
+  }
+})();
+
+function openHistorySession(session) {
+  try {
+    sessionStorage.setItem('cg_restore_session', JSON.stringify({
+      id:           session.id,
+      name:         session.name,
+      ticket_id:    session.ticket_id,
+      environment:  session.environment,
+      items:        session.items,
+      session_type: session.session_type,
+    }));
+    location.href = '/app/';
+  } catch(e) {}
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+
+<div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:280px">
+  <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
+    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+  </div>
+  <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
+</div>
+</body>
+</html>
