@@ -1613,3 +1613,23 @@ input[type="password"] {
   flex-shrink: 0;
 }
 .marked-by:empty { display: none !important; }
+
+/* ── Skip to main content (accessibility) ──────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: var(--sp-2);
+  z-index: 99999;
+  background: var(--green);
+  color: #052e16;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.skip-link:focus {
+  left: var(--sp-4);
+}
