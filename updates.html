@@ -172,7 +172,7 @@
         <h2>Initial launch</h2>
         <p>CheckGen started as an internal QA tool — a way to stop writing the same test cases every sprint.</p>
         <ul>
-          <li><strong>AI generation</strong> — Paste AC, select testing areas, get 15–25 grouped test cases from Claude Haiku.</li>
+          <li><strong>AI generation</strong> — Paste AC, select testing areas, get grouped test cases from Claude Haiku in 3–8 seconds.</li>
           <li><strong>Pass / Fail / Blocked</strong> — Mark outcomes per item as you test.</li>
           <li><strong>Progress bar</strong> — Live count of actioned vs total items.</li>
           <li><strong>localStorage persistence</strong> — Session survives page refresh.</li>
@@ -323,7 +323,7 @@
       if (d && !wrapper.contains(e.target)) d.style.display = 'none';
     });
 
-    // Also swap "Try without signing up" ghost btn
+    // Also swap "Try without an account" ghost btn
     document.querySelectorAll('a[href="/app/"].btn-ghost').forEach(function(el) {
       el.style.display = 'none';
     });
