@@ -102,6 +102,8 @@ function setSharedSub(sub) {
 }
 
 async function startSession() {
+  // Clear any stale session data so screen2 is always fresh
+  localStorage.removeItem(SK);
   // Block guests who've hit the limit before they even reach screen2
   const _sess = await getSession().catch(() => null);
   if (!_sess?.user && anonLimitReached()) {
@@ -287,6 +289,8 @@ function endSession() {
   // Reset export filter + share emails
   const csvSel = $('exportCsvMode'); if (csvSel) csvSel.value = 'all';
   _shareEmails = [];
+  // Clear any sessionStorage session restore (history → app navigation)
+  sessionStorage.removeItem('cg_restore_session');
   loadHistory();
   updateSummary();
   goTo(1);
@@ -946,6 +950,66 @@ function updateAnonGate(remaining) {
   }
 }
 
+
+/* ── Leave-session guard ────────────────────────────────── */
+let _pendingLeaveUrl = null;
+
+function hasActiveSession() {
+  return currentChecklist.length > 0;
+}
+
+function showLeaveModal(destinationUrl) {
+  _pendingLeaveUrl = destinationUrl;
+  const modal = document.getElementById('leaveSessionModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function leaveSessionModalCancel() {
+  _pendingLeaveUrl = null;
+  const modal = document.getElementById('leaveSessionModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function leaveSessionModalEndAndGo() {
+  const url = _pendingLeaveUrl;
+  leaveSessionModalCancel();
+  endSession(); // clears state, saves nothing new but clears SK
+  if (url) location.href = url;
+}
+
+function leaveSessionModalLeave() {
+  const url = _pendingLeaveUrl;
+  leaveSessionModalCancel();
+  if (url) location.href = url;
+}
+
+// Intercept all nav-link clicks inside the app-shell sidebar
+function initLeaveGuard() {
+  // Intercept nav links (History, Team, Account)
+  document.addEventListener('click', function(e) {
+    if (!hasActiveSession()) return;
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript')) return;
+    // Only intercept internal nav links (not buttons in the checklist itself)
+    const isNavLink = link.closest('#appNav') !== null || link.closest('.nav-link') !== null;
+    if (!isNavLink) return;
+    // Allow /app/ links — they're inside the tool
+    if (href === '/app/' || href === '/app/index.html') return;
+    e.preventDefault();
+    showLeaveModal(href);
+  });
+
+  // Intercept browser back/forward
+  window.addEventListener('beforeunload', function(e) {
+    if (!hasActiveSession()) return;
+    e.preventDefault();
+    e.returnValue = 'You have an active checklist session. Are you sure you want to leave?';
+  });
+}
+
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved name
@@ -958,6 +1022,9 @@ document.addEventListener('DOMContentLoaded', () => {
   ['ticketId','envBranch','checklistName'].forEach(id => {
     $(id)?.addEventListener('input', () => { if (currentChecklist.length) renderChecklist(); });
   });
+
+  // Init leave-session guard
+  initLeaveGuard();
 
   loadSession();
 
