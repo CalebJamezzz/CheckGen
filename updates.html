@@ -251,7 +251,7 @@
     var name = meta.name || meta.full_name || (user.email||'').split('@')[0] || '?';
     var initial = name.charAt(0).toUpperCase();
     // Swap all "Create Free Account" CTAs to "Open App →" since user is signed in
-    document.querySelectorAll('a[href="/signup.html"]').forEach(function(el) {
+    document.querySelectorAll('a[href="/signup.html"], a[href="/signup"]').forEach(function(el) {
       if (el.closest('.site-footer')) return;
       el.href = '/app/';
       el.textContent = 'Open App →';
