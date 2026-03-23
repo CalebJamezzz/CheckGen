@@ -125,7 +125,7 @@ function openHistorySession(session) {
     }
 
     // Render cloud sessions — no "Local/Cloud" badge needed, always cloud
-    el.innerHTML = `<div class="history-grid" id="historyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4)"></div>`;
+    el.innerHTML = `<div class="history-grid" id="historyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-5)"></div>`;
     const grid = document.getElementById('historyGrid');
 
     cloudSessions.forEach(s => {
@@ -143,6 +143,9 @@ function openHistorySession(session) {
       const card = document.createElement('div');
       card.className = 'history-card card';
       card.style.cursor = 'pointer';
+      card.style.display = 'block';       // override flex from .history-card
+      card.style.padding = 'var(--sp-5)'; // consistent padding
+      card.style.transition = 'border-color .2s, transform .2s, box-shadow .2s';
       card.title = 'Click to open';
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-2)">
@@ -165,6 +168,16 @@ function openHistorySession(session) {
         ` : '<div style="font-size:clamp(11px,.72vw,13px);color:var(--muted)">0 items</div>'}`;
 
       card.addEventListener('click', () => openHistorySession(s));
+      card.addEventListener('mouseenter', () => {
+        card.style.borderColor = 'rgba(16,185,129,.3)';
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 24px rgba(0,0,0,.3)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.borderColor = '';
+        card.style.transform = '';
+        card.style.boxShadow = '';
+      });
       grid.appendChild(card);
     });
   } catch(e) {
