@@ -7,6 +7,7 @@ let sharedSub    = 'start';
 let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
+let _currentUserName = null; // set when session starts, used for markedBy
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -559,13 +560,20 @@ function deleteItem(id) {
 function setOutcome(id, outcome) {
   const item = currentChecklist.find(i => i.id === id);
   if (!item) return;
-  item.outcome = item.outcome === outcome ? null : outcome;
+  const toggling = item.outcome === outcome;
+  item.outcome  = toggling ? null : outcome;
+  item.markedBy = toggling ? null : (_currentUserName || null);
   const row = document.querySelector(`.item[data-id="${id}"]`);
   if (row) {
     row.className = 'item' + (item.outcome ? ' ' + item.outcome : '');
     row.querySelectorAll('.ob').forEach(b => {
       b.className = 'ob' + (b.dataset.o === item.outcome ? ` a${b.dataset.o[0]}` : '');
     });
+    // Update markedBy label
+    const byEl = row.querySelector('.marked-by');
+    if (byEl) {
+      byEl.style.display = (sessionMode === 'shared' && item.markedBy) ? 'inline' : 'none';
+    }
   }
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
@@ -644,6 +652,7 @@ function renderChecklist() {
                   <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
                   <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
                   <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
             </div>
@@ -762,6 +771,7 @@ async function joinSharedSession() {
     return;
   }
   localStorage.setItem('cg_user_name', name);
+  _currentUserName = name;
   try {
     const rows = await sbGet('checklist_sessions', 'code', code);
     if (!rows.length) { alert('Session not found. Check the code and try again.'); return; }
@@ -1072,6 +1082,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (_r.name)        $('checklistName') && ($('checklistName').value = _r.name);
       if (_r.ticket_id)   $('ticketId') && ($('ticketId').value = _r.ticket_id);
       if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
+      // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
+      if (_r.id) _cloudSaveId = _r.id;
+      if (_r.session_type === 'team') sessionMode = 'shared';
       if (currentChecklist.length) {
         goTo(3);
         renderChecklist(); updateProgress(); updateTimeSummary();
@@ -1125,22 +1138,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })();
 
-  // Auto-fill name from account if signed in
+  // Auto-fill name from account + set _currentUserName
   (async () => {
     try {
       if (typeof getSession !== 'function') return;
       const s = await getSession();
       if (!s?.user) return;
-      const nameField = $('userName');
-      if (!nameField || nameField.value) return;
+      let resolvedName = null;
       // Try profile name first
       if (typeof getProfile === 'function') {
         const p = await getProfile();
-        if (p?.name) { nameField.value = p.name; return; }
+        resolvedName = p?.name || null;
       }
       // Fall back to email prefix
-      const emailName = s.user.email?.split('@')[0] || '';
-      if (emailName) nameField.value = emailName;
+      if (!resolvedName) resolvedName = s.user.email?.split('@')[0] || null;
+      _currentUserName = resolvedName;
+      const nameField = $('userName');
+      if (nameField && !nameField.value && resolvedName) nameField.value = resolvedName;
     } catch(e) {}
   })();
 });

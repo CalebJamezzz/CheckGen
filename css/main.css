@@ -1597,3 +1597,18 @@ input[type="password"] {
 /* Marketing nav profile dropdown */
 #navDropdown { z-index: 1000 !important; }
 #navAvatarBtn:hover { background: rgba(16,185,129,.25) !important; }
+
+/* ── Shared session: who marked the outcome ────────────── */
+.marked-by {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, .62vw, 11px);
+  letter-spacing: .06em;
+  color: var(--muted);
+  padding: 2px 7px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.marked-by:empty { display: none !important; }
