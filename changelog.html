@@ -54,18 +54,48 @@
         <div class="changelog-version">v2.0</div>
       </div>
       <div class="changelog-content">
-        <h2>CheckGen v2 — Accounts &amp; Cloud History</h2>
-        <p>The biggest update yet. CheckGen v2 adds user accounts, cloud-saved history, and a redesigned interface built to scale.</p>
+        <h2>CheckGen v2 — Accounts, Teams &amp; Cloud</h2>
+        <p>The biggest update to CheckGen. v2 introduces accounts, cloud history, team workspaces, smarter AI generation, and a complete overhaul of the session experience.</p>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Accounts &amp; Auth</h3>
         <ul>
-          <li><strong>Accounts</strong> — Create a free account with email/password or Google SSO. Your profile, history, and sessions are tied to your account.</li>
-          <li><strong>Cloud history</strong> — Saved checklists sync across devices. Pick up exactly where you left off from any browser.</li>
-          <li><strong>Team page</strong> — Start shared sessions and see your organization. Full team management (invite links, roles, shared history) is coming soon.</li>
-          <li><strong>Left navigation</strong> — New sidebar in the app for New Checklist, History, Team, and Account.</li>
-          <li><strong>Redesigned landing page</strong> — New homepage, about page with FAQ, pricing, terms, privacy policy, and changelog.</li>
-          <li><strong>Password requirements</strong> — Minimum 8 characters, one uppercase, one number, one special character.</li>
-          <li><strong>Anonymous limit</strong> — Guests can generate 3 checklists before being prompted to create an account.</li>
-          <li><strong>Outcome buttons</strong> — Pass, Fail, Blocked now display horizontally with full labels.</li>
-          <li><strong>Green design system</strong> — Emerald green replaces indigo as the primary brand color throughout.</li>
+          <li><strong>Free accounts</strong> — Sign up with email/password or Google SSO. Your profile, history, and sessions follow you across devices.</li>
+          <li><strong>Secure error messages</strong> — Sign-in and sign-up errors never reveal whether an email exists. Forgot password always shows the same response.</li>
+          <li><strong>Password requirements</strong> — Minimum 8 characters, one uppercase, one number, one special character with live rule indicators.</li>
+          <li><strong>Anonymous limit</strong> — Guests can generate 3 checklists before being prompted to create an account. Enforced at both the start and generate steps.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Team Workspaces</h3>
+        <ul>
+          <li><strong>Workspaces</strong> — Create a workspace and invite teammates by email. Three roles: Admin (full access), Moderator (view team history, no settings), User (own history only).</li>
+          <li><strong>Email invites</strong> — Workspace and shared session invites are sent by email. Invite links take recipients directly to the accept or join flow.</li>
+          <li><strong>Team history</strong> — Shared sessions are saved to team history scoped by role. Joining a session saves it to the joiner's history too.</li>
+          <li><strong>Who marked what</strong> — In shared sessions, a name pill appears next to each outcome showing which teammate marked it Pass, Fail, or Blocked.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Sessions &amp; History</h3>
+        <ul>
+          <li><strong>3-card session picker</strong> — Screen 1 has Personal, Shared (create with email invites), and Join (enter a code). Guests only see Personal and Shared.</li>
+          <li><strong>Cloud-first history</strong> — Every checklist generated while signed in is saved to your account automatically. Persists even if you clear browser cache.</li>
+          <li><strong>Click to reopen</strong> — Any history card opens that checklist back in the app at screen 3. Outcome changes update the existing record, no duplicates created.</li>
+          <li><strong>Resume panel</strong> — If your last personal session was incomplete, a continue panel appears on screen 1 with remaining item count and date.</li>
+          <li><strong>Leave session guard</strong> — Navigating away from an active session shows a modal: End Session &amp; Leave, Leave Without Saving, or Cancel.</li>
+          <li><strong>Screen 2 always fresh</strong> — Starting a new session clears all previous values. No AC or settings persisting from the last run.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">AI &amp; Generation</h3>
+        <ul>
+          <li><strong>Testing areas strictly respected</strong> — A system prompt enforces that only the areas you select appear in the output. No more ignored selections.</li>
+          <li><strong>Dynamic item count</strong> — Item count scales with areas selected (2–4 items per area). Fewer areas means a tighter, more focused checklist.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Design &amp; Polish</h3>
+        <ul>
+          <li><strong>Left navigation</strong> — New 280px sidebar in the app for New Checklist, History, Team, and Account.</li>
+          <li><strong>Marketing nav profile avatar</strong> — When signed in, the homepage replaces Sign In with your initial in a green circle, with a dropdown for Open App, Account, and Sign Out.</li>
+          <li><strong>Branded email templates</strong> — All 6 Supabase auth emails match the site's dark design and are sent from noreply@checkgen.dev via Resend.</li>
+          <li><strong>Redesigned landing &amp; about pages</strong> — New homepage, about page with FAQ, pricing, terms, privacy, and this changelog.</li>
+          <li><strong>Green design system</strong> — Emerald green throughout. All type sizes use clamp() to scale cleanly from 13" to 27" monitors.</li>
         </ul>
       </div>
     </div>
