@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CheckGen — QA Checklist Generator</title>
+  <title>CheckGen | QA Checklist Generator</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <div class="app-shell">
   <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
-  <aside id="appNav"></aside>
+  <aside id="appNav" aria-label="App navigation"></aside>
 
   <main class="app-content">
 
@@ -348,13 +349,13 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
   </main>
 </div><!-- end app-shell -->
 
-<div style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:280px">
+<footer aria-label="App footer" style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:280px">
   <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
     <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
     <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
   </div>
   <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
-</div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase.js"></script>

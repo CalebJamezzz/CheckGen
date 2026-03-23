@@ -39,12 +39,17 @@
       .changelog-entry { grid-template-columns:1fr; gap:var(--sp-3); }
       .contact-grid { grid-template-columns:1fr; }
     }
-  </style>
+  
+.skip-link { position:absolute; left:-9999px; top:var(--sp-2); z-index:99999; background:var(--green); color:#052e16; padding:var(--sp-2) var(--sp-4); border-radius:var(--r-md); font-family:var(--font-mono); font-size:12px; font-weight:700; text-decoration:none; }
+.skip-link:focus { left:var(--sp-4); }
+</style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <div class="shell" style="padding-top:var(--sp-6)">
 
-  <nav class="nav">
+  <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
       <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">About</a>
@@ -53,12 +58,13 @@
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
+  <main id="main-content">
 
   <!-- Contact -->
   <section style="padding:var(--sp-10) 0 var(--sp-12);border-bottom:1px solid var(--border)">
     <p class="eyebrow" style="margin-bottom:var(--sp-3)">Contact</p>
     <h1 style="font-size:clamp(2rem,3.5vw,3.5rem);margin-bottom:var(--sp-4)">Get in touch.</h1>
-    <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);max-width:520px;line-height:1.7;margin-bottom:var(--sp-8)">CheckGen is a small product built by one person. Feedback, bug reports, feature ideas; all welcome.</p>
+    <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);max-width:520px;line-height:1.7;margin-bottom:var(--sp-8)">CheckGen is a small product built by one person. Feedback, bug reports, feature ideas — all welcome.</p>
     <div class="contact-grid">
       <div class="about-card" style="padding:var(--sp-6)">
         <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-3)">Email</div>
@@ -178,7 +184,8 @@
 
 </div>
 
-<footer class="site-footer">
+  </main>
+<footer class="site-footer" aria-label="Site footer">
   <div class="footer-inner">
     <div class="site-footer-grid">
       <div class="site-footer-brand">

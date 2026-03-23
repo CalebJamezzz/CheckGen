@@ -36,7 +36,10 @@
     
     @media(max-width:900px) { .pricing-grid,.pain-grid,.stats-grid { grid-template-columns:1fr 1fr !important; } .hero-headline { font-size:clamp(2.6rem,8vw,4rem); max-width:100%; } }
     @media(max-width:600px) { .pain-grid,.stats-grid { grid-template-columns:1fr !important; } }
-  </style>
+  
+.skip-link { position:absolute; left:-9999px; top:var(--sp-2); z-index:99999; background:var(--green); color:#052e16; padding:var(--sp-2) var(--sp-4); border-radius:var(--r-md); font-family:var(--font-mono); font-size:12px; font-weight:700; text-decoration:none; }
+.skip-link:focus { left:var(--sp-4); }
+</style>
   <script>
     // Redirect to app if already signed in (prevents flash)
     (function() {
@@ -65,9 +68,11 @@
   </script>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <div class="shell" style="padding-top:var(--sp-6)">
 
-  <nav class="nav">
+  <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
       <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:var(--soft);transition:color .15s">About</a>
@@ -76,6 +81,7 @@
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
+  <main id="main-content">
 
   <!-- spacer for sticky nav -->
   <div style="height:var(--sp-2)"></div>
@@ -128,7 +134,7 @@
     <div style="margin-top:var(--sp-8);padding:var(--sp-6);border:1px solid rgba(16,185,129,.25);border-radius:var(--r-lg);background:rgba(16,185,129,.05);display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap">
       <div style="flex:1;min-width:260px">
         <div style="font-family:var(--font-display);font-size:clamp(1rem,1.3vw,1.4rem);font-weight:600;color:var(--text);margin-bottom:var(--sp-2)">CheckGen fixes all three.</div>
-        <p style="font-size:clamp(14px,.92vw,15px);color:var(--dim);line-height:1.7;margin:0">Paste your AC. Get grouped, AI-generated test cases in seconds; specific to your ticket, covering the areas you care about. Mark outcomes, add notes, share with your team, export when done. Every session saved to your account.</p>
+        <p style="font-size:clamp(14px,.92vw,15px);color:var(--dim);line-height:1.7;margin:0">Paste your AC. Get grouped, AI-generated test cases in seconds — specific to your ticket, covering the areas you care about. Mark outcomes, add notes, share with your team, export when done. Every session saved to your account.</p>
       </div>
       <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6);flex-shrink:0">Create free account →</a>
     </div>
@@ -211,11 +217,12 @@
   </section>
 
 </div>
+  </main>
 <script src="/js/supabase.js"></script>
 
 
 
-  <footer class="site-footer">
+  <footer class="site-footer" aria-label="Site footer">
     <div class="footer-inner">
       <div class="site-footer-grid">
         <div class="site-footer-brand">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Create Account — CheckGen</title>
+  <title>Create Account | CheckGen</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -13,9 +13,15 @@
     .pw-rule::before { content:'○'; font-size:10px; flex-shrink:0; }
     .pw-rule.ok { color:var(--green); }
     .pw-rule.ok::before { content:'●'; }
-  </style>
+  
+.skip-link { position:absolute; left:-9999px; top:var(--sp-2); z-index:99999; background:var(--green); color:#052e16; padding:var(--sp-2) var(--sp-4); border-radius:var(--r-md); font-family:var(--font-mono); font-size:12px; font-weight:700; text-decoration:none; }
+.skip-link:focus { left:var(--sp-4); }
+</style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
 <div class="auth-wrap">
 
   <!-- Left — value props -->
@@ -189,5 +195,6 @@ function showSt(msg, type) {
   el.textContent = msg; el.className = 'status ' + type;
 }
 </script>
+</main>
 </body>
 </html>

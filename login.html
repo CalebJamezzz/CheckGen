@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Sign In — CheckGen</title>
+  <title>Sign In | CheckGen</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
 <div class="auth-wrap">
 
   <!-- Left — value props -->
@@ -107,5 +110,6 @@ function showSt(msg, type) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 </script>
+</main>
 </body>
 </html>

@@ -38,7 +38,7 @@
   --text:  #F2F0FC;
   --dim:   rgba(242,240,252,.82);
   --soft:  rgba(242,240,252,.58);
-  --muted: rgba(242,240,252,.4);
+  --muted: rgba(242,240,252,.58);
 
   /* Fonts */
   --font-display: 'Syne', sans-serif;
@@ -256,11 +256,12 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 
 .btn-primary {
   background: var(--green);
-  color: #fff;
+  color: #052e16;
   box-shadow: 0 0 0 0 var(--green-glow);
 }
 .btn-primary:hover:not(:disabled) {
   background: #34D399;
+  color: #052e16;
   box-shadow: 0 0 16px var(--green-glow);
 }
 
@@ -883,7 +884,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   padding: 2px 6px;
   border-radius: 4px;
 }
-.tier-badge.free { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+.tier-badge.free { background: rgba(255,255,255,.06); color: var(--soft); border: 1px solid var(--border); }
 .tier-badge.pro  { background: rgba(16,185,129,.12); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
 .nav-links {
   flex: 1;
@@ -961,7 +962,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .nav-user-tier {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--muted);
+  color: var(--soft);
   letter-spacing: .08em;
 }
 .nav-upgrade-btn {
@@ -992,7 +993,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   font-size: clamp(10px,.68vw,12px);
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--soft);
   cursor: pointer;
   text-align: left;
   border-radius: var(--r-md);
@@ -1210,7 +1211,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .pricing-features li { font-size: clamp(13px,.88vw,14px); color: var(--dim); display: flex; align-items: flex-start; gap: 10px; }
 .pricing-features li::before { content: '✓'; color: var(--green); font-weight: 600; flex-shrink: 0; margin-top: 1px; }
 .pricing-features li.locked::before { content: '—'; color: var(--muted); }
-.pricing-features li.locked { color: var(--muted); }
+.pricing-features li.locked { color: var(--soft); }
 
 @media (max-width: 680px) { .pricing-grid { grid-template-columns: 1fr; } }
 
