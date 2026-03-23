@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>CheckGen — AI-Powered QA Checklist Generator</title>
-  <meta name="description" content="Paste your ticket or AC. Get a grouped, AI-generated QA checklist in seconds. Free forever. Shared sessions and cloud history with a free account.">
+  <meta name="description" content="Paste your ticket or AC. Get a grouped, AI-generated QA checklist in seconds. Free to start. Shared sessions and cloud history with a free account.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -18,22 +18,10 @@
     .hero-cta { display:flex; gap:var(--sp-3); align-items:center; flex-wrap:wrap; }
     .hero-note { font-family:var(--font-mono); font-size:clamp(10px,.7vw,12px); letter-spacing:.1em; color:var(--soft); }
     .section { padding:var(--sp-16) 0; border-top:1px solid var(--border); }
-    .steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-6); margin-top:var(--sp-8); }
-    .step { padding:var(--sp-5); border:1px solid var(--border-md); border-radius:var(--r-lg); background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%); }
-    .step-num { font-family:var(--font-display); font-size:clamp(3rem,4vw,5rem); font-weight:700; color:rgba(16,185,129,.12); line-height:1; margin-bottom:var(--sp-3); letter-spacing:-.04em; }
-    .step-title { font-family:var(--font-display); font-size:clamp(1rem,1.2vw,1.3rem); font-weight:600; margin-bottom:var(--sp-2); }
-    .step-desc { color:var(--text); opacity:.78; font-size:clamp(14px,.95vw,16px); line-height:1.75; }
-    .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-4); margin-top:var(--sp-8); }
-    .feature-card { padding:var(--sp-5); border:1px solid var(--border); border-radius:var(--r-lg); background:linear-gradient(135deg,rgba(14,19,32,.95) 0%,rgba(11,15,26,.98) 100%); position:relative; overflow:hidden; transition:border-color .25s,transform .25s; }
-    .feature-card::after { content:''; position:absolute; bottom:0;left:0;right:0; height:2px; background:linear-gradient(90deg,var(--green),var(--pass)); transform:scaleX(0); transform-origin:left; transition:transform .4s; }
-    .feature-card:hover { border-color:rgba(16,185,129,.3); transform:translateY(-4px); }
-    .feature-card:hover::after { transform:scaleX(1); }
-    .feature-icon { font-size:22px; margin-bottom:var(--sp-3); }
-    .feature-title { font-family:var(--font-mono); font-size:clamp(10px,.72vw,13px); letter-spacing:.14em; text-transform:uppercase; color:var(--green); margin-bottom:var(--sp-2); }
-    .feature-desc { color:var(--text); opacity:.78; font-size:clamp(14px,.92vw,16px); line-height:1.75; }
     .cta-section { padding:var(--sp-16) 0; border-top:1px solid var(--border); text-align:center; }
     
-    @media(max-width:900px) { .steps-grid,.features-grid,.pricing-grid { grid-template-columns:1fr; } .hero-headline { font-size:clamp(2.6rem,8vw,4rem); max-width:100%; } }
+    @media(max-width:900px) { .pricing-grid,.pain-grid,.stats-grid { grid-template-columns:1fr 1fr !important; } .hero-headline { font-size:clamp(2.6rem,8vw,4rem); max-width:100%; } }
+    @media(max-width:600px) { .pain-grid,.stats-grid { grid-template-columns:1fr !important; } }
   </style>
   <script>
     // Redirect to app if already signed in (prevents flash)
@@ -84,17 +72,73 @@
     <h1 class="hero-headline">Stop writing<br>checklists<br><span class="accent">from scratch.</span></h1>
     <p class="hero-sub">Paste your ticket or acceptance criteria. CheckGen surfaces the edge cases, validations, permissions, and break-it scenarios that don't always make it into the AC.</p>
     <div class="hero-cta">
-      <a href="/app/" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Generate a Checklist →</a>
-      <span class="hero-note">3 free generations · No sign-up required</span>
+      <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create Free Account →</a>
+      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without signing up</a>
+    </div>
+    <div style="margin-top:var(--sp-4)">
+      <span class="hero-note">Free to start · No credit card required</span>
     </div>
 
-    <div style="margin-top:var(--sp-8);display:flex;gap:var(--sp-6);flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ AI-generated from your AC</span></div>
-      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ Real-time shared sessions</span></div>
-      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ Export to CSV</span></div>
+    <div style="margin-top:var(--sp-6);display:flex;gap:var(--sp-6);flex-wrap:wrap">
+      <div><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ AI-generated from your AC</span></div>
+      <div><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ Cloud history across devices</span></div>
+      <div><span style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">✓ Live shared team sessions</span></div>
     </div>
     <div style="margin-top:var(--sp-5)">
       <a href="/about.html" style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--soft);text-decoration:none;transition:color .15s" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--soft)'">How it works →</a>
+    </div>
+  </section>
+
+
+  <!-- Pain points -->
+  <section class="section">
+    <div class="eyebrow">The problem</div>
+    <h2 style="margin-top:var(--sp-3);margin-bottom:var(--sp-8);color:var(--text)">Sound familiar?</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)" class="pain-grid">
+      <div style="padding:var(--sp-6);border:1px solid var(--border);border-radius:var(--r-lg);background:rgba(14,19,32,.6)">
+        <div style="font-size:28px;margin-bottom:var(--sp-4)">⏱</div>
+        <div style="font-family:var(--font-display);font-size:clamp(.95rem,1.1vw,1.2rem);font-weight:600;margin-bottom:var(--sp-2)">30 minutes per ticket</div>
+        <p style="color:var(--text);opacity:.72;font-size:clamp(14px,.92vw,15px);line-height:1.75">Writing test cases from scratch every sprint. Same patterns, different ticket, different day.</p>
+      </div>
+      <div style="padding:var(--sp-6);border:1px solid var(--border);border-radius:var(--r-lg);background:rgba(14,19,32,.6)">
+        <div style="font-size:28px;margin-bottom:var(--sp-4)">🕳</div>
+        <div style="font-family:var(--font-display);font-size:clamp(.95rem,1.1vw,1.2rem);font-weight:600;margin-bottom:var(--sp-2)">Edge cases fall through</div>
+        <p style="color:var(--text);opacity:.72;font-size:clamp(14px,.92vw,15px);line-height:1.75">The permission check. The empty state. The concurrent edit. The ones that only surface in production.</p>
+      </div>
+      <div style="padding:var(--sp-6);border:1px solid var(--border);border-radius:var(--r-lg);background:rgba(14,19,32,.6)">
+        <div style="font-size:28px;margin-bottom:var(--sp-4)">📋</div>
+        <div style="font-family:var(--font-display);font-size:clamp(.95rem,1.1vw,1.2rem);font-weight:600;margin-bottom:var(--sp-2)">No record of what was tested</div>
+        <p style="color:var(--text);opacity:.72;font-size:clamp(14px,.92vw,15px);line-height:1.75">Checklist lives in a doc, a ticket comment, or memory. Next sprint it's gone. No history, no pattern.</p>
+      </div>
+    </div>
+    <div style="margin-top:var(--sp-8);padding:var(--sp-6);border:1px solid rgba(16,185,129,.25);border-radius:var(--r-lg);background:rgba(16,185,129,.05);display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap">
+      <div style="flex:1;min-width:260px">
+        <div style="font-family:var(--font-display);font-size:clamp(1rem,1.3vw,1.4rem);font-weight:600;color:var(--text);margin-bottom:var(--sp-2)">CheckGen fixes all three.</div>
+        <p style="font-size:clamp(14px,.92vw,15px);color:var(--dim);line-height:1.7;margin:0">Paste your AC. Get grouped, AI-generated test cases in seconds — specific to your ticket, covering the areas you care about. Mark outcomes, add notes, share with your team, export when done. Every session saved to your account.</p>
+      </div>
+      <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6);flex-shrink:0">Create free account →</a>
+    </div>
+  </section>
+
+  <!-- Proof strip -->
+  <section class="section" style="padding:var(--sp-10) 0">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-6);text-align:center" class="stats-grid">
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(2rem,3vw,3.5rem);font-weight:700;color:var(--green);letter-spacing:-.03em">3–8s</div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:var(--sp-2)">Checklist generation</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(2rem,3vw,3.5rem);font-weight:700;color:var(--green);letter-spacing:-.03em">2–4×</div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:var(--sp-2)">Items per area selected</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(2rem,3vw,3.5rem);font-weight:700;color:var(--green);letter-spacing:-.03em">$0</div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:var(--sp-2)">Free to start, no card needed</div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:clamp(2rem,3vw,3.5rem);font-weight:700;color:var(--green);letter-spacing:-.03em">0</div>
+        <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:var(--sp-2)">Setup or integrations</div>
+      </div>
     </div>
   </section>
 
@@ -125,7 +169,7 @@
       <div class="pricing-card featured">
         <div class="pricing-badge">Most Popular</div>
         <div class="pricing-tier">Free Account</div>
-        <div class="pricing-price">$0<span> / forever</span></div>
+        <div class="pricing-price">$0<span> / month</span></div>
         <p class="pricing-desc">Everything you need for day-to-day QA testing.</p>
         <ul class="pricing-features">
           <li>Unlimited AI generations</li>
@@ -144,58 +188,18 @@
 
   <!-- Final CTA -->
   <section class="cta-section">
-    <h2>Ready to test smarter?</h2>
-    <p style="color:var(--text);opacity:.72;font-size:clamp(15px,1.1vw,17px);margin-bottom:var(--sp-8)">No install. No credit card. Just paste your ticket and go.</p>
+    <h2>Ready to stop writing<br>test cases from scratch?</h2>
+    <p style="color:var(--text);opacity:.72;font-size:clamp(15px,1.1vw,17px);margin-bottom:var(--sp-8)">Free account. No credit card. Takes 30 seconds.</p>
     <div style="display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap">
-      <a href="/app/" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try free →</a>
-      <a href="/signup.html" class="btn btn-outline" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create free account →</a>
+      <a href="/signup.html" class="btn btn-primary" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Create Free Account →</a>
+      <a href="/app/" class="btn btn-ghost" style="font-size:clamp(13px,.9vw,15px);padding:var(--sp-4) var(--sp-6)">Try without signing up</a>
     </div>
   </section>
 
 </div>
 <script src="/js/supabase.js"></script>
-<script>
-// Swap nav CTA if already logged in
-(async () => {
-  if (typeof window.supabase === 'undefined') return;
-  const sb = window.supabase.createClient(
-    document.querySelector('script[src*="supabase"]') ? 'placeholder' : '',
-    ''
-  );
-  // Just check localStorage session quickly
-  const raw = localStorage.getItem('sb-' + location.hostname + '-auth-token') ||
-              Object.keys(localStorage).filter(k => k.startsWith('sb-')).map(k => localStorage.getItem(k)).find(Boolean);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.access_token || parsed?.user) {
-        document.querySelectorAll('a[href="/login.html"]').forEach(el => {
-          el.href = '/app/'; el.textContent = 'Open App';
-        });
-      }
-    } catch(e) {}
-  }
-})();
-</script>
-<script>
-(function() {
-  var nav = document.querySelector('.nav');
-  var shell = document.querySelector('.shell');
-  if (!nav) return;
-  var sticky = false;
-  window.addEventListener('scroll', function() {
-    if (window.scrollY > 60 && !sticky) {
-      sticky = true;
-      nav.classList.add('sticky');
-      if (shell) shell.classList.add('nav-offset');
-    } else if (window.scrollY <= 60 && sticky) {
-      sticky = false;
-      nav.classList.remove('sticky');
-      if (shell) shell.classList.remove('nav-offset');
-    }
-  }, { passive: true });
-})();
-</script>
+
+
 
   <footer class="site-footer">
     <div class="footer-inner">
