@@ -473,8 +473,31 @@ async function generateChecklist() {
     // Save to cloud if signed in
     cloudSaveSession();
     if (sessionMode === 'shared' && sharedSub === 'start') {
-      try { await createSharedSession(); startPolling(); }
-      catch(e) {
+      try {
+        await createSharedSession();
+        startPolling();
+        // Email invited users
+        if (_shareEmails.length > 0) {
+          const s = await getSession().catch(() => null);
+          const inviterName = s?.user?.user_metadata?.name || s?.user?.email?.split('@')[0] || 'A teammate';
+          const origin = location.origin;
+          for (const email of _shareEmails) {
+            fetch('/.netlify/functions/send-session-invite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email,
+                inviterName,
+                sessionName: $('checklistName')?.value?.trim() || null,
+                ticketId:    $('ticketId')?.value?.trim()    || null,
+                shareCode:   sharedCode,
+                sessionUrl:  origin + '/app/?join=' + sharedCode,
+              })
+            }).catch(() => {}); // fire and forget
+          }
+          showStatus('status3', `✓ ${currentChecklist.length} items generated. Invites sent to ${_shareEmails.length} teammate${_shareEmails.length !== 1 ? 's' : ''}.`, 'success');
+        }
+      } catch(e) {
         showStatus('status3', '⚠ Could not create shared session — running as personal. Check your connection.', 'warn');
       }
     }
@@ -744,6 +767,8 @@ async function joinSharedSession() {
     $('exportBar').style.display = '';
     showShareBadge(); startPolling();
     showStatus('status3', '✓ Joined shared session.', 'success');
+    // Save to cloud history for this user
+    cloudSaveSession();
   } catch(e) { alert('Error joining session: ' + e.message); }
 }
 
@@ -825,9 +850,17 @@ async function cloudSaveSession() {
   if (!currentChecklist.length) return;
   try {
     const s = await getSession(); if (!s?.user) return;
+    // Get workspace_id from profile for team sessions
+    const isShared = sessionMode === 'shared';
+    let workspaceId = null;
+    if (isShared) {
+      const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', s.user.id).single();
+      workspaceId = prof?.workspace_id || null;
+    }
     const payload = {
       user_id:      s.user.id,
-      session_type: 'personal',
+      session_type: isShared ? 'team' : 'personal',
+      workspace_id: workspaceId,
       name:         $('checklistName')?.value || null,
       ticket_id:    $('ticketId')?.value || null,
       environment:  $('envBranch')?.value || null,
@@ -835,10 +868,8 @@ async function cloudSaveSession() {
       updated_at:   new Date().toISOString(),
     };
     if (_cloudSaveId) {
-      // Update existing row
       await sb.from('checklist_sessions').update(payload).eq('id', _cloudSaveId);
     } else {
-      // Create new row
       const { data, error } = await sb
         .from('checklist_sessions')
         .insert({ ...payload, created_at: new Date().toISOString() })
@@ -899,6 +930,30 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSession();
   loadHistory();
   updateSummary();
+
+  // Auto-join from ?join=CODE URL param (from session invite email)
+  const joinParam = new URLSearchParams(location.search).get('join');
+  if (joinParam && joinParam.length === 6) {
+    // Pre-fill join code and switch to shared join mode
+    setMode('shared');
+    setSharedSub('join');
+    const jc = $('joinCode');
+    if (jc) { jc.value = joinParam.toUpperCase(); }
+    // Auto-trigger join after a short delay (let page settle)
+    setTimeout(async () => {
+      const s = await getSession().catch(() => null);
+      if (s?.user) {
+        // Auto-fill name from profile
+        const p = typeof getProfile === 'function' ? await getProfile().catch(() => null) : null;
+        const un = $('userName');
+        if (un && !un.value) {
+          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+        }
+      }
+      // Show a hint
+      showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
+    }, 400);
+  }
 
   // Show anon gate if guest has used any generations
   (async () => {
