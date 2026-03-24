@@ -172,6 +172,9 @@ h3 { font-size: clamp(1.1rem, 1.5vw, 1.4rem); }
 .card:hover { border-color: rgba(16,185,129,.35); transform: translateY(-4px); }
 .card:hover::after { transform: scaleX(1); }
 
+.pain-card { transition: transform .2s, border-color .2s, box-shadow .2s; }
+.pain-card:hover { border-color: rgba(255,255,255,.18) !important; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+
 /* ── Form elements ── */
 input[type="text"],
 input[type="email"],
@@ -290,8 +293,14 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   background: transparent;
   border: 1px solid rgba(248,113,113,.2);
   color: rgba(248,113,113,.6);
-  font-size: clamp(10px, .65vw, 12px);
-  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: clamp(9px, .62vw, 11px);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all .15s;
 }
 .btn-danger:hover { background: var(--fail-dim); color: var(--fail); border-color: rgba(248,113,113,.4); }
 
@@ -308,7 +317,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   text-transform: uppercase;
   color: var(--soft);
   cursor: pointer;
-  padding: 0;
+  padding: 6px 0;
   transition: color .15s;
 }
 .back-link:hover { color: var(--text); }
@@ -420,6 +429,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   transition: all .15s;
 }
 .regen-btn:hover { color: var(--green); border-color: rgba(16,185,129,.3); }
+.regen-btn.loading { color: var(--green); border-color: rgba(16,185,129,.3); animation: regen-pulse 1s ease-in-out infinite; }
+@keyframes regen-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
 .items { padding: 4px 8px; }
 .item {

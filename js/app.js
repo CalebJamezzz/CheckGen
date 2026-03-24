@@ -560,7 +560,7 @@ async function regenSection(section) {
   const ticket = $('ticketText').value.trim();
   if (!ticket) { showStatus('status3', 'Ticket text needed to regenerate.', 'error'); return; }
   const btn = document.querySelector(`.regen-btn[data-section="${CSS.escape(section)}"]`);
-  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
   const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}`;
   try {
     const newItems = await callClaude(prompt, 1200);
@@ -572,7 +572,7 @@ async function regenSection(section) {
     renderChecklist(); updateProgress(); saveSession();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
   } catch(err) { showStatus('status3', 'Regenerate failed: ' + err.message, 'error'); }
-  finally { if (btn) { btn.textContent = '↺ regen'; btn.disabled = false; } }
+  finally { if (btn) { btn.textContent = '↺ regen'; btn.classList.remove('loading'); btn.disabled = false; } }
 }
 
 /* ── Item actions ───────────────────────────────────────── */
