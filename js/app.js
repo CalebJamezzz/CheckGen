@@ -8,6 +8,7 @@ let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
 let _currentUserName = null; // set when session starts, used for markedBy
+let _pendingBackToSetup = false;
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -37,12 +38,34 @@ function goTo(n) {
 function backToSetup() {
   const actioned = currentChecklist.filter(i => i.outcome || i.note).length;
   if (actioned > 0) {
-    if (!confirm(
-      actioned + ' item' + (actioned === 1 ? '' : 's') + ' ha' + (actioned === 1 ? 's' : 've') +
-      ' outcomes or notes. Going back and regenerating will replace this checklist. Continue?'
-    )) return;
+    // Use custom modal instead of native confirm()
+    _pendingBackToSetup = true;
+    const modal = document.getElementById('backToSetupModal');
+    if (modal) {
+      const countEl = document.getElementById('backToSetupCount');
+      if (countEl) countEl.textContent = actioned + ' item' + (actioned === 1 ? '' : 's');
+      modal.style.display = 'flex';
+    }
+    return;
   }
+  _doBackToSetup();
+}
+
+function _doBackToSetup() {
+  _pendingBackToSetup = false;
+  currentChecklist = [];
+  _cloudSaveId = null;
   goTo(2);
+}
+
+function backToSetupConfirm() {
+  document.getElementById('backToSetupModal').style.display = 'none';
+  _doBackToSetup();
+}
+
+function backToSetupCancel() {
+  _pendingBackToSetup = false;
+  document.getElementById('backToSetupModal').style.display = 'none';
 }
 
 /* ── Screen 1 — Session mode ────────────────────────────── */
@@ -761,6 +784,15 @@ function startPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = s
 function stopPolling()  { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 async function joinSharedSession() {
+  // Shared sessions require an account
+  const _joinSess = await getSession().catch(() => null);
+  if (!_joinSess?.user) {
+    // Store the join code so signup/login can redirect back
+    const code = $('joinCode')?.value?.trim().toUpperCase();
+    if (code) sessionStorage.setItem('cg_join_code', code);
+    location.href = '/signup.html?returnTo=' + encodeURIComponent(location.href);
+    return;
+  }
   const code = $('joinCode').value.trim().toUpperCase();
   if (code.length !== 6) { alert('Enter a valid 6-character code.'); return; }
   const name = $('userName').value.trim();
@@ -1101,6 +1133,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modeParam === 'shared') {
     // Wait for auth to resolve then set shared mode
     setTimeout(() => setMode('shared'), 300);
+  }
+
+  // Restore join code if user just signed up/in via the join flow
+  const _savedJoinCode = sessionStorage.getItem('cg_join_code');
+  if (_savedJoinCode) {
+    sessionStorage.removeItem('cg_join_code');
+    setMode('join');
+    const jc = $('joinCode');
+    if (jc) jc.value = _savedJoinCode;
+    setTimeout(() => showStatus('status1', 'Signed in — click Start Session to join.', 'success'), 400);
   }
 
   // Auto-join from ?join=CODE URL param (from session invite email)

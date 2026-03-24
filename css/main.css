@@ -769,18 +769,16 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   justify-content: space-between;
   padding: var(--sp-4) 0;
   margin-bottom: 0;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 50;
   border-bottom: none;
+  background: transparent;
+  transition: background .2s, backdrop-filter .2s, box-shadow .2s;
 }
 /* Sticky nav for marketing pages — scrolled state via JS */
 .nav.sticky {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: var(--sp-3) clamp(var(--sp-6), 3vw, var(--sp-16));
-  background: rgba(8,11,18,.88);
+  background: rgba(8,11,18,.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255,255,255,.06);
@@ -788,7 +786,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 }
 @keyframes navSlideIn { from { transform: translateY(-100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
 /* When nav is sticky, add top padding to shell so content doesn't jump */
-.shell.nav-offset { padding-top: 68px; }
+.shell.nav-offset { padding-top: 0; } /* sticky nav doesn't pull from flow */
 .nav-logo {
   font-family: var(--font-display);
   font-size: clamp(18px, 1.4vw, 22px);

@@ -295,23 +295,6 @@
   </div>
 </footer>
 
-<script>
-(function() {
-  var nav = document.querySelector('.nav');
-  var shell = document.querySelector('.shell');
-  if (!nav) return;
-  var sticky = false;
-  window.addEventListener('scroll', function() {
-    if (window.scrollY > 60 && !sticky) {
-      sticky = true; nav.classList.add('sticky');
-      if (shell) shell.classList.add('nav-offset');
-    } else if (window.scrollY <= 60 && sticky) {
-      sticky = false; nav.classList.remove('sticky');
-      if (shell) shell.classList.remove('nav-offset');
-    }
-  }, { passive: true });
-})();
-</script>
 <script src="/js/supabase.js"></script>
 <script>
 /* Marketing nav — profile avatar */
