@@ -23,8 +23,8 @@
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
 
+<header class="site-header">
   <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
@@ -34,6 +34,9 @@
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
+</header>
+<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
+
   <main id="main-content">
 
   <!-- Intro -->
@@ -399,10 +402,10 @@
 
 <script>
 (function() {
-  var nav = document.querySelector('.nav');
-  if (!nav) return;
+  var header = document.querySelector('.site-header');
+  if (!header) return;
   window.addEventListener('scroll', function() {
-    nav.classList.toggle('sticky', window.scrollY > 40);
+    header.classList.toggle('sticky', window.scrollY > 40);
   }, { passive: true });
 })();
 </script>
