@@ -1059,6 +1059,76 @@ function initLeaveGuard() {
 }
 
 
+/* ── Resume panel ───────────────────────────────────────── */
+let _resumeSession = null; // stores the last incomplete cloud session for resuming
+
+async function initResumePanel() {
+  const panel = $('resumePanel');
+  if (!panel) return;
+  try {
+    const s = await getSession().catch(() => null);
+    if (!s?.user) return;
+    const sb = getSB(); if (!sb) return;
+
+    // Get the most recent personal session that has incomplete items
+    const { data } = await sb
+      .from('checklist_sessions')
+      .select('id, name, ticket_id, environment, items, updated_at, session_type')
+      .eq('user_id', s.user.id)
+      .eq('session_type', 'personal')
+      .order('updated_at', { ascending: false })
+      .limit(5);
+
+    if (!data?.length) return;
+
+    // Find first session with at least one unactioned item
+    const incomplete = data.find(sess => {
+      const items = Array.isArray(sess.items) ? sess.items : [];
+      return items.length > 0 && items.some(i => !i.outcome);
+    });
+    if (!incomplete) return;
+
+    _resumeSession = incomplete;
+    const items = Array.isArray(incomplete.items) ? incomplete.items : [];
+    const remaining = items.filter(i => !i.outcome).length;
+    const label = incomplete.name || incomplete.ticket_id || 'Last session';
+    const ago = incomplete.updated_at
+      ? (() => {
+          const mins = Math.round((Date.now() - new Date(incomplete.updated_at)) / 60000);
+          return mins < 60 ? mins + 'm ago' : Math.round(mins/60) + 'h ago';
+        })()
+      : '';
+
+    const metaEl = $('resumeMeta');
+    if (metaEl) metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+    const nameEl = $('resumeTitle');
+    if (nameEl) nameEl.textContent = label;
+
+    panel.style.display = 'block';
+  } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }
+}
+
+
+function dismissResume() {
+  _resumeSession = null;
+  const panel = $('resumePanel');
+  if (panel) panel.style.display = 'none';
+}
+
+function resumeLastSession() {
+  if (!_resumeSession) return;
+  const sess = _resumeSession;
+  currentChecklist = Array.isArray(sess.items) ? sess.items : [];
+  if (sess.name)        { const el = $('checklistName'); if (el) el.value = sess.name; }
+  if (sess.ticket_id)   { const el = $('ticketId');      if (el) el.value = sess.ticket_id; }
+  if (sess.environment) { const el = $('envBranch');     if (el) el.value = sess.environment; }
+  _cloudSaveId = sess.id; // updates this row on future saves
+  goTo(3);
+  renderChecklist(); updateProgress(); updateTimeSummary();
+  $('exportBar').style.display = '';
+}
+
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved name
@@ -1132,7 +1202,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }
 
-  loadHistory();
+  // Show Recent Checklists only for guests (signed-in users use cloud History page)
+  (async () => {
+    const s = await getSession().catch(() => null);
+    if (s?.user) {
+      // Signed-in: hide local history section, init resume panel instead
+      const section = $('historySection');
+      if (section) section.style.display = 'none';
+      await initResumePanel();
+    } else {
+      // Guest: show local history
+      loadHistory();
+    }
+  })();
   updateSummary();
 
   // Handle ?mode=shared (from team history page)
