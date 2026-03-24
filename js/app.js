@@ -36,19 +36,17 @@ function goTo(n) {
 }
 
 function backToSetup() {
+  const modal = document.getElementById('backToSetupModal');
+  if (!modal) { _doBackToSetup(); return; }
   const actioned = currentChecklist.filter(i => i.outcome || i.note).length;
-  if (actioned > 0) {
-    // Use custom modal instead of native confirm()
-    _pendingBackToSetup = true;
-    const modal = document.getElementById('backToSetupModal');
-    if (modal) {
-      const countEl = document.getElementById('backToSetupCount');
-      if (countEl) countEl.textContent = actioned + ' item' + (actioned === 1 ? '' : 's');
-      modal.style.display = 'flex';
-    }
-    return;
+  const countEl = document.getElementById('backToSetupCount');
+  if (countEl) {
+    countEl.textContent = actioned > 0
+      ? actioned + ' item' + (actioned === 1 ? '' : 's') + ' with outcomes or notes'
+      : 'Your generated checklist';
   }
-  _doBackToSetup();
+  _pendingBackToSetup = true;
+  modal.style.display = 'flex';
 }
 
 function _doBackToSetup() {
@@ -84,17 +82,18 @@ function setMode(mode) {
   if (mode === 'personal') {
     // nothing extra
   } else if (mode === 'join') {
-    // Join panel — visible for everyone
-    if (joinPanel) joinPanel.classList.add('visible');
-    // Auto-fill name if signed in
+    // Join panel — requires auth; redirect guests to login
     (async () => {
       const s = await getSession().catch(() => null);
-      if (s?.user) {
-        const un = $('userName');
-        if (un && !un.value) {
-          const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
-          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
-        }
+      if (!s?.user) {
+        location.href = '/login?returnTo=' + encodeURIComponent(location.href);
+        return;
+      }
+      if (joinPanel) joinPanel.classList.add('visible');
+      const un = $('userName');
+      if (un && !un.value) {
+        const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
+        un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
       }
     })();
   } else if (mode === 'shared') {
@@ -1156,24 +1155,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-join from ?join=CODE URL param (from session invite email)
   const joinParam = new URLSearchParams(location.search).get('join');
   if (joinParam && joinParam.length === 6) {
-    // Pre-fill join code and switch to shared join mode
-    setMode('join');
-    const jc = $('joinCode');
-    if (jc) { jc.value = joinParam.toUpperCase(); }
-    // Auto-trigger join after a short delay (let page settle)
-    setTimeout(async () => {
-      const s = await getSession().catch(() => null);
-      if (s?.user) {
-        // Auto-fill name from profile
+    (async () => {
+      // Require auth — guests must log in first
+      const _jpSess = await getSession().catch(() => null);
+      if (!_jpSess?.user) {
+        sessionStorage.setItem('cg_join_code', joinParam.toUpperCase());
+        location.href = '/login?returnTo=' + encodeURIComponent('/app/?join=' + joinParam.toUpperCase());
+        return;
+      }
+      // Signed in — pre-fill join code
+      setMode('join');
+      const jc = $('joinCode');
+      if (jc) jc.value = joinParam.toUpperCase();
+      // Auto-fill name + hint after settle
+      setTimeout(async () => {
         const p = typeof getProfile === 'function' ? await getProfile().catch(() => null) : null;
         const un = $('userName');
         if (un && !un.value) {
-          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+          un.value = p?.name || _jpSess.user.user_metadata?.name || _jpSess.user.email?.split('@')[0] || '';
         }
-      }
-      // Show a hint
-      showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
-    }, 400);
+        showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
+      }, 400);
+    })();
   }
 
   // Show anon gate + hide join card for guests
