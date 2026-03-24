@@ -781,8 +781,8 @@ async function syncRemote() {
     let changed = false;
     currentChecklist.forEach(item => {
       const r = rm[item.id];
-      if (r && (r.outcome !== item.outcome || (r.note || '') !== (item.note || ''))) {
-        item.outcome = r.outcome; item.note = r.note || ''; changed = true;
+      if (r && (r.outcome !== item.outcome || (r.note || '') !== (item.note || '') || r.markedBy !== item.markedBy)) {
+        item.outcome = r.outcome; item.note = r.note || ''; item.markedBy = r.markedBy || null; changed = true;
       }
     });
     if (changed) { renderChecklist(); updateProgress(); }
