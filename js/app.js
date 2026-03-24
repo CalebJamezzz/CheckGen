@@ -203,7 +203,9 @@ function updateLatestHistory() {
   } catch(e) {}
 }
 
-function loadHistory() {
+async function loadHistory() {
+  const s = await getSession().catch(() => null);
+  if (s?.user) return; // signed-in users use cloud History page
   try {
     const hist = JSON.parse(localStorage.getItem(HSK) || '[]');
     const section = $('historySection');

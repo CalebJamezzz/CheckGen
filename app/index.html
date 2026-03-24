@@ -371,47 +371,11 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
   if (user) {
     if (pDesc) pDesc.textContent = 'Just you. Saved to your cloud history.';
     if (sDesc) sDesc.textContent = 'Invite teammates. Requires a workspace.';
-    // Hide local history for signed-in users — they use History page instead
-    const histSection = document.getElementById('historySection');
-    if (histSection) histSection.style.setProperty('display', 'none', 'important');
-    loadResumePanel(user.id);
   } else {
     if (pDesc) pDesc.textContent = 'Just you. Saves to your browser.';
     if (sDesc) sDesc.textContent = 'Requires a free account to sync live.';
   }
 })();
-
-async function loadResumePanel(userId) {
-  try {
-    const sb = getSB(); if (!sb) return;
-    const { data, error } = await sb
-      .from('checklist_sessions')
-      .select('id, name, ticket_id, items, updated_at')
-      .eq('user_id', userId)
-      .eq('session_type', 'personal')
-      .order('updated_at', { ascending: false })
-      .limit(1);
-    if (error || !data?.length) return;
-    const last = data[0];
-    const items = Array.isArray(last.items) ? last.items : [];
-    const incomplete = items.filter(i => !i.outcome || i.outcome === '').length;
-    if (incomplete === 0 || items.length === 0) return;
-    const panel = document.getElementById('resumePanel'); if (!panel) return;
-    const date = new Date(last.updated_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    document.getElementById('resumeTitle').textContent = last.name || last.ticket_id || 'Untitled checklist';
-    document.getElementById('resumeMeta').textContent = `${incomplete} of ${items.length} item${items.length!==1?'s':''} remaining · ${date}`;
-    panel.style.display = 'block';
-    panel.dataset.sessionId = last.id;
-  } catch(e) {}
-}
-function resumeLastSession() {
-  const id = document.getElementById('resumePanel')?.dataset.sessionId;
-  if (id) location.href = '/history.html?session=' + id;
-}
-function dismissResume() {
-  const p = document.getElementById('resumePanel');
-  if (p) { p.style.display = 'none'; p.dataset.sessionId = ''; }
-}
 </script>
 
 <!-- Leave session confirmation modal -->
