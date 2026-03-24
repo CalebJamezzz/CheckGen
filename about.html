@@ -396,6 +396,16 @@
   else setTimeout(initMarketingNav, 50);
 })();
 </script>
+
+<script>
+(function() {
+  var nav = document.querySelector('.nav');
+  if (!nav) return;
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('sticky', window.scrollY > 40);
+  }, { passive: true });
+})();
+</script>
 </body>
 </html>
   <!-- Open Graph / Social sharing -->
