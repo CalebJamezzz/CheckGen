@@ -144,7 +144,15 @@ async function startSession() {
     await joinSharedSession(); return;
   }
   if (sessionMode === 'shared') {
-    // Shared create — go to setup
+    // Shared sessions require an account — block guests here too
+    if (!_sess?.user) {
+      // Show the sign-up prompt and scroll to it
+      const sharedPanel = $('sharedPanel');
+      const anonView = document.getElementById('sharedAnonView');
+      if (sharedPanel) sharedPanel.classList.add('visible');
+      if (anonView) { anonView.style.display = 'block'; anonView.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return;
+    }
   }
   goTo(2);
   updateSummary();
