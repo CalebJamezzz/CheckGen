@@ -560,19 +560,27 @@ async function regenSection(section) {
   const ticket = $('ticketText').value.trim();
   if (!ticket) { showStatus('status3', 'Ticket text needed to regenerate.', 'error'); return; }
   const btn = document.querySelector(`.regen-btn[data-section="${CSS.escape(section)}"]`);
+  const groupCard = btn?.closest('.group-card');
   if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
+  if (groupCard) groupCard.classList.add('regen-loading');
   const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}`;
   try {
     const newItems = await callClaude(prompt, 1200);
-    const maxId    = Math.max(...currentChecklist.map(i => i.id), 0);
-    currentChecklist = [
-      ...currentChecklist.filter(i => i.section !== section),
-      ...newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' })),
-    ];
+    const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
+    const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
+    // Preserve original section order rather than appending to end
+    const sectionOrder = [...new Set(currentChecklist.map(i => i.section))];
+    const withoutSection = currentChecklist.filter(i => i.section !== section);
+    currentChecklist = sectionOrder.flatMap(s =>
+      s === section ? newMapped : withoutSection.filter(i => i.section === s)
+    );
     renderChecklist(); updateProgress(); saveSession();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
   } catch(err) { showStatus('status3', 'Regenerate failed: ' + err.message, 'error'); }
-  finally { if (btn) { btn.textContent = '↺ regen'; btn.classList.remove('loading'); btn.disabled = false; } }
+  finally {
+    if (btn) { btn.textContent = '↺ regen'; btn.classList.remove('loading'); btn.disabled = false; }
+    if (groupCard) groupCard.classList.remove('regen-loading');
+  }
 }
 
 /* ── Item actions ───────────────────────────────────────── */
@@ -603,9 +611,7 @@ function setOutcome(id, outcome) {
     });
     // Update markedBy label
     const byEl = row.querySelector('.marked-by');
-    if (byEl) {
-      byEl.style.display = (sessionMode === 'shared' && item.markedBy) ? 'inline' : 'none';
-    }
+    if (byEl) byEl.textContent = (sessionMode === 'shared' && item.markedBy) ? item.markedBy : '';
   }
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
@@ -681,9 +687,11 @@ function renderChecklist() {
                   </div>
                 </div>
                 <div class="outcome-btns">
-                  <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
-                  <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  <div class="ob-row">
+                    <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
+                    <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
+                    <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  </div>
                   <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
@@ -776,8 +784,20 @@ async function syncRemote() {
   try {
     const rows = await sbGet('checklist_sessions', 'id', sharedSessionId);
     if (!rows.length) return;
+    const remoteItems = rows[0].items || [];
     const rm = {};
-    rows[0].items?.forEach(i => rm[i.id] = i);
+    remoteItems.forEach(i => rm[i.id] = i);
+    // Detect structural changes (regen creates new item IDs)
+    const localIds  = new Set(currentChecklist.map(i => i.id));
+    const remoteIds = new Set(remoteItems.map(i => i.id));
+    const hasStructuralChange =
+      [...remoteIds].some(id => !localIds.has(id)) ||
+      [...localIds].some(id => !remoteIds.has(id));
+    if (hasStructuralChange) {
+      currentChecklist = remoteItems.map(i => ({ ...i }));
+      renderChecklist(); updateProgress();
+      return;
+    }
     let changed = false;
     currentChecklist.forEach(item => {
       const r = rm[item.id];
@@ -1240,6 +1260,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const joinParam = new URLSearchParams(location.search).get('join');
   if (joinParam && joinParam.length === 6) {
     (async () => {
+      // Hide content immediately to prevent flash before auth check resolves
+      document.body.style.visibility = 'hidden';
       // Require auth — guests must log in first
       const _jpSess = await getSession().catch(() => null);
       if (!_jpSess?.user) {
@@ -1247,6 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
         location.href = '/login?returnTo=' + encodeURIComponent('/app/?join=' + joinParam.toUpperCase());
         return;
       }
+      document.body.style.visibility = '';
       // Signed in — pre-fill join code
       setMode('join');
       const jc = $('joinCode');
