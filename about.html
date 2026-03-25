@@ -23,8 +23,8 @@
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
 
+<header class="site-header">
   <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
@@ -34,6 +34,9 @@
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
+</header>
+<div class="shell" style="padding-top:var(--sp-6);padding-bottom:var(--sp-16)">
+
   <main id="main-content">
 
   <!-- Intro -->
@@ -295,23 +298,6 @@
   </div>
 </footer>
 
-<script>
-(function() {
-  var nav = document.querySelector('.nav');
-  var shell = document.querySelector('.shell');
-  if (!nav) return;
-  var sticky = false;
-  window.addEventListener('scroll', function() {
-    if (window.scrollY > 60 && !sticky) {
-      sticky = true; nav.classList.add('sticky');
-      if (shell) shell.classList.add('nav-offset');
-    } else if (window.scrollY <= 60 && sticky) {
-      sticky = false; nav.classList.remove('sticky');
-      if (shell) shell.classList.remove('nav-offset');
-    }
-  }, { passive: true });
-})();
-</script>
 <script src="/js/supabase.js"></script>
 <script>
 /* Marketing nav — profile avatar */
@@ -411,6 +397,16 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMarketingNav);
   else setTimeout(initMarketingNav, 50);
+})();
+</script>
+
+<script>
+(function() {
+  var header = document.querySelector('.site-header');
+  if (!header) return;
+  window.addEventListener('scroll', function() {
+    header.classList.toggle('sticky', window.scrollY > 40);
+  }, { passive: true });
 })();
 </script>
 </body>

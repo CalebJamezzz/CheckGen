@@ -45,8 +45,8 @@
 <body>
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-<div class="shell" style="padding-top:var(--sp-6)">
 
+<header class="site-header">
   <nav class="nav" aria-label="Main navigation">
     <a href="/" class="nav-logo">Check<span>Gen</span></a>
     <div style="display:flex;gap:var(--sp-5);align-items:center">
@@ -56,6 +56,9 @@
       <a href="/app/" class="btn btn-primary" style="font-size:clamp(11px,.75vw,13px);padding:8px 16px">Open App →</a>
     </div>
   </nav>
+</header>
+<div class="shell" style="padding-top:var(--sp-6)">
+
   <main id="main-content">
 
   <!-- Contact -->
@@ -82,6 +85,27 @@
     <p class="eyebrow" style="margin-bottom:var(--sp-3)">Changelog</p>
     <h2 style="font-size:clamp(1.8rem,3vw,3rem);margin-bottom:var(--sp-3);color:var(--text)">What's new.</h2>
     <p style="font-size:clamp(14px,.95vw,16px);color:var(--dim);margin-bottom:var(--sp-10);max-width:480px;line-height:1.7">Every update, improvement, and fix to CheckGen.</p>
+
+    <div class="changelog-entry">
+      <div>
+        <div class="changelog-date">March 2026</div>
+        <span class="changelog-tag fix">Fix</span>
+        <div class="changelog-version">v2.1</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Shared sessions &amp; team fixes</h2>
+        <p>A round of fixes across shared sessions, the team page, and general reliability.</p>
+        <ul>
+          <li><strong>Regen stays in place</strong> — Regenerating a section no longer moves it to the bottom of the checklist.</li>
+          <li><strong>Regen loading indicator</strong> — The section being regenerated now shows a visual loading state while the AI runs.</li>
+          <li><strong>Shared session syncs regen</strong> — When one user regenerates a section, the other user's checklist updates automatically.</li>
+          <li><strong>Shared sessions reopen correctly</strong> — Reopening a shared session from history now reconnects live sync properly.</li>
+          <li><strong>Team history is now clickable</strong> — Sessions in team history open directly in the app.</li>
+          <li><strong>Invite modal fixes</strong> — Fixed a double outline on the email field and the role dropdown now displays fully.</li>
+          <li><strong>Who marked what</strong> — Improved placement and styling of the name shown next to Pass/Fail/Blocked outcomes in shared sessions.</li>
+        </ul>
+      </div>
+    </div>
 
     <div class="changelog-entry">
       <div>
@@ -226,23 +250,6 @@
   </div>
 </footer>
 
-<script>
-(function() {
-  var nav = document.querySelector('.nav');
-  var shell = document.querySelector('.shell');
-  if (!nav) return;
-  var sticky = false;
-  window.addEventListener('scroll', function() {
-    if (window.scrollY > 60 && !sticky) {
-      sticky = true; nav.classList.add('sticky');
-      if (shell) shell.classList.add('nav-offset');
-    } else if (window.scrollY <= 60 && sticky) {
-      sticky = false; nav.classList.remove('sticky');
-      if (shell) shell.classList.remove('nav-offset');
-    }
-  }, { passive: true });
-})();
-</script>
 <script src="/js/supabase.js"></script>
 <script>
 /* Marketing nav — profile avatar */
@@ -342,6 +349,16 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMarketingNav);
   else setTimeout(initMarketingNav, 50);
+})();
+</script>
+
+<script>
+(function() {
+  var header = document.querySelector('.site-header');
+  if (!header) return;
+  window.addEventListener('scroll', function() {
+    header.classList.toggle('sticky', window.scrollY > 40);
+  }, { passive: true });
 })();
 </script>
 </body>

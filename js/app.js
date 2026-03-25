@@ -8,6 +8,7 @@ let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
 let _currentUserName = null; // set when session starts, used for markedBy
+let _pendingBackToSetup = false;
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -35,14 +36,34 @@ function goTo(n) {
 }
 
 function backToSetup() {
+  const modal = document.getElementById('backToSetupModal');
+  if (!modal) { _doBackToSetup(); return; }
   const actioned = currentChecklist.filter(i => i.outcome || i.note).length;
-  if (actioned > 0) {
-    if (!confirm(
-      actioned + ' item' + (actioned === 1 ? '' : 's') + ' ha' + (actioned === 1 ? 's' : 've') +
-      ' outcomes or notes. Going back and regenerating will replace this checklist. Continue?'
-    )) return;
+  const countEl = document.getElementById('backToSetupCount');
+  if (countEl) {
+    countEl.textContent = actioned > 0
+      ? actioned + ' item' + (actioned === 1 ? '' : 's') + ' with outcomes or notes'
+      : 'Your generated checklist';
   }
+  _pendingBackToSetup = true;
+  modal.style.display = 'flex';
+}
+
+function _doBackToSetup() {
+  _pendingBackToSetup = false;
+  currentChecklist = [];
+  _cloudSaveId = null;
   goTo(2);
+}
+
+function backToSetupConfirm() {
+  document.getElementById('backToSetupModal').style.display = 'none';
+  _doBackToSetup();
+}
+
+function backToSetupCancel() {
+  _pendingBackToSetup = false;
+  document.getElementById('backToSetupModal').style.display = 'none';
 }
 
 /* ── Screen 1 — Session mode ────────────────────────────── */
@@ -61,17 +82,18 @@ function setMode(mode) {
   if (mode === 'personal') {
     // nothing extra
   } else if (mode === 'join') {
-    // Join panel — visible for everyone
-    if (joinPanel) joinPanel.classList.add('visible');
-    // Auto-fill name if signed in
+    // Join panel — requires auth; redirect guests to login
     (async () => {
       const s = await getSession().catch(() => null);
-      if (s?.user) {
-        const un = $('userName');
-        if (un && !un.value) {
-          const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
-          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
-        }
+      if (!s?.user) {
+        location.href = '/login?returnTo=' + encodeURIComponent(location.href);
+        return;
+      }
+      if (joinPanel) joinPanel.classList.add('visible');
+      const un = $('userName');
+      if (un && !un.value) {
+        const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
+        un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
       }
     })();
   } else if (mode === 'shared') {
@@ -121,7 +143,15 @@ async function startSession() {
     await joinSharedSession(); return;
   }
   if (sessionMode === 'shared') {
-    // Shared create — go to setup
+    // Shared sessions require an account — block guests here too
+    if (!_sess?.user) {
+      // Show the sign-up prompt and scroll to it
+      const sharedPanel = $('sharedPanel');
+      const anonView = document.getElementById('sharedAnonView');
+      if (sharedPanel) sharedPanel.classList.add('visible');
+      if (anonView) { anonView.style.display = 'block'; anonView.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return;
+    }
   }
   goTo(2);
   updateSummary();
@@ -173,7 +203,9 @@ function updateLatestHistory() {
   } catch(e) {}
 }
 
-function loadHistory() {
+async function loadHistory() {
+  const s = await getSession().catch(() => null);
+  if (s?.user) return; // signed-in users use cloud History page
   try {
     const hist = JSON.parse(localStorage.getItem(HSK) || '[]');
     const section = $('historySection');
@@ -528,19 +560,27 @@ async function regenSection(section) {
   const ticket = $('ticketText').value.trim();
   if (!ticket) { showStatus('status3', 'Ticket text needed to regenerate.', 'error'); return; }
   const btn = document.querySelector(`.regen-btn[data-section="${CSS.escape(section)}"]`);
-  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  const groupCard = btn?.closest('.group-card');
+  if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
+  if (groupCard) groupCard.classList.add('regen-loading');
   const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}`;
   try {
     const newItems = await callClaude(prompt, 1200);
-    const maxId    = Math.max(...currentChecklist.map(i => i.id), 0);
-    currentChecklist = [
-      ...currentChecklist.filter(i => i.section !== section),
-      ...newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' })),
-    ];
+    const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
+    const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
+    // Preserve original section order rather than appending to end
+    const sectionOrder = [...new Set(currentChecklist.map(i => i.section))];
+    const withoutSection = currentChecklist.filter(i => i.section !== section);
+    currentChecklist = sectionOrder.flatMap(s =>
+      s === section ? newMapped : withoutSection.filter(i => i.section === s)
+    );
     renderChecklist(); updateProgress(); saveSession();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
   } catch(err) { showStatus('status3', 'Regenerate failed: ' + err.message, 'error'); }
-  finally { if (btn) { btn.textContent = '↺ regen'; btn.disabled = false; } }
+  finally {
+    if (btn) { btn.textContent = '↺ regen'; btn.classList.remove('loading'); btn.disabled = false; }
+    if (groupCard) groupCard.classList.remove('regen-loading');
+  }
 }
 
 /* ── Item actions ───────────────────────────────────────── */
@@ -571,9 +611,7 @@ function setOutcome(id, outcome) {
     });
     // Update markedBy label
     const byEl = row.querySelector('.marked-by');
-    if (byEl) {
-      byEl.style.display = (sessionMode === 'shared' && item.markedBy) ? 'inline' : 'none';
-    }
+    if (byEl) byEl.textContent = (sessionMode === 'shared' && item.markedBy) ? item.markedBy : '';
   }
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
@@ -649,9 +687,11 @@ function renderChecklist() {
                   </div>
                 </div>
                 <div class="outcome-btns">
-                  <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
-                  <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                  <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  <div class="ob-row">
+                    <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
+                    <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
+                    <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                  </div>
                   <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
@@ -744,13 +784,25 @@ async function syncRemote() {
   try {
     const rows = await sbGet('checklist_sessions', 'id', sharedSessionId);
     if (!rows.length) return;
+    const remoteItems = rows[0].items || [];
     const rm = {};
-    rows[0].items?.forEach(i => rm[i.id] = i);
+    remoteItems.forEach(i => rm[i.id] = i);
+    // Detect structural changes (regen creates new item IDs)
+    const localIds  = new Set(currentChecklist.map(i => i.id));
+    const remoteIds = new Set(remoteItems.map(i => i.id));
+    const hasStructuralChange =
+      [...remoteIds].some(id => !localIds.has(id)) ||
+      [...localIds].some(id => !remoteIds.has(id));
+    if (hasStructuralChange) {
+      currentChecklist = remoteItems.map(i => ({ ...i }));
+      renderChecklist(); updateProgress();
+      return;
+    }
     let changed = false;
     currentChecklist.forEach(item => {
       const r = rm[item.id];
-      if (r && (r.outcome !== item.outcome || (r.note || '') !== (item.note || ''))) {
-        item.outcome = r.outcome; item.note = r.note || ''; changed = true;
+      if (r && (r.outcome !== item.outcome || (r.note || '') !== (item.note || '') || r.markedBy !== item.markedBy)) {
+        item.outcome = r.outcome; item.note = r.note || ''; item.markedBy = r.markedBy || null; changed = true;
       }
     });
     if (changed) { renderChecklist(); updateProgress(); }
@@ -761,6 +813,15 @@ function startPolling() { if (pollTimer) clearInterval(pollTimer); pollTimer = s
 function stopPolling()  { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 async function joinSharedSession() {
+  // Shared sessions require an account
+  const _joinSess = await getSession().catch(() => null);
+  if (!_joinSess?.user) {
+    // Store the join code so signup/login can redirect back
+    const code = $('joinCode')?.value?.trim().toUpperCase();
+    if (code) sessionStorage.setItem('cg_join_code', code);
+    location.href = '/signup.html?returnTo=' + encodeURIComponent(location.href);
+    return;
+  }
   const code = $('joinCode').value.trim().toUpperCase();
   if (code.length !== 6) { alert('Enter a valid 6-character code.'); return; }
   const name = $('userName').value.trim();
@@ -1020,6 +1081,76 @@ function initLeaveGuard() {
 }
 
 
+/* ── Resume panel ───────────────────────────────────────── */
+let _resumeSession = null; // stores the last incomplete cloud session for resuming
+
+async function initResumePanel() {
+  const panel = $('resumePanel');
+  if (!panel) return;
+  try {
+    const s = await getSession().catch(() => null);
+    if (!s?.user) return;
+    const sb = getSB(); if (!sb) return;
+
+    // Get the most recent personal session that has incomplete items
+    const { data } = await sb
+      .from('checklist_sessions')
+      .select('id, name, ticket_id, environment, items, updated_at, session_type')
+      .eq('user_id', s.user.id)
+      .eq('session_type', 'personal')
+      .order('updated_at', { ascending: false })
+      .limit(5);
+
+    if (!data?.length) return;
+
+    // Find first session with at least one unactioned item
+    const incomplete = data.find(sess => {
+      const items = Array.isArray(sess.items) ? sess.items : [];
+      return items.length > 0 && items.some(i => !i.outcome);
+    });
+    if (!incomplete) return;
+
+    _resumeSession = incomplete;
+    const items = Array.isArray(incomplete.items) ? incomplete.items : [];
+    const remaining = items.filter(i => !i.outcome).length;
+    const label = incomplete.name || incomplete.ticket_id || 'Last session';
+    const ago = incomplete.updated_at
+      ? (() => {
+          const mins = Math.round((Date.now() - new Date(incomplete.updated_at)) / 60000);
+          return mins < 60 ? mins + 'm ago' : Math.round(mins/60) + 'h ago';
+        })()
+      : '';
+
+    const metaEl = $('resumeMeta');
+    if (metaEl) metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+    const nameEl = $('resumeTitle');
+    if (nameEl) nameEl.textContent = label;
+
+    panel.style.display = 'block';
+  } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }
+}
+
+
+function dismissResume() {
+  _resumeSession = null;
+  const panel = $('resumePanel');
+  if (panel) panel.style.display = 'none';
+}
+
+function resumeLastSession() {
+  if (!_resumeSession) return;
+  const sess = _resumeSession;
+  currentChecklist = Array.isArray(sess.items) ? sess.items : [];
+  if (sess.name)        { const el = $('checklistName'); if (el) el.value = sess.name; }
+  if (sess.ticket_id)   { const el = $('ticketId');      if (el) el.value = sess.ticket_id; }
+  if (sess.environment) { const el = $('envBranch');     if (el) el.value = sess.environment; }
+  _cloudSaveId = sess.id; // updates this row on future saves
+  goTo(3);
+  renderChecklist(); updateProgress(); updateTimeSummary();
+  $('exportBar').style.display = '';
+}
+
+
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   // Restore saved name
@@ -1084,7 +1215,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
       // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
       if (_r.id) _cloudSaveId = _r.id;
-      if (_r.session_type === 'team') sessionMode = 'shared';
+      if (_r.session_type === 'team') {
+        sessionMode = 'shared';
+        // Reconnect live-sync by looking up the session via its share code.
+        // Owner rows store the code in `code`; joiner personal-copies store it in `share_code`.
+        const _shareCode = _r.code || _r.share_code || null;
+        if (_shareCode) {
+          (async () => {
+            try {
+              const _rows = await sbGet('checklist_sessions', 'code', _shareCode);
+              if (_rows.length) {
+                sharedSessionId = _rows[0].id;
+                sharedCode      = _shareCode;
+                showShareBadge();
+                startPolling();
+              }
+            } catch(e) {}
+          })();
+        }
+      }
       if (currentChecklist.length) {
         goTo(3);
         renderChecklist(); updateProgress(); updateTimeSummary();
@@ -1093,7 +1242,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }
 
-  loadHistory();
+  // Show Recent Checklists only for guests (signed-in users use cloud History page)
+  (async () => {
+    const s = await getSession().catch(() => null);
+    if (s?.user) {
+      // Signed-in: hide local history section, init resume panel instead
+      const section = $('historySection');
+      if (section) section.style.display = 'none';
+      await initResumePanel();
+    } else {
+      // Guest: show local history
+      loadHistory();
+    }
+  })();
   updateSummary();
 
   // Handle ?mode=shared (from team history page)
@@ -1103,27 +1264,44 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => setMode('shared'), 300);
   }
 
+  // Restore join code if user just signed up/in via the join flow
+  const _savedJoinCode = sessionStorage.getItem('cg_join_code');
+  if (_savedJoinCode) {
+    sessionStorage.removeItem('cg_join_code');
+    setMode('join');
+    const jc = $('joinCode');
+    if (jc) jc.value = _savedJoinCode;
+    setTimeout(() => showStatus('status1', 'Signed in — click Start Session to join.', 'success'), 400);
+  }
+
   // Auto-join from ?join=CODE URL param (from session invite email)
   const joinParam = new URLSearchParams(location.search).get('join');
   if (joinParam && joinParam.length === 6) {
-    // Pre-fill join code and switch to shared join mode
-    setMode('join');
-    const jc = $('joinCode');
-    if (jc) { jc.value = joinParam.toUpperCase(); }
-    // Auto-trigger join after a short delay (let page settle)
-    setTimeout(async () => {
-      const s = await getSession().catch(() => null);
-      if (s?.user) {
-        // Auto-fill name from profile
+    (async () => {
+      // Hide content immediately to prevent flash before auth check resolves
+      document.body.style.visibility = 'hidden';
+      // Require auth — guests must log in first
+      const _jpSess = await getSession().catch(() => null);
+      if (!_jpSess?.user) {
+        sessionStorage.setItem('cg_join_code', joinParam.toUpperCase());
+        location.href = '/login?returnTo=' + encodeURIComponent('/app/?join=' + joinParam.toUpperCase());
+        return;
+      }
+      document.body.style.visibility = '';
+      // Signed in — pre-fill join code
+      setMode('join');
+      const jc = $('joinCode');
+      if (jc) jc.value = joinParam.toUpperCase();
+      // Auto-fill name + hint after settle
+      setTimeout(async () => {
         const p = typeof getProfile === 'function' ? await getProfile().catch(() => null) : null;
         const un = $('userName');
         if (un && !un.value) {
-          un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
+          un.value = p?.name || _jpSess.user.user_metadata?.name || _jpSess.user.email?.split('@')[0] || '';
         }
-      }
-      // Show a hint
-      showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
-    }, 400);
+        showStatus('status1', 'Session code pre-filled — click Start Session to join.', 'success');
+      }, 400);
+    })();
   }
 
   // Show anon gate + hide join card for guests
