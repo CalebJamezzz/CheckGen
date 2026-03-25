@@ -55,29 +55,67 @@
         </div>
       </div>
 
-      <div class="label mb-3">How would you like to work?</div>
-      <div class="session-cards">
+      <div class="label" style="margin-bottom:var(--sp-3)">How would you like to work?</div>
+
+      <!-- Primary tiles: Personal + Shared -->
+      <div class="s1-primary-tiles">
         <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
-          <div class="card-icon">🔒</div>
-          <div class="card-label">Personal</div>
-          <div class="card-desc" id="personalDesc" style="color:var(--text);opacity:.72">Just you. Saved to your cloud history.</div>
+          <div class="s1-tile-icon">⊙</div>
+          <div>
+            <div class="card-label">Personal</div>
+            <div class="card-desc">Just for you — generate and track test cases saved to your cloud history.</div>
+          </div>
         </button>
-        <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button">
-          <div class="card-icon">👥</div>
-          <div class="card-label">Shared</div>
-          <div class="card-desc" id="sharedDesc" style="color:var(--text);opacity:.72">Create a live session with your team.</div>
-        </button>
-        <button class="session-card" id="cardJoin" onclick="setMode('join')" type="button">
-          <div class="card-icon" style="color:var(--green);font-size:22px;font-weight:700">↗</div>
-          <div class="card-label">Join</div>
-          <div class="card-desc" style="color:var(--text);opacity:.72">Enter a code to join an active session.</div>
+        <button class="session-card s1-card-shared" id="cardShared" onclick="setMode('shared')" type="button">
+          <div class="s1-tile-icon">⊕</div>
+          <div>
+            <div class="card-label">Shared</div>
+            <div class="card-desc">Create a live session your team can join and mark off together in real time.</div>
+          </div>
         </button>
       </div>
 
-      <!-- Join panel — always visible for all users -->
+      <!-- Join strip: secondary / compact -->
+      <button class="s1-join-strip" id="cardJoin" onclick="setMode('join')" type="button">
+        <span class="s1-join-icon">↗</span>
+        <div class="s1-join-copy">
+          <span class="s1-join-title">Join a Session</span>
+          <span class="s1-join-desc">Have a 6-character code? Jump into an active shared session.</span>
+        </div>
+        <span class="s1-join-chevron" id="joinChevron">›</span>
+      </button>
+
+      <!-- Shared panel (signed-in: email invite · anon: signup prompt) -->
+      <div class="shared-panel" id="sharedPanel">
+        <div id="sharedAnonView" style="display:none">
+          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3);line-height:1.6">
+            Shared sessions require a free account to invite teammates.
+          </p>
+          <div style="display:flex;gap:var(--sp-3)">
+            <a href="/signup.html" class="btn btn-primary btn-sm">Create free account</a>
+            <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
+          </div>
+        </div>
+        <div id="sharedAuthView" style="display:none">
+          <div class="field" style="margin-bottom:var(--sp-3)">
+            <label class="field-label">Invite teammates by email</label>
+            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
+              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
+                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
+                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
+            </div>
+            <div class="field-hint" style="margin-top:6px">Press Enter or comma after each email. Teammates will get an invite link.</div>
+          </div>
+          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
+            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
+            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Join panel: name + code (signed-in only) -->
       <div class="shared-panel" id="joinPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Join Session</div>
-        <div class="field">
+        <div class="field" style="margin-bottom:var(--sp-3)">
           <label class="field-label">Your Name</label>
           <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
           <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
@@ -91,77 +129,24 @@
         </div>
       </div>
 
-      <!-- Shared panel — signed-in users only -->
-      <div class="shared-panel" id="sharedPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-        <!-- Email invite for signed-in users -->
-        <div id="sharedAuthView" style="display:none">
-          <div class="field" style="margin-bottom:var(--sp-3)">
-            <label class="field-label">Invite teammates by email</label>
-            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
-              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
-                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
-                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
-            </div>
-            <div class="field-hint" style="margin-top:6px">Press Enter after each email. They'll get an invite link.</div>
-          </div>
-          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
-            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
-            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-          </div>
+      <!-- Session Details — optional, shown for personal + shared only -->
+      <div class="s1-session-details" id="sessionDetails">
+        <div class="s1-details-header">
+          <span class="label" style="margin:0;line-height:1">Session Details</span>
+          <span class="s2-badge s2-badge-optional">Optional</span>
         </div>
-        <!-- Guest: prompt to sign up -->
-        <div id="sharedAnonView" style="display:none">
-          <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3);line-height:1.6">
-            Shared sessions require a free account to invite teammates.
-          </p>
-          <div style="display:flex;gap:var(--sp-3)">
-            <a href="/signup.html" class="btn btn-primary btn-sm">Create free account</a>
-            <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
-          </div>
-        </div>
-      </div>
-
-
-
-      <div class="shared-panel" id="sharedPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-
-        <!-- Anonymous: show code-based join (no account needed) -->
-        <div id="sharedAnonView">
-          <div class="shared-sub-opts">
-            <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New</button>
-            <button class="sub-btn"        id="subJoin"  onclick="setSharedSub('join')"  type="button">↗ Join by Code</button>
+        <div class="s1-meta-grid">
+          <div class="field">
+            <label class="field-label">Ticket ID</label>
+            <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
           </div>
           <div class="field">
-            <label class="field-label">Your Name</label>
-            <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-            <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
+            <label class="field-label">Environment / Branch</label>
+            <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
           </div>
-          <div class="join-section" id="joinSection">
-            <label class="field-label" style="margin-bottom:7px">Session Code</label>
-            <div class="join-row">
-              <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
-              <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Signed-in: email invite flow -->
-        <div id="sharedAuthView" style="display:none">
-          <div class="field" style="margin-bottom:var(--sp-3)">
-            <label class="field-label">Invite teammates by email</label>
-            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
-              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
-                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
-                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
-            </div>
-            <div class="field-hint" style="margin-top:6px">Press Enter or comma after each email. Teammates will get an invite link.</div>
-          </div>
-          <!-- Also show team members as quick-add chips -->
-          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
-            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
-            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div class="field">
+            <label class="field-label">Checklist Name</label>
+            <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
           </div>
         </div>
       </div>
@@ -182,7 +167,7 @@
         <button class="btn btn-primary" id="startBtn" onclick="startSession()" type="button">Start Session →</button>
       </div>
 
-    <div class="status" id="status1" style="margin-top:var(--sp-3)"></div>
+      <div class="status" id="status1" style="margin-top:var(--sp-3)"></div>
     </div><!-- end screen1 -->
 
 
@@ -193,75 +178,70 @@
         <span class="eyebrow" style="margin-bottom:0">✦ Generate Checklist</span>
       </div>
 
-      <!-- 2-col: left = inputs, right = options + areas -->
-      <div class="s2-grid">
-
-        <!-- Left: Ticket + AC -->
-        <div class="panel" style="display:flex;flex-direction:column;gap:var(--sp-4)">
-          <div>
-            <div class="s2-field-label"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
-            <textarea id="ticketText" class="s2-ticket-area" style="margin-top:var(--sp-2)" placeholder="Paste your ticket, user story, or feature description here…
+      <!-- Ticket / User Story -->
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="s2-field-label" style="margin-bottom:var(--sp-2)"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
+        <textarea id="ticketText" class="s2-ticket-area" placeholder="Paste your ticket, user story, or feature description here…
 
 Example:
 As a manager, I can approve or reject expense reports submitted by my team."></textarea>
-            <div class="field-hint" style="margin-top:4px">The what and why — more context gives better results.</div>
-          </div>
-          <div>
-            <div class="s2-field-label"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
-            <textarea id="acText" class="s2-ac-area" style="margin-top:var(--sp-2)" placeholder="Paste your AC clauses, one per line.
+        <div class="field-hint" style="margin-top:4px">The what and why — more context gives better results.</div>
+      </div>
+
+      <!-- Acceptance Criteria -->
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="s2-field-label" style="margin-bottom:var(--sp-2)"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
+        <textarea id="acText" class="s2-ac-area" placeholder="Paste your AC clauses, one per line.
 
 Example:
 Only managers can see approve/reject buttons
 Approved reports trigger an email notification
 Rejected reports require a reason to be entered"></textarea>
-            <div class="field-hint" style="margin-top:4px">Each clause gets its own test coverage — nothing slips through.</div>
+        <div class="field-hint" style="margin-top:4px">Each clause gets its own test coverage — nothing slips through.</div>
+      </div>
+
+      <!-- Test Strategy + Output Format + Testing Areas -->
+      <div class="panel" style="margin-bottom:var(--sp-3)">
+        <div class="s2-options-row" style="margin-bottom:var(--sp-5)">
+          <div class="field">
+            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+              <span>Test Strategy</span>
+              <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
+            </div>
+            <select id="focusStyle" onchange="applyStrategyPreset()">
+              <option value="balanced" selected>Full Coverage</option>
+              <option value="smoke">Smoke Test</option>
+              <option value="edge">Deep Dive</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+              <span>Output Format</span>
+              <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
+            </div>
+            <select id="detailLevel">
+              <option value="expanded" selected>Detailed</option>
+              <option value="concise">Quick Checklist</option>
+            </select>
           </div>
         </div>
-
-        <!-- Right: Test Strategy + Output Format + Testing Areas -->
-        <div class="panel">
-          <div class="s2-options-row" style="margin-bottom:var(--sp-5)">
-            <div class="field">
-              <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
-                <span>Test Strategy</span>
-                <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
-              </div>
-              <select id="focusStyle" onchange="applyStrategyPreset()">
-                <option value="balanced" selected>Full Coverage</option>
-                <option value="smoke">Smoke Test</option>
-                <option value="edge">Deep Dive</option>
-              </select>
-            </div>
-            <div class="field">
-              <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
-                <span>Output Format</span>
-                <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
-              </div>
-              <select id="detailLevel">
-                <option value="expanded" selected>Detailed</option>
-                <option value="concise">Quick Checklist</option>
-              </select>
-            </div>
-          </div>
-          <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span></div>
-          <div class="area-grid">
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"         checked> Functional</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"         checked> Validation</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"        checked> Permissions</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI / Layout"        checked> UI / Layout</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data / Persistence" checked> Data / Persistence</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations"       checked> Integrations</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Error Handling"     checked> Error Handling</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"         checked> Edge Cases</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="WCAG"               checked> WCAG</label>
-            <label class="pill-check"><input type="checkbox" class="areaCheck" value="Performance"        checked> Performance</label>
-          </div>
+        <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span></div>
+        <div class="area-grid">
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"         checked> Functional</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"         checked> Validation</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"        checked> Permissions</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI / Layout"        checked> UI / Layout</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data / Persistence" checked> Data / Persistence</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations"       checked> Integrations</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Error Handling"     checked> Error Handling</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"         checked> Edge Cases</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="WCAG"               checked> WCAG</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Performance"        checked> Performance</label>
         </div>
-
       </div>
 
       <!-- Add-ons accordion -->
-      <div class="s2-accordion" style="margin-bottom:var(--sp-3)">
+      <div class="s2-accordion" style="margin-bottom:var(--sp-4)">
         <button class="s2-accordion-trigger" type="button" onclick="toggleAccordion('addons')">
           <span class="s2-accordion-name">Add-ons</span>
           <span class="s2-accordion-desc">Break-it scenarios, test data tables, cross-browser coverage</span>
@@ -272,31 +252,6 @@ Rejected reports require a reason to be entered"></textarea>
             <label class="pill-check s2-addon-check"><input type="checkbox" id="addonBreak"> Break-it</label>
             <label class="pill-check s2-addon-check"><input type="checkbox" id="addonTestData"> Test Data</label>
             <label class="pill-check s2-addon-check"><input type="checkbox" id="addonCrossBrowser"> Cross-Browser / Device</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Optional accordion -->
-      <div class="s2-accordion" style="margin-bottom:var(--sp-4)">
-        <button class="s2-accordion-trigger" type="button" onclick="toggleAccordion('optional')">
-          <span class="s2-accordion-name">Optional Details</span>
-          <span class="s2-accordion-desc">Ticket ID, environment, checklist name — adds context to your header</span>
-          <span class="s2-accordion-chevron" id="optionalChevron">›</span>
-        </button>
-        <div class="s2-accordion-body" id="optionalBody">
-          <div class="s2-meta-grid">
-            <div class="field">
-              <label class="field-label">Ticket ID</label>
-              <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
-            </div>
-            <div class="field">
-              <label class="field-label">Environment / Branch</label>
-              <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
-            </div>
-            <div class="field">
-              <label class="field-label">Checklist Name</label>
-              <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
-            </div>
           </div>
         </div>
       </div>

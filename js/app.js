@@ -71,7 +71,12 @@ function setMode(mode) {
   sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
   $('cardShared').classList.toggle('active', mode === 'shared');
-  if ($('cardJoin')) $('cardJoin').classList.toggle('active', mode === 'join');
+  const joinStrip = $('cardJoin');
+  if (joinStrip) joinStrip.classList.toggle('active', mode === 'join');
+
+  // Show/hide session details (optional fields) — not relevant for joining someone else's session
+  const sessionDetails = $('sessionDetails');
+  if (sessionDetails) sessionDetails.style.display = mode === 'join' ? 'none' : '';
 
   // Hide both panels first
   const sharedPanel = $('sharedPanel');
@@ -118,9 +123,9 @@ function setMode(mode) {
 
 function setSharedSub(sub) {
   sharedSub = sub;
-  $('subStart').classList.toggle('active', sub === 'start');
-  $('subJoin').classList.toggle('active', sub === 'join');
-  $('joinSection').classList.toggle('visible', sub === 'join');
+  $('subStart')?.classList.toggle('active', sub === 'start');
+  $('subJoin')?.classList.toggle('active', sub === 'join');
+  $('joinSection')?.classList.toggle('visible', sub === 'join');
   $('startBtn').textContent = sub === 'join' ? 'Join Session →' : 'Start Session →';
 }
 
