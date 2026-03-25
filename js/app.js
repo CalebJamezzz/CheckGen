@@ -315,7 +315,7 @@ function endSession() {
   sharedSessionId = null; sharedCode = null;
   currentChecklist = [];
   sessionMode = 'personal'; sharedSub = 'start';
-  ['ticketText','ticketId','checklistName','envBranch'].forEach(id => {
+  ['ticketText','acText','ticketId','checklistName','envBranch'].forEach(id => {
     const el = $(id); if (el) el.value = '';
   });
   $('detailLevel').value = 'expanded';
@@ -1165,6 +1165,39 @@ async function initResumePanel() {
     panel.style.display = 'block';
   } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }
 }
+
+
+/* ── Screen 2 helpers ───────────────────────────────────── */
+function toggleAccordion(id) {
+  const body    = document.getElementById(id + 'Body');
+  const chevron = document.getElementById(id + 'Chevron');
+  if (!body) return;
+  const opening = body.style.display === 'none' || body.style.display === '';
+  body.style.display = opening ? 'block' : 'none';
+  if (chevron) chevron.classList.toggle('open', opening);
+}
+
+function applyStrategyPreset() {
+  const strategy = $('focusStyle')?.value;
+  const presets = {
+    balanced: ['Functional','Validation','Permissions','UI / Layout','Data / Persistence','Integrations','Error Handling','Edge Cases','WCAG','Performance'],
+    smoke:    ['Functional','UI / Layout','Error Handling'],
+    edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling','Edge Cases','Integrations']
+  };
+  const selected = presets[strategy] || presets.balanced;
+  document.querySelectorAll('.areaCheck').forEach(cb => {
+    cb.checked = selected.includes(cb.value);
+  });
+  updateSummary();
+  // Show soft toast so user knows areas changed
+  const toast = $('presetToast');
+  if (toast) {
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+}
+
 
 
 function dismissResume() {
