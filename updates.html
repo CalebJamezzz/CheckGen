@@ -89,6 +89,49 @@
     <div class="changelog-entry">
       <div>
         <div class="changelog-date">March 2026</div>
+        <span class="changelog-tag fix">Fix</span>
+        <div class="changelog-version">v2.1</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Shared sessions, team workspace &amp; security fixes</h2>
+        <p>A focused patch addressing shared session reliability, team page issues, and a full security audit of the database layer.</p>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Shared Sessions</h3>
+        <ul>
+          <li><strong>Regen keeps section order</strong> — Regenerating a section no longer moves it to the bottom of the checklist.</li>
+          <li><strong>Regen loading state</strong> — The section being regenerated now dims and shows a pulsing indicator while the AI runs.</li>
+          <li><strong>Cross-user regen sync</strong> — When one user regenerates a section in a shared session, the other user's view now updates automatically on the next sync.</li>
+          <li><strong>Shared session restores correctly</strong> — Reopening a shared session from history now reconnects live sync, restores the share code badge, and resumes polling. Previously it loaded as a dead personal copy.</li>
+          <li><strong>Guest join flash fixed</strong> — Navigating to a session invite link as a guest no longer briefly flashes the app screen before redirecting to sign-in.</li>
+          <li><strong>Marked-by name placement</strong> — The name pill showing who marked an outcome is now positioned below the Pass/Fail/Blocked buttons with improved green styling.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Team Page</h3>
+        <ul>
+          <li><strong>Team history cards are now clickable</strong> — Selecting a session from team history opens it in the app, with live sync reconnecting if it was a shared session.</li>
+          <li><strong>Invite modal email field</strong> — Fixed double focus outline on the email input.</li>
+          <li><strong>Role dropdown displays fully</strong> — The role select in the invite modal now shows full option text without being clipped.</li>
+          <li><strong>Workspace self-healing</strong> — If a user's profile workspace reference is out of sync with their membership, the team page now detects and repairs it automatically.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Security &amp; Database</h3>
+        <ul>
+          <li><strong>View security</strong> — Removed <code style="font-family:var(--font-mono);font-size:.85em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">SECURITY DEFINER</code> from the workspace member details view and resolved the exposed auth users warning.</li>
+          <li><strong>RLS policy audit</strong> — Resolved a circular RLS dependency across profiles, workspace_members, and workspaces tables that was causing 500 errors. All three tables now have clean, non-recursive read policies.</li>
+          <li><strong>Function search path</strong> — Hardened <code style="font-family:var(--font-mono);font-size:.85em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">get_my_workspace_ids</code> and <code style="font-family:var(--font-mono);font-size:.85em;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">is_workspace_admin</code> against search path injection.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Polish</h3>
+        <ul>
+          <li><strong>Homepage card hover</strong> — "Sound familiar?" cards now use the same green border sweep hover as the rest of the site.</li>
+          <li><strong>AI generation quality</strong> — Updated system prompt teaches the model QA methodology: boundary values, state transitions, error recovery, and risk-based priority. Test steps now include expected outcomes in action → result format.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="changelog-entry">
+      <div>
+        <div class="changelog-date">March 2026</div>
         <span class="changelog-tag launch">Launch</span>
         <div class="changelog-version">v2.0</div>
       </div>
