@@ -123,7 +123,16 @@ const ROLE_ORDER = ['admin', 'moderator', 'user'];
 
 async function loadWorkspace() {
   const sb = getSB();
-  const wsId = _profile?.workspace_id;
+  let wsId = _profile?.workspace_id;
+
+  // Fall back to workspace_members if profile.workspace_id is out of sync
+  if (!wsId) {
+    const { data: mem } = await sb.from('workspace_members').select('workspace_id').eq('user_id', _user.id).limit(1).single();
+    wsId = mem?.workspace_id || null;
+    // Heal the profile so this doesn't happen again
+    if (wsId) await sb.from('profiles').update({ workspace_id: wsId }).eq('id', _user.id).catch(() => {});
+  }
+
   if (!wsId) { renderSetup(); return; }
 
   const { data: ws, error } = await sb.from('workspaces').select('*').eq('id', wsId).single();
