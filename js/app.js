@@ -1215,7 +1215,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
       // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
       if (_r.id) _cloudSaveId = _r.id;
-      if (_r.session_type === 'team') sessionMode = 'shared';
+      if (_r.session_type === 'team') {
+        sessionMode = 'shared';
+        // Reconnect live-sync by looking up the session via its share code.
+        // Owner rows store the code in `code`; joiner personal-copies store it in `share_code`.
+        const _shareCode = _r.code || _r.share_code || null;
+        if (_shareCode) {
+          (async () => {
+            try {
+              const _rows = await sbGet('checklist_sessions', 'code', _shareCode);
+              if (_rows.length) {
+                sharedSessionId = _rows[0].id;
+                sharedCode      = _shareCode;
+                showShareBadge();
+                startPolling();
+              }
+            } catch(e) {}
+          })();
+        }
+      }
       if (currentChecklist.length) {
         goTo(3);
         renderChecklist(); updateProgress(); updateTimeSummary();
