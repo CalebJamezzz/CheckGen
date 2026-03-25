@@ -193,57 +193,56 @@
         <span class="eyebrow" style="margin-bottom:0">✦ Generate Checklist</span>
       </div>
 
-      <!-- Ticket + AC — side by side -->
-      <div class="s2-inputs-row">
-        <div>
-          <div class="s2-field-label"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
-          <textarea id="ticketText" style="margin-top:var(--sp-2)" placeholder="Paste your ticket, user story, or feature description here…
+      <!-- 2-col: left = inputs, right = options + areas -->
+      <div class="s2-grid">
+
+        <!-- Left: Ticket + AC -->
+        <div class="panel" style="display:flex;flex-direction:column;gap:var(--sp-4)">
+          <div>
+            <div class="s2-field-label"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
+            <textarea id="ticketText" class="s2-ticket-area" style="margin-top:var(--sp-2)" placeholder="Paste your ticket, user story, or feature description here…
 
 Example:
 As a manager, I can approve or reject expense reports submitted by my team."></textarea>
-          <div class="field-hint" style="margin-top:4px">The what and why — more context gives better results.</div>
-        </div>
-        <div>
-          <div class="s2-field-label"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
-          <textarea id="acText" style="margin-top:var(--sp-2)" placeholder="Paste your AC clauses, one per line.
+            <div class="field-hint" style="margin-top:4px">The what and why — more context gives better results.</div>
+          </div>
+          <div>
+            <div class="s2-field-label"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
+            <textarea id="acText" class="s2-ac-area" style="margin-top:var(--sp-2)" placeholder="Paste your AC clauses, one per line.
 
 Example:
 Only managers can see approve/reject buttons
 Approved reports trigger an email notification
 Rejected reports require a reason to be entered"></textarea>
-          <div class="field-hint" style="margin-top:4px">Each clause gets its own test coverage — nothing slips through.</div>
-        </div>
-      </div>
-
-      <!-- Options + Testing Areas -->
-      <div class="panel" style="margin-bottom:var(--sp-3)">
-        <!-- Test Strategy + Output Format -->
-        <div class="s2-options-row">
-          <div class="field">
-            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
-              <span>Test Strategy</span>
-              <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
-            </div>
-            <select id="focusStyle" onchange="applyStrategyPreset()">
-              <option value="balanced" selected>Full Coverage</option>
-              <option value="smoke">Smoke Test</option>
-              <option value="edge">Deep Dive</option>
-            </select>
-          </div>
-          <div class="field">
-            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
-              <span>Output Format</span>
-              <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
-            </div>
-            <select id="detailLevel">
-              <option value="expanded" selected>Detailed</option>
-              <option value="concise">Quick Checklist</option>
-            </select>
+            <div class="field-hint" style="margin-top:4px">Each clause gets its own test coverage — nothing slips through.</div>
           </div>
         </div>
 
-        <!-- Testing Areas -->
-        <div style="margin-top:var(--sp-5)">
+        <!-- Right: Test Strategy + Output Format + Testing Areas -->
+        <div class="panel">
+          <div class="s2-options-row" style="margin-bottom:var(--sp-5)">
+            <div class="field">
+              <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+                <span>Test Strategy</span>
+                <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
+              </div>
+              <select id="focusStyle" onchange="applyStrategyPreset()">
+                <option value="balanced" selected>Full Coverage</option>
+                <option value="smoke">Smoke Test</option>
+                <option value="edge">Deep Dive</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+                <span>Output Format</span>
+                <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
+              </div>
+              <select id="detailLevel">
+                <option value="expanded" selected>Detailed</option>
+                <option value="concise">Quick Checklist</option>
+              </select>
+            </div>
+          </div>
           <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span></div>
           <div class="area-grid">
             <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"         checked> Functional</label>
@@ -258,6 +257,7 @@ Rejected reports require a reason to be entered"></textarea>
             <label class="pill-check"><input type="checkbox" class="areaCheck" value="Performance"        checked> Performance</label>
           </div>
         </div>
+
       </div>
 
       <!-- Add-ons accordion -->
