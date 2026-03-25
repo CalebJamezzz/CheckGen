@@ -188,96 +188,113 @@
 
     <!-- ═══════════ SCREEN 2 — Setup ═══════════ -->
     <div class="screen" id="screen2">
-      <div class="flex items-center justify-between mb-5">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5)">
         <button class="back-link" onclick="goTo(1)" type="button">← Back</button>
-        <span class="eyebrow" style="margin-bottom:0">✦ Ticket / AC &amp; Options</span>
+        <span class="eyebrow" style="margin-bottom:0">✦ Generate Checklist</span>
       </div>
 
-      <div class="setup-grid" style="display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-4);margin-bottom:var(--sp-4);align-items:stretch">
-        <div class="panel" style="display:flex;flex-direction:column">
-          <div class="section-title">Ticket / AC</div>
-          <div class="field" style="flex:1;display:flex;flex-direction:column">
-            <textarea id="ticketText" style="flex:1;min-height:220px" placeholder="Paste your ticket, acceptance criteria, or user story here…
+      <!-- Main grid: left inputs + right options -->
+      <div class="s2-grid">
+
+        <!-- Left: ticket + AC -->
+        <div class="panel" style="display:flex;flex-direction:column;gap:var(--sp-5)">
+          <div>
+            <div class="s2-field-label"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
+            <textarea id="ticketText" style="min-height:160px;margin-top:var(--sp-2)" placeholder="Paste your ticket, user story, or feature description here…
 
 Example:
-As a manager, I can approve or reject expense reports submitted by my team.
-AC: Only managers see approve/reject buttons. Approved reports trigger a notification. Rejected reports require a reason."></textarea>
-            <div class="field-hint" style="color:var(--soft)">Full AC works best. Short feature notes work too.</div>
+As a manager, I can approve or reject expense reports submitted by my team."></textarea>
+            <div class="field-hint" style="margin-top:4px">The what and why. More context gives better results.</div>
+          </div>
+          <div>
+            <div class="s2-field-label"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
+            <textarea id="acText" style="min-height:120px;margin-top:var(--sp-2)" placeholder="Paste your AC clauses, one per line.
+
+Example:
+Only managers can see approve/reject buttons
+Approved reports trigger an email notification
+Rejected reports require a reason to be entered"></textarea>
+            <div class="field-hint" style="margin-top:4px">Each clause gets direct test coverage — nothing slips through.</div>
           </div>
         </div>
 
+        <!-- Right: required options + add-ons -->
         <div class="panel">
-          <div class="section-title">Options</div>
-          <div class="grid-2">
+          <div class="s2-field-label" style="margin-bottom:var(--sp-4)"><span>Options</span><span class="s2-badge s2-badge-required">Required</span></div>
+
+          <div class="grid-2" style="margin-bottom:var(--sp-1)">
             <div class="field">
-              <label class="field-label">Ticket ID</label>
-              <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
-            </div>
-            <div class="field">
-              <label class="field-label">Environment / Branch</label>
-              <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label class="field-label">Checklist Name</label>
-              <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
-            </div>
-            <div class="field">
-              <label class="field-label">Detail Level</label>
-              <select id="detailLevel">
-                <option value="expanded" selected>Expanded</option>
-                <option value="concise">Concise</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label class="field-label">Focus Style</label>
+              <label class="field-label">Test Strategy</label>
               <select id="focusStyle">
-                <option value="balanced" selected>Balanced</option>
-                <option value="smoke">Smoke-heavy</option>
-                <option value="edge">Edge-heavy</option>
+                <option value="balanced" selected>Full Coverage</option>
+                <option value="smoke">Smoke Test</option>
+                <option value="edge">Deep Dive</option>
               </select>
+              <div class="field-hint" style="margin-top:5px">Full Coverage: all areas · Smoke: core flows · Deep Dive: edge cases &amp; errors first</div>
             </div>
             <div class="field">
-              <label class="field-label">CSV Export Filter</label>
-              <select id="exportCsvMode">
-                <option value="all" selected>All items</option>
-                <option value="open">No outcome yet</option>
-                <option value="done">Has outcome</option>
+              <label class="field-label">Output Format</label>
+              <select id="detailLevel">
+                <option value="expanded" selected>Detailed</option>
+                <option value="concise">Quick Checklist</option>
               </select>
+              <div class="field-hint" style="margin-top:5px">Detailed: action + expected outcome · Quick: short scannable one-liners</div>
             </div>
           </div>
-          <div class="field">
+
+          <div class="field" style="margin-top:var(--sp-4)">
             <label class="field-label">Testing Areas</label>
-            <div class="area-grid">
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"   checked> Functional</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"   checked> Validation</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"  checked> Permissions</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI"           checked> UI / Layout</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data"         checked> Data / Persistence</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations" checked> Integrations</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Errors"       checked> Error Handling</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"   checked> Edge Cases</label>
+            <div class="area-grid" style="margin-top:var(--sp-2)">
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"        checked> Functional</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"        checked> Validation</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"       checked> Permissions</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI / Layout"       checked> UI / Layout</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data / Persistence" checked> Data / Persistence</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations"      checked> Integrations</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Error Handling"    checked> Error Handling</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"        checked> Edge Cases</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="WCAG"> WCAG</label>
+              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Performance"> Performance</label>
             </div>
           </div>
+
+          <div class="s2-addons-header">
+            <span class="field-label" style="margin:0">Add-ons</span>
+            <span class="field-hint" style="margin:0">Extra test cases layered on top of your selected areas</span>
+          </div>
+          <div class="area-grid s2-addon-grid">
+            <label class="pill-check s2-addon-check"><input type="checkbox" id="addonBreak"> Break-it</label>
+            <label class="pill-check s2-addon-check"><input type="checkbox" id="addonTestData"> Test Data</label>
+            <label class="pill-check s2-addon-check"><input type="checkbox" id="addonCrossBrowser"> Cross-Browser / Device</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional metadata strip -->
+      <div class="s2-optional-strip">
+        <div class="s2-optional-label">Optional — adds context to your checklist header</div>
+        <div class="s2-meta-grid">
           <div class="field">
-            <label class="field-label">Additions</label>
-            <div class="area-grid">
-              <label class="pill-check"><input type="checkbox" id="includeBreak"     checked> Break-it tests</label>
-              <label class="pill-check"><input type="checkbox" id="includeDataHints" checked> Suggested test data</label>
-            </div>
+            <label class="field-label">Ticket ID</label>
+            <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
+          </div>
+          <div class="field">
+            <label class="field-label">Environment / Branch</label>
+            <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
+          </div>
+          <div class="field">
+            <label class="field-label">Checklist Name</label>
+            <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
           </div>
         </div>
       </div>
 
       <div class="summary-bar">
         <div class="summary-text">
-          <strong id="summaryWords">0</strong> words of input ·
-          <strong id="summaryAreas">8</strong> area(s) selected
+          <strong id="summaryWords">0</strong> words ·
+          <strong id="summaryAreas">8</strong> area<span id="summaryAreasPlural">s</span> selected<span id="summaryAddons"></span>
         </div>
-        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Checklist</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Checklist →</button>
       </div>
       <div class="status" id="status2"></div>
     </div><!-- end screen2 -->

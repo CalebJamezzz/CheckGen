@@ -264,10 +264,19 @@ function clearHistory(e) {
 
 /* ── Screen 2 ───────────────────────────────────────────── */
 function updateSummary() {
-  const words = $('ticketText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
+  const ticketWords = $('ticketText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
+  const acWords     = $('acText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
   const areas = document.querySelectorAll('.areaCheck:checked').length;
-  $('summaryWords').textContent = words;
+  const addons = [];
+  if ($('addonBreak')?.checked)        addons.push('Break-it');
+  if ($('addonTestData')?.checked)     addons.push('Test Data');
+  if ($('addonCrossBrowser')?.checked) addons.push('Cross-Browser');
+  $('summaryWords').textContent = ticketWords + acWords;
   $('summaryAreas').textContent = areas;
+  const pl = document.getElementById('summaryAreasPlural');
+  if (pl) pl.textContent = areas === 1 ? '' : 's';
+  const addonsEl = $('summaryAddons');
+  if (addonsEl) addonsEl.textContent = addons.length ? ' · ' + addons.join(', ') : '';
 }
 
 /* ── Persistence ────────────────────────────────────────── */
@@ -320,7 +329,7 @@ function endSession() {
   $('liveIndicator').style.display  = 'none';
   $('exportBar').style.display      = 'none';
   // Reset export filter + share emails
-  const csvSel = $('exportCsvMode'); if (csvSel) csvSel.value = 'all';
+  const csvSel = $('exportCsvMode2'); if (csvSel) csvSel.value = 'all';
   _shareEmails = [];
   // Clear any sessionStorage session restore (history → app navigation)
   sessionStorage.removeItem('cg_restore_session');
@@ -445,53 +454,80 @@ async function generateChecklist() {
 
   const detail = $('detailLevel').value;
   const focus  = $('focusStyle').value;
-  const brk    = $('includeBreak').checked;
-  const dat    = $('includeDataHints').checked;
+  const ac     = $('acText')?.value.trim() || '';
+  const brk    = $('addonBreak')?.checked;
+  const dat    = $('addonTestData')?.checked;
+  const cross  = $('addonCrossBrowser')?.checked;
 
   const focusNote = focus === 'smoke'
-    ? 'Lean toward smoke and happy-path checks.'
+    ? 'This is a smoke test — focus on verifying core happy-path flows work. Skip deep edge cases.'
     : focus === 'edge'
-      ? 'Lean heavily toward edge cases and boundary conditions.'
-      : 'Balance happy-path, validation, and edge cases evenly.';
+      ? 'This is a deep dive — prioritise edge cases, boundary conditions, and error paths. Go beyond the obvious.'
+      : 'Provide full coverage — balance happy-path, validation, edge cases, and error handling across all areas.';
+
+  const detailNote = detail === 'concise'
+    ? 'Write each item as a short, scannable one-liner (under 15 words).'
+    : 'Write each item as a clear action + expected outcome: "Do X → Y should happen."';
 
   // Areas the user selected — these are the ONLY sections allowed
   const selectedAreas = [...areas];
-  if (brk) selectedAreas.push('Break-It');
-  if (dat) selectedAreas.push('Test Data');
-  const areaList = selectedAreas.join(', ');
+  if (brk)   selectedAreas.push('Break-It');
+  if (dat)   selectedAreas.push('Test Data');
+  if (cross) selectedAreas.push('Cross-Browser / Device');
 
-  // Item count: let Claude decide the right number, but give a range
-  // based on areas selected so fewer areas = fewer items
+  // Item count scales with areas selected
   const areaCount = selectedAreas.length;
   const minItems  = Math.max(5,  areaCount * 2);
   const maxItems  = Math.min(30, areaCount * 4);
 
-  const detailNote = detail === 'concise'
-    ? 'Write each item in 1 concise sentence.'
-    : 'Write each item as a clear 1-2 sentence actionable step.';
-
-  // System prompt goes into the messages array as a system role
+  // System prompt
   const systemPrompt = (
-    'You are a precise QA engineer generating test checklists as JSON arrays. ' +
-    'RULES: ' +
+    'You are a senior QA engineer creating structured test checklists. ' +
+    'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
+    'Think systematically across: boundary values, empty/null inputs, invalid formats, permission levels, ' +
+    'state transitions, error recovery, and realistic data scenarios. ' +
+    'Assign priority using exactly these 5 levels — ' +
+    'Highest: blocking functionality, crash, or major error; ' +
+    'High: major functionality issue that impairs core use; ' +
+    'Medium: invasive styling issue or minor functionality issue; ' +
+    'Low: non-invasive styling issue or invasive typo; ' +
+    'Lowest: typo or trivial cosmetic issue. ' +
+    'Assign type using these definitions — ' +
+    'Smoke: proves the feature works at all; ' +
+    'Happy Path: expected normal use with valid inputs; ' +
+    'Edge: boundary conditions or unusual but valid input; ' +
+    'Data: data integrity, format validation, or persistence; ' +
+    'Break: destructive or adversarial input intended to break the feature. ' +
+    'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
     '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
-    '4. Every item must be specific to the ticket, never generic. ' +
-    '5. Each object must have: section, text, priority (High|Medium|Low), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
+    '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
+    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
   );
 
-  const userPrompt = [
-    'Generate a QA test checklist for this ticket:',
+  // User prompt — treat ticket and AC as separate signals
+  const userPromptParts = [
+    'Generate a QA test checklist for this ticket or acceptance criteria:',
     '',
+    'TICKET / USER STORY:',
     ticket,
+  ];
+  if (ac) {
+    userPromptParts.push('', 'ACCEPTANCE CRITERIA (each clause must have at least one test case covering it):');
+    userPromptParts.push(ac);
+  }
+  userPromptParts.push(
     '',
     'TESTING AREAS (use ONLY these as section names, no others):',
     selectedAreas.map(a => '- ' + a).join('\n'),
     '',
-    'Focus style: ' + focusNote,
+    'Test strategy: ' + focusNote,
     detailNote,
-  ].join('\n');
+    'Each item must be directly traceable to this specific ticket — no generic filler.',
+  );
+  if (ac) userPromptParts.push('Each acceptance criteria clause must have at least one explicit test case covering it.');
+  const userPrompt = userPromptParts.join('\n');
 
   const prompt = userPrompt; // kept for callClaude signature compat
   const messages = [{ role: 'user', content: userPrompt }];
@@ -563,7 +599,7 @@ async function regenSection(section) {
   const groupCard = btn?.closest('.group-card');
   if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
   if (groupCard) groupCard.classList.add('regen-loading');
-  const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}`;
+  const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"Highest|High|Medium|Low|Lowest","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}. Priority scale: Highest=blocking/crash, High=major functionality, Medium=invasive styling or minor functionality, Low=non-invasive styling or invasive typo, Lowest=typo.`;
   try {
     const newItems = await callClaude(prompt, 1200);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
@@ -677,7 +713,7 @@ function renderChecklist() {
                 <div style="flex:1;min-width:0">
                   <div class="item-text">${esc2(item.text)}</div>
                   <div class="meta-row">
-                    <span class="tag ${item.priority.toLowerCase()}">${item.priority}</span>
+                    <span class="tag ${item.priority.toLowerCase()}">${({Highest:'🔴',High:'🟠',Medium:'🟡',Low:'🔵',Lowest:'🟣'}[item.priority]||'')} ${item.priority}</span>
                     <span class="tag ${typeClass(item.type)}">${item.type}</span>
                     <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})">✎ note</button>
                     <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})">✕ remove</button>
@@ -709,7 +745,7 @@ function renderChecklist() {
 /* ── Export CSV ─────────────────────────────────────────── */
 function downloadCsv() {
   if (!currentChecklist.length) { showStatus('status3', 'Generate a checklist first.', 'error'); return; }
-  const mode    = $('exportCsvMode').value;
+  const mode    = $('exportCsvMode2').value;
   const tid     = $('ticketId').value.trim();
   const env     = $('envBranch').value.trim();
   const name    = $('checklistName').value.trim();
@@ -1159,7 +1195,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wire up summary updates
   $('ticketText').addEventListener('input', updateSummary);
+  $('acText')?.addEventListener('input', updateSummary);
   document.querySelectorAll('.areaCheck').forEach(el => el.addEventListener('change', updateSummary));
+  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => {
+    $(id)?.addEventListener('change', updateSummary);
+  });
   ['ticketId','envBranch','checklistName'].forEach(id => {
     $(id)?.addEventListener('input', () => { if (currentChecklist.length) renderChecklist(); });
   });

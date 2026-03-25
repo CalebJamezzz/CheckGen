@@ -365,9 +365,11 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   color: var(--muted);
   background: rgba(255,255,255,.02);
 }
-.tag.high    { color: var(--blocked); border-color: rgba(251,191,36,.3);   background: var(--blocked-dim); }
-.tag.medium  { color: var(--dim);     border-color: rgba(255,255,255,.12); }
-.tag.low     { color: var(--muted);   border-color: var(--border); }
+.tag.highest { color: var(--fail);    border-color: rgba(248,113,113,.3);  background: var(--fail-dim); }
+.tag.high    { color: #fb923c;        border-color: rgba(251,146,60,.3);   background: rgba(251,146,60,.08); }
+.tag.medium  { color: var(--blocked); border-color: rgba(251,191,36,.3);   background: var(--blocked-dim); }
+.tag.low     { color: #60a5fa;        border-color: rgba(96,165,250,.25);  background: rgba(96,165,250,.06); }
+.tag.lowest  { color: #c084fc;        border-color: rgba(192,132,252,.25); background: rgba(192,132,252,.06); }
 .tag.smoke   { color: var(--pass);    border-color: rgba(52,211,153,.25);  background: var(--pass-dim); }
 .tag.happypath, .tag.functional { color: var(--muted); }
 .tag.edge    { color: var(--fail);    border-color: rgba(248,113,113,.22); background: var(--fail-dim); }
@@ -384,6 +386,22 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-4); }
 .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── Screen 2 layout ─────────────────────────────────────── */
+.s2-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: var(--sp-4); margin-bottom: var(--sp-4); align-items: start; }
+.s2-field-label { display: flex; align-items: center; gap: var(--sp-2); font-family: var(--font-display); font-size: clamp(.8rem, .95vw, .95rem); font-weight: 600; color: var(--text); }
+.s2-badge { font-family: var(--font-mono); font-size: clamp(9px, .58vw, 10px); letter-spacing: .1em; text-transform: uppercase; border-radius: 999px; padding: 2px 7px; border: 1px solid; }
+.s2-badge-required { color: var(--green); border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); }
+.s2-badge-optional  { color: var(--muted); border-color: var(--border); background: rgba(255,255,255,.03); }
+.s2-addons-header { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; border-top: 1px solid var(--border); margin-top: var(--sp-4); margin-bottom: var(--sp-3); }
+.s2-addon-grid { grid-template-columns: repeat(3, 1fr); }
+.s2-addon-check { border-color: rgba(99,102,241,.2) !important; }
+.s2-addon-check:hover { border-color: rgba(99,102,241,.45) !important; background: rgba(99,102,241,.06) !important; }
+.s2-addon-check input[type="checkbox"] { accent-color: #818cf8; }
+.s2-addon-check:has(input:checked) { border-color: rgba(99,102,241,.45) !important; background: rgba(99,102,241,.08) !important; color: #a5b4fc !important; }
+.s2-optional-strip { background: rgba(255,255,255,.015); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-4) var(--sp-5); margin-bottom: var(--sp-4); }
+.s2-optional-label { font-family: var(--font-mono); font-size: clamp(9px, .62vw, 11px); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: var(--sp-3); }
+.s2-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
 
 /* ── Checklist items ── */
 .group-card {
@@ -843,13 +861,20 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .mb-5 { margin-bottom: var(--sp-5); } .mb-6 { margin-bottom: var(--sp-6); }
 
 /* ── Responsive ── */
-@media (max-width: 1040px) { .setup-grid { grid-template-columns: 1fr !important; } }
+@media (max-width: 1040px) {
+  .setup-grid { grid-template-columns: 1fr !important; }
+  .s2-grid { grid-template-columns: 1fr; }
+  .s2-meta-grid { grid-template-columns: 1fr 1fr; }
+  .s2-addon-grid { grid-template-columns: 1fr 1fr; }
+}
 @media (max-width: 760px) {
   body { padding: var(--sp-4); }
   .session-cards { flex-direction: column; }
   .grid-2, .grid-3, .area-grid, .feature-tiles { grid-template-columns: 1fr; }
   .summary-bar, .checklist-nav { flex-direction: column; align-items: flex-start; }
   .ob-row { flex-wrap: wrap; }
+  .s2-meta-grid { grid-template-columns: 1fr; }
+  .s2-addon-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* ─────────────────────────────────────────────────────────
