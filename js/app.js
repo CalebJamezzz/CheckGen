@@ -696,7 +696,10 @@ function groupChecklist(items) {
 function renderItemText(text) {
   const idx = text.indexOf(' → ');
   if (idx !== -1) {
-    return `<div class="item-step">${esc2(text.slice(0, idx))}</div><div class="item-expected"><span class="item-expected-label">Expected</span>${esc2(text.slice(idx + 3))}</div>`;
+    const step = text.slice(0, idx);
+    const exp  = text.slice(idx + 3);
+    const expCap = exp.charAt(0).toUpperCase() + exp.slice(1);
+    return `<div class="item-step">${esc2(step)}</div><div class="item-expected"><span class="item-expected-label">Expected</span>${esc2(expCap)}</div>`;
   }
   return `<div class="item-step">${esc2(text)}</div>`;
 }
@@ -705,11 +708,17 @@ function toggleSection(card) {
 }
 function refreshGroupStates() {
   document.querySelectorAll('.group-card').forEach(card => {
-    const items = card.querySelectorAll('.item');
-    if (!items.length) return;
-    const allDone = [...items].every(el =>
+    const itemEls = card.querySelectorAll('.item');
+    if (!itemEls.length) return;
+    const total = itemEls.length;
+    const done  = [...itemEls].filter(el =>
       el.classList.contains('pass') || el.classList.contains('fail') || el.classList.contains('blocked')
-    );
+    ).length;
+    const allDone = done === total;
+    const doneEl  = card.querySelector('.group-done-count');
+    if (doneEl) { doneEl.textContent = done > 0 ? `${done}/${total} done` : ''; doneEl.style.display = done > 0 ? '' : 'none'; }
+    const badge   = card.querySelector('.group-complete-badge');
+    if (badge) badge.style.display = allDone ? '' : 'none';
     if (allDone) card.dataset.open = 'false';
   });
 }
@@ -740,6 +749,8 @@ function renderChecklist() {
           <span class="group-toggle">▾</span>
           <div class="group-name">${esc2(section)}</div>
           <div class="group-count">${items.length} item${items.length === 1 ? '' : 's'}</div>
+          <span class="group-done-count" style="display:none"></span>
+          <span class="group-complete-badge" style="display:none">✓ Complete</span>
         </div>
         <button class="regen-btn" data-section="${esc2(section)}" onclick="event.stopPropagation();regenSection('${esc(section)}')">↺ regen</button>
       </div>
