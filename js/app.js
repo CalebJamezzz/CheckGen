@@ -1159,7 +1159,10 @@ async function initResumePanel() {
     const ago = incomplete.updated_at
       ? (() => {
           const mins = Math.round((Date.now() - new Date(incomplete.updated_at)) / 60000);
-          return mins < 60 ? mins + 'm ago' : Math.round(mins/60) + 'h ago';
+          if (mins < 60)   return mins + 'm ago';
+          if (mins < 1440) return Math.round(mins / 60) + 'h ago';
+          const days = Math.round(mins / 1440);
+          return days + ' day' + (days !== 1 ? 's' : '') + ' ago';
         })()
       : '';
 

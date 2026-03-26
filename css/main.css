@@ -587,22 +587,23 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .screen { display: none; }
 .screen.active { display: block; }
 
-/* ── Screen 1 resume bar ── */
-.s1-resume-bar {
+/* ── Screen 1 resume card ── */
+.s1-resume-card {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border-left: 2px solid var(--green);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid rgba(16,185,129,.2);
+  border-radius: var(--r-lg);
   background: rgba(16,185,129,.04);
-  border-radius: 0 var(--r-md) var(--r-md) 0;
   margin-bottom: var(--sp-5);
   flex-wrap: wrap;
 }
-.s1-resume-info    { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
-.s1-resume-label   { font-family: var(--font-mono); font-size: clamp(9px,.62vw,10px); letter-spacing: .12em; text-transform: uppercase; color: var(--green); white-space: nowrap; }
-.s1-resume-title   { font-size: clamp(13px,.85vw,14px); color: var(--text); font-weight: 500; }
-.s1-resume-meta    { font-size: clamp(11px,.72vw,12px); color: var(--muted); }
+.s1-resume-left    { flex: 1; min-width: 0; }
+.s1-resume-label   { font-family: var(--font-mono); font-size: clamp(9px,.62vw,10px); letter-spacing: .12em; text-transform: uppercase; color: var(--green); margin-bottom: 5px; }
+.s1-resume-name    { font-size: clamp(14px,.95vw,16px); color: var(--text); font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s1-resume-meta    { font-size: clamp(11px,.75vw,12px); color: var(--muted); }
 .s1-resume-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ── Session tiles (screen 1) ── */

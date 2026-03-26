@@ -33,17 +33,17 @@
       <div style="margin-bottom:var(--sp-6)">
         <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
         <h1 style="margin-bottom:var(--sp-3)">Turn tickets into test cases.</h1>
-        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:560px;line-height:1.7">
+        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);line-height:1.7">
           Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
         </p>
       </div>
 
-      <!-- Resume strip — shown only when there's an unfinished session -->
-      <div id="resumePanel" class="s1-resume-bar" style="display:none">
-        <div class="s1-resume-info">
-          <span class="s1-resume-label">Unfinished checklist</span>
-          <span class="s1-resume-title" id="resumeTitle"></span>
-          <span class="s1-resume-meta" id="resumeMeta"></span>
+      <!-- Resume card — shown only when there's an unfinished session -->
+      <div id="resumePanel" class="s1-resume-card" style="display:none">
+        <div class="s1-resume-left">
+          <div class="s1-resume-label">Unfinished checklist</div>
+          <div class="s1-resume-name" id="resumeTitle"></div>
+          <div class="s1-resume-meta" id="resumeMeta"></div>
         </div>
         <div class="s1-resume-actions">
           <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
