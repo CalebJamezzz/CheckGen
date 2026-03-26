@@ -513,6 +513,23 @@ async function generateChecklist() {
     'Edge: boundary conditions or unusual but valid input; ' +
     'Data: data integrity, format validation, or persistence; ' +
     'Break: destructive or adversarial input intended to break the feature. ' +
+    'TESTING AREA GUIDANCE — when these sections are present, generate specific actionable cases: ' +
+    'WCAG: color contrast meets AA minimum (4.5:1 body text, 3:1 large text/UI components), ' +
+    'all interactive elements have visible focus indicators, keyboard navigation follows logical tab order, ' +
+    'modals trap focus and release on close, form inputs have programmatically associated labels, ' +
+    'error messages are linked to their field via aria-describedby, images have meaningful alt text, ' +
+    'buttons/links have descriptive accessible names (not "click here"), touch targets are at least 44×44px, ' +
+    'and screen readers announce dynamic content changes. ' +
+    'Performance: initial load and time-to-interactive meet defined thresholds, ' +
+    'API calls complete within acceptable response times under normal and concurrent load, ' +
+    'feature behaves correctly with large data sets (100+, 1000+ records), ' +
+    'repeated interactions do not cause memory leaks or DOM bloat, ' +
+    'animations and scroll are smooth with no jank (60fps target), ' +
+    'assets are appropriately cached and not re-fetched unnecessarily, ' +
+    'perceived performance (skeleton screens, loading states) is correct, ' +
+    'and include a Lighthouse audit step in Chrome DevTools covering: Performance score 90+ ' +
+    '(Core Web Vitals — LCP under 2.5s, CLS under 0.1, INP under 200ms), Best Practices score 90+ ' +
+    '(no console errors, no deprecated APIs), and SEO score 90+ if the page is publicly accessible. ' +
     'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
@@ -777,6 +794,7 @@ function renderChecklist() {
                     ${renderItemText(item.text)}
                     <div class="meta-row">
                       <span class="tag ${item.priority.toLowerCase()}">${({Highest:'🔴',High:'🟠',Medium:'🟡',Low:'🔵',Lowest:'🟣'}[item.priority]||'')} ${item.priority}</span>
+                      <span class="item-time">${item.time}</span>
                       <div class="item-actions">
                         <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})" title="Add note">✎</button>
                         <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})" title="Remove">✕</button>
@@ -796,7 +814,6 @@ function renderChecklist() {
                   </div>
                 </div>
               </div>
-              <div class="item-time">${item.time}</div>
             </div>`).join('')}
         </div>
         <div class="add-item-row">
