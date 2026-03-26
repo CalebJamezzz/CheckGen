@@ -15,7 +15,7 @@ exports.handler = async (event) => {
     const parsed = JSON.parse(event.body || '{}');
 
     // Ensure we use a supported model
-    if (!parsed.model) parsed.model = 'claude-haiku-4-5-20251001';
+    if (!parsed.model) parsed.model = 'claude-sonnet-4-6';
 
     const data = JSON.stringify(parsed);
 
