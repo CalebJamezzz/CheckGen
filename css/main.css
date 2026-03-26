@@ -524,19 +524,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .item.blocked .item-step { color: rgba(251,191,36,.75); }
 .item-expected {
   margin-top: .35rem;
-  display: flex;
-  align-items: baseline;
-  gap: .4rem;
   font-size: .875em;
   color: var(--soft);
-  line-height: 1.55;
+  line-height: 1.6;
   transition: color .2s;
 }
 .item-expected-arrow {
+  display: inline;
   color: rgba(16,185,129,.6);
   font-family: var(--font-mono);
   font-size: 1.1em;
-  flex-shrink: 0;
+  margin-right: .3rem;
   transition: color .2s;
 }
 .item.pass    .item-expected                { color: rgba(52,211,153,.7);   }

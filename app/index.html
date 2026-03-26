@@ -282,7 +282,7 @@ Rejected reports require a reason to be entered"></textarea>
         <div class="flex gap-3 items-center flex-wrap">
           <span id="liveIndicator" style="display:none" class="live-badge"><span class="live-dot"></span>Live</span>
           <span class="share-code-badge" id="shareCodeBadge" style="display:none" onclick="copyShareCode()" title="Click to copy share code"></span>
-          <button class="end-session-btn" onclick="endSession()" type="button">✕ End Session</button>
+          <button class="end-session-btn" onclick="endSession()" type="button">↓ Save &amp; Close</button>
         </div>
       </div>
 
@@ -360,7 +360,7 @@ Rejected reports require a reason to be entered"></textarea>
     <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.4rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-2);text-align:center">Leave active session?</h2>
     <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.6;text-align:center;margin:0 0 var(--sp-6)">You have a checklist in progress. End the session first to save your progress, or leave without saving.</p>
     <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalEndAndGo()">End Session &amp; Leave →</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalEndAndGo()">Save &amp; Leave →</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalLeave()">Leave Without Saving</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="leaveSessionModalCancel()">Cancel — Stay Here</button>
     </div>
@@ -390,7 +390,7 @@ Rejected reports require a reason to be entered"></textarea>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="completeAndEndSession()">End Session →</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="completeAndEndSession()">✓ Mark Complete</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="downloadCsv();closeCompleteModal()">Export Results</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="closeCompleteModal()">Keep Reviewing</button>
     </div>

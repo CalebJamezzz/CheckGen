@@ -328,9 +328,6 @@ function loadSession() {
 function endSession() {
   // Cancel any pending cloud save timer
   if (_cloudSaveTimer) { clearTimeout(_cloudSaveTimer); _cloudSaveTimer = null; }
-  // Mark session abandoned if it wasn't already completed via the modal
-  const allMarked = currentChecklist.length > 0 && currentChecklist.every(i => i.outcome);
-  if (_cloudSaveId && !allMarked) cloudMarkSession(_cloudSaveId, 'abandoned');
   _cloudSaveId = null;
   _completionModalShown = false;
   closeCompleteModal();
@@ -521,22 +518,28 @@ async function generateChecklist() {
     'Data: data integrity, format validation, or persistence; ' +
     'Break: destructive or adversarial input intended to break the feature. ' +
     'TESTING AREA GUIDANCE — when these sections are present, generate specific actionable cases: ' +
-    'WCAG: color contrast meets AA minimum (4.5:1 body text, 3:1 large text/UI components), ' +
-    'all interactive elements have visible focus indicators, keyboard navigation follows logical tab order, ' +
-    'modals trap focus and release on close, form inputs have programmatically associated labels, ' +
-    'error messages are linked to their field via aria-describedby, images have meaningful alt text, ' +
-    'buttons/links have descriptive accessible names (not "click here"), touch targets are at least 44×44px, ' +
-    'and screen readers announce dynamic content changes. ' +
-    'Performance: initial load and time-to-interactive meet defined thresholds, ' +
-    'API calls complete within acceptable response times under normal and concurrent load, ' +
-    'feature behaves correctly with large data sets (100+, 1000+ records), ' +
-    'repeated interactions do not cause memory leaks or DOM bloat, ' +
-    'animations and scroll are smooth with no jank (60fps target), ' +
-    'assets are appropriately cached and not re-fetched unnecessarily, ' +
-    'perceived performance (skeleton screens, loading states) is correct, ' +
-    'and include a Lighthouse audit step in Chrome DevTools covering: Performance score 90+ ' +
-    '(Core Web Vitals — LCP under 2.5s, CLS under 0.1, INP under 200ms), Best Practices score 90+ ' +
-    '(no console errors, no deprecated APIs), and SEO score 90+ if the page is publicly accessible. ' +
+    'WCAG: generate specific, actionable test cases across these areas — ' +
+    '(1) Color contrast: body text meets 4.5:1 AA ratio, large text and UI components meet 3:1, verify using browser DevTools color picker or axe extension; ' +
+    '(2) Images and icons: meaningful images have descriptive alt text that conveys function or content (not filenames or "image"), purely decorative images have alt="" and role="presentation", icon-only buttons have an aria-label; ' +
+    '(3) Screen reader accuracy: use VoiceOver (Mac) or NVDA (Windows) to verify heading hierarchy is logical, landmark regions are present (main, nav, header), reading order matches visual order, and dynamic content changes (toasts, modals, loading states) are announced via aria-live regions; ' +
+    '(4) Keyboard navigation: every interactive element is reachable by Tab key, tab order matches visual flow, no keyboard traps, Escape closes modals/dropdowns, Enter/Space activates buttons; ' +
+    '(5) Focus indicators: all focused elements have a clearly visible outline — not removed with outline:none without a custom replacement; ' +
+    '(6) Forms: every input has a programmatically associated label (not just visually adjacent text), required fields are marked, error messages are linked via aria-describedby and announced on submit; ' +
+    '(7) ARIA correctness: custom components (tabs, accordions, modals, comboboxes) use correct roles, states (aria-expanded, aria-selected, aria-checked), and properties — verify with axe or browser accessibility tree; ' +
+    '(8) Zoom and reflow: content is fully usable at 200% browser zoom with no horizontal scrolling and no overlapping elements; ' +
+    '(9) Motion: animations and transitions respect prefers-reduced-motion media query; ' +
+    '(10) Touch targets: all interactive elements are at least 44×44px on mobile. ' +
+    'Performance: generate specific, actionable test cases across these areas — ' +
+    '(1) Core load metrics: initial page load and time-to-interactive meet defined thresholds, Largest Contentful Paint (LCP) under 2.5s, Cumulative Layout Shift (CLS) under 0.1, Interaction to Next Paint (INP) under 200ms; ' +
+    '(2) API responsiveness: API calls complete within acceptable response times under normal load, concurrent requests do not degrade UI responsiveness; ' +
+    '(3) Large data: feature behaves correctly and remains responsive with 100+ and 1000+ records, lists are paginated or virtualised; ' +
+    '(4) Memory and DOM: repeated interactions (open/close, add/remove) do not cause memory leaks or DOM bloat — verify with Chrome DevTools Memory tab; ' +
+    '(5) Rendering: animations and scroll are smooth with no jank — target 60fps, verify with Performance panel; ' +
+    '(6) Assets: images use modern formats (WebP/AVIF), are correctly sized for their display size, and have explicit width/height to prevent layout shift; below-fold images use lazy loading; ' +
+    '(7) Caching: static assets are served with efficient cache headers, unchanged assets are not re-fetched on navigation; ' +
+    '(8) Fonts: web fonts use font-display:swap or similar, no invisible text during font load, no layout shift after font swap; ' +
+    '(9) Perceived performance: loading states, skeleton screens, and optimistic UI are present where expected; ' +
+    '(10) Lighthouse audit: run Lighthouse in Chrome DevTools with CPU throttling (4x slowdown) to simulate low-end devices — Performance score 90+, Best Practices score 90+ (no console errors, no deprecated APIs), SEO score 90+ if publicly accessible. ' +
     'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
