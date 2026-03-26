@@ -597,7 +597,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   border: 1px solid rgba(16,185,129,.2);
   border-radius: var(--r-lg);
   background: rgba(16,185,129,.04);
-  margin-bottom: var(--sp-5);
+  margin-bottom: var(--sp-6);
   flex-wrap: wrap;
 }
 .s1-resume-left    { flex: 1; min-width: 0; }
@@ -607,9 +607,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s1-resume-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ── Session tiles (screen 1) ── */
-.s1-primary-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.s1-primary-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-5); }
 .session-card {
-  padding: var(--sp-4) var(--sp-5);
+  padding: var(--sp-5);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--bg2);
@@ -618,31 +618,31 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   text-align: left;
   display: flex;
   align-items: flex-start;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
 }
 .session-card:hover { border-color: rgba(16,185,129,.3); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .session-card.active { border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.06); box-shadow: var(--glow-green); }
 .s1-card-shared:not(.active) { border-color: rgba(16,185,129,.18); }
-.s1-tile-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--r-md); border: 1px solid var(--border); background: rgba(255,255,255,.04); font-size: 15px; color: var(--muted); margin-top: 1px; }
+.s1-tile-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--r-md); border: 1px solid var(--border); background: rgba(255,255,255,.04); font-size: 16px; color: var(--muted); margin-top: 2px; }
 .session-card.active .s1-tile-icon { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.1); color: var(--green); }
-.card-label { font-family: var(--font-mono); font-size: clamp(11px,.75vw,13px); letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 5px; }
-.card-desc { font-size: clamp(12px,.85vw,14px); color: var(--dim); line-height: 1.6; }
+.card-label { font-family: var(--font-mono); font-size: clamp(11px,.75vw,13px); letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
+.card-desc { font-size: clamp(12px,.85vw,14px); color: var(--dim); line-height: 1.65; }
 
 /* Join-instead link (inside Team Session panel — temporary until 2.3) */
 .s1-join-instead-btn { background: none; border: none; padding: 0; font-size: clamp(12px,.82vw,13px); color: var(--muted); cursor: pointer; text-align: left; transition: color .15s; border-top: 1px solid var(--border); padding-top: var(--sp-3); width: 100%; margin-top: var(--sp-2); }
 .s1-join-instead-btn:hover { color: var(--green); }
 
 /* Session Details (optional fields on screen 1) */
-.s1-session-details { margin-bottom: var(--sp-4); }
-.s1-details-header { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
-.s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+.s1-session-details { margin-bottom: var(--sp-6); }
+.s1-details-header { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
 
 /* Shared sub-options */
 .shared-panel {
   background: rgba(16,185,129,.04);
   border: 1px solid rgba(16,185,129,.18);
   border-radius: var(--r-lg);
-  padding: var(--sp-4);
+  padding: var(--sp-5);
   margin-bottom: var(--sp-5);
   display: none;
 }
@@ -958,6 +958,14 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   max-width: calc(100vw - 280px);
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+.app-footer {
+  margin-top: auto;
+  padding: var(--sp-5) 0 var(--sp-4);
+  text-align: center;
+  border-top: 1px solid var(--border);
 }
 .nav-logo-wrap {
   display: flex;
