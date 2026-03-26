@@ -557,7 +557,22 @@ async function generateChecklist() {
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
     '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
     '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
-    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
+    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
+    'Functional = 2-5m (straightforward feature interaction); ' +
+    'Validation = 2-4m (form input checks, error message verification); ' +
+    'Permissions = 4-8m (requires switching user roles or accounts, login/logout cycles); ' +
+    'UI / Layout = 2-4m (visual inspection, responsive breakpoints); ' +
+    'Data / Persistence = 4-8m (CRUD verification, checking DB state, refresh/reload confirmation); ' +
+    'Integrations = 5-15m (external API calls, webhook verification, third-party service interaction); ' +
+    'Error Handling = 2-5m (triggering failure states, verifying recovery); ' +
+    'Edge Cases = 3-6m (boundary value setup, unusual but valid scenario construction); ' +
+    'WCAG = 8-20m (screen reader walkthroughs with VoiceOver/NVDA, axe/DevTools audit, keyboard-only nav session, contrast ratio checks); ' +
+    'Performance = 10-20m (Lighthouse audit with throttling, DevTools profiling, memory leak check); ' +
+    'Break-It = 3-7m (crafting and submitting adversarial inputs, verifying graceful failure); ' +
+    'Test Data = 3-8m (setting up data fixtures, seeding edge-case values, verifying cleanup); ' +
+    'Cross-Browser / Device = 5-15m (repeating key flows across multiple browsers or device sizes). ' +
+    'Never default everything to 2m — vary estimates to reflect actual task complexity.'
   );
 
   // User prompt — treat ticket and AC as separate signals
@@ -653,9 +668,64 @@ async function regenSection(section) {
   const groupCard = btn?.closest('.group-card');
   if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
   if (groupCard) groupCard.classList.add('regen-loading');
-  const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"Highest|High|Medium|Low|Lowest","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}. Priority scale: Highest=blocking/crash, High=major functionality, Medium=invasive styling or minor functionality, Low=non-invasive styling or invasive typo, Lowest=typo.`;
+
+  const ac = $('acText')?.value.trim() || '';
+  const existingItems = currentChecklist.filter(i => i.section === section).map(i => i.text);
+
+  const regenSystemPrompt = (
+    'You are a senior QA engineer regenerating a specific section of a test checklist. ' +
+    'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
+    'The text field must always follow this format: "action step → expected result". ' +
+    'Assign priority using exactly these 5 levels — ' +
+    'Highest: blocking functionality, crash, or major error; ' +
+    'High: major functionality issue that impairs core use; ' +
+    'Medium: invasive styling issue or minor functionality issue; ' +
+    'Low: non-invasive styling issue or invasive typo; ' +
+    'Lowest: typo or trivial cosmetic issue. ' +
+    'Assign type using these definitions — ' +
+    'Smoke: proves the feature works at all; ' +
+    'Happy Path: expected normal use with valid inputs; ' +
+    'Edge: boundary conditions or unusual but valid input; ' +
+    'Data: data integrity, format validation, or persistence; ' +
+    'Break: destructive or adversarial input intended to break the feature. ' +
+    'OUTPUT RULES: ' +
+    '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
+    `2. Every item's section field must be exactly "${section}". ` +
+    '3. Generate 4-7 items. ' +
+    '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
+    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
+    'Functional = 2-5m; Validation = 2-4m; Permissions = 4-8m (role switching required); ' +
+    'UI / Layout = 2-4m; Data / Persistence = 4-8m; Integrations = 5-15m; ' +
+    'Error Handling = 2-5m; Edge Cases = 3-6m; ' +
+    'WCAG = 8-20m (screen reader, axe audit, keyboard nav, contrast checks); ' +
+    'Performance = 10-20m (Lighthouse with throttling, profiling); ' +
+    'Break-It = 3-7m; Test Data = 3-8m; Cross-Browser / Device = 5-15m. ' +
+    'Never default everything to 2m — vary estimates to reflect actual task complexity.'
+  );
+
+  const regenPromptParts = [
+    `Regenerate the "${section}" testing section for this ticket:`,
+    '',
+    'TICKET / USER STORY:',
+    ticket,
+  ];
+  if (ac) {
+    regenPromptParts.push('', 'ACCEPTANCE CRITERIA (cover each clause where relevant to this section):');
+    regenPromptParts.push(ac);
+  }
+  if (existingItems.length) {
+    regenPromptParts.push('', 'EXISTING ITEMS TO REPLACE (generate fresh alternatives, do not repeat these):');
+    existingItems.forEach(t => regenPromptParts.push('- ' + t));
+  }
+  regenPromptParts.push(
+    '',
+    `Generate 4-7 fresh "${section}" test cases. Each item text must follow: "action step → expected result".`,
+    'Every item must be directly traceable to this specific ticket — no generic filler.',
+  );
+
   try {
-    const newItems = await callClaude(prompt, 1200);
+    const newItems = await callClaude(regenPromptParts.join('\n'), 1500, regenSystemPrompt);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
     const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
     // Preserve original section order rather than appending to end
@@ -664,7 +734,7 @@ async function regenSection(section) {
     currentChecklist = sectionOrder.flatMap(s =>
       s === section ? newMapped : withoutSection.filter(i => i.section === s)
     );
-    renderChecklist(); updateProgress(); saveSession();
+    renderChecklist(); updateProgress(); updateTimeSummary(); saveSession(); debouncedCloudSave();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
   } catch(err) { showStatus('status3', 'Regenerate failed: ' + err.message, 'error'); }
   finally {
