@@ -14,9 +14,6 @@
 [functions."ask"]
   timeout = 26
 
-[edge_functions]
-  directory = "netlify/edge-functions"
-
 [[edge_functions]]
   path = "/api/ask"
   function = "ask"
