@@ -163,7 +163,7 @@
     <div class="screen" id="screen2">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5)">
         <button class="back-link" onclick="goTo(1)" type="button">← Back</button>
-        <span class="eyebrow" style="margin-bottom:0">✦ Generate Checklist</span>
+        <span class="eyebrow" style="margin-bottom:0">✦ Checklist Setup</span>
       </div>
 
       <!-- Ticket / User Story -->
@@ -194,6 +194,7 @@ Rejected reports require a reason to be entered"></textarea>
           <div class="field">
             <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
               <span>Test Strategy</span>
+              <span class="s2-badge s2-badge-required">Required</span>
               <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
             </div>
             <select id="focusStyle" onchange="applyStrategyPreset()">
@@ -205,6 +206,7 @@ Rejected reports require a reason to be entered"></textarea>
           <div class="field">
             <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
               <span>Output Format</span>
+              <span class="s2-badge s2-badge-required">Required</span>
               <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
             </div>
             <select id="detailLevel">
@@ -213,7 +215,7 @@ Rejected reports require a reason to be entered"></textarea>
             </select>
           </div>
         </div>
-        <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span></div>
+        <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span><span class="s2-badge s2-badge-required">Required</span></div>
         <div class="area-grid">
           <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"         checked> Functional</label>
           <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"         checked> Validation</label>
@@ -249,7 +251,7 @@ Rejected reports require a reason to be entered"></textarea>
           <strong id="summaryWords">0</strong> words ·
           <strong id="summaryAreas">10</strong> area<span id="summaryAreasPlural">s</span> selected<span id="summaryAddons"></span>
         </div>
-        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Test Case Checklist →</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Test Cases →</button>
       </div>
       <div class="status" id="status2"></div>
     </div><!-- end screen2 -->

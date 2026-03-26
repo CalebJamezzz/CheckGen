@@ -198,9 +198,30 @@ input:focus, textarea:focus, select:focus {
   border-color: rgba(16,185,129,.55);
   box-shadow: 0 0 0 3px rgba(16,185,129,.1);
 }
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+  padding-right: 40px;
+  cursor: pointer;
+}
 select option { background: var(--bg2); }
 textarea { min-height: 180px; line-height: 1.7; }
 input::placeholder, textarea::placeholder { color: var(--muted); }
+
+/* ── Custom scrollbars (screen 2 textareas) ── */
+.s2-ticket-area, .s2-ac-area { overflow-y: auto; }
+.s2-ticket-area::-webkit-scrollbar,
+.s2-ac-area::-webkit-scrollbar { width: 4px; }
+.s2-ticket-area::-webkit-scrollbar-track,
+.s2-ac-area::-webkit-scrollbar-track { background: transparent; }
+.s2-ticket-area::-webkit-scrollbar-thumb,
+.s2-ac-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.s2-ticket-area::-webkit-scrollbar-thumb:hover,
+.s2-ac-area::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 .field-label {
   font-family: var(--font-mono);
