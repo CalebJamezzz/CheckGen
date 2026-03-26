@@ -475,6 +475,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .group-card[data-open="false"] .group-body { display: none; }
 .group-done-count { font-family: var(--font-mono); font-size: clamp(9px, .62vw, 11px); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
 .group-complete-badge { font-family: var(--font-mono); font-size: clamp(9px, .62vw, 11px); letter-spacing: .08em; text-transform: uppercase; color: var(--green); background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); border-radius: var(--r-sm); padding: 2px 7px; }
+.group-fail-count    { font-family: var(--font-mono); font-size: clamp(9px, .62vw, 11px); letter-spacing: .08em; text-transform: uppercase; color: var(--fail);    background: var(--fail-dim);    border: 1px solid rgba(248,113,113,.3); border-radius: var(--r-sm); padding: 2px 7px; }
+.group-blocked-count { font-family: var(--font-mono); font-size: clamp(9px, .62vw, 11px); letter-spacing: .08em; text-transform: uppercase; color: var(--blocked); background: var(--blocked-dim); border: 1px solid rgba(251,191,36,.3);  border-radius: var(--r-sm); padding: 2px 7px; }
 .group-name {
   font-family: var(--font-mono);
   font-size: clamp(11px, .75vw, 13px);

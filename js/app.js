@@ -710,15 +710,26 @@ function refreshGroupStates() {
   document.querySelectorAll('.group-card').forEach(card => {
     const itemEls = card.querySelectorAll('.item');
     if (!itemEls.length) return;
-    const total = itemEls.length;
-    const done  = [...itemEls].filter(el =>
+    const total    = itemEls.length;
+    const fails    = [...itemEls].filter(el => el.classList.contains('fail')).length;
+    const blocked  = [...itemEls].filter(el => el.classList.contains('blocked')).length;
+    const done     = [...itemEls].filter(el =>
       el.classList.contains('pass') || el.classList.contains('fail') || el.classList.contains('blocked')
     ).length;
-    const allDone = done === total;
-    const doneEl  = card.querySelector('.group-done-count');
-    if (doneEl) { doneEl.textContent = done > 0 ? `${done}/${total} done` : ''; doneEl.style.display = done > 0 ? '' : 'none'; }
-    const badge   = card.querySelector('.group-complete-badge');
+    const allDone  = done === total;
+
+    const doneEl = card.querySelector('.group-done-count');
+    if (doneEl) { doneEl.textContent = (!allDone && done > 0) ? `${done}/${total} done` : ''; doneEl.style.display = (!allDone && done > 0) ? '' : 'none'; }
+
+    const badge = card.querySelector('.group-complete-badge');
     if (badge) badge.style.display = allDone ? '' : 'none';
+
+    const failEl = card.querySelector('.group-fail-count');
+    if (failEl) { failEl.textContent = `${fails} Fail`; failEl.style.display = fails > 0 ? '' : 'none'; }
+
+    const blockedEl = card.querySelector('.group-blocked-count');
+    if (blockedEl) { blockedEl.textContent = `${blocked} Blocked`; blockedEl.style.display = blocked > 0 ? '' : 'none'; }
+
     if (allDone) card.dataset.open = 'false';
   });
 }
@@ -751,6 +762,8 @@ function renderChecklist() {
           <div class="group-count">${items.length} item${items.length === 1 ? '' : 's'}</div>
           <span class="group-done-count" style="display:none"></span>
           <span class="group-complete-badge" style="display:none">✓ Complete</span>
+          <span class="group-fail-count" style="display:none"></span>
+          <span class="group-blocked-count" style="display:none"></span>
         </div>
         <button class="regen-btn" data-section="${esc2(section)}" onclick="event.stopPropagation();regenSection('${esc(section)}')">↺ regen</button>
       </div>
