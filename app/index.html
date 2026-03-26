@@ -30,34 +30,30 @@
     <!-- ═══════════ SCREEN 1 — Welcome ═══════════ -->
     <div class="screen active" id="screen1">
 
-      <div style="margin-bottom:var(--sp-6)">
-        <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
-        <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
-        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:560px;line-height:1.7">
-          Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
-        </p>
-      </div>
-
-      <!-- Resume last session — signed-in users with incomplete session only -->
-      <div id="resumePanel" style="display:none;margin-bottom:var(--sp-5)">
-        <div class="panel" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3)">
-            <div>
-              <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:4px">Continue where you left off</div>
-              <div id="resumeTitle" style="font-size:clamp(14px,.95vw,16px);color:var(--text);font-weight:500"></div>
-              <div id="resumeMeta" style="font-size:clamp(11px,.75vw,13px);color:var(--muted);margin-top:2px"></div>
-            </div>
-            <div style="display:flex;gap:8px;flex-shrink:0">
-              <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
-              <button class="btn btn-ghost btn-sm" onclick="dismissResume()">New instead</button>
-            </div>
+      <!-- Hero + resume side by side -->
+      <div class="s1-hero">
+        <div class="s1-hero-copy">
+          <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
+          <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
+          <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:520px;line-height:1.7">
+            Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
+          </p>
+        </div>
+        <!-- Resume card — shown only when there's an unfinished session -->
+        <div id="resumePanel" class="s1-resume-card" style="display:none">
+          <div class="s1-resume-label">Unfinished checklist</div>
+          <div id="resumeTitle" class="s1-resume-title"></div>
+          <div id="resumeMeta" class="s1-resume-meta"></div>
+          <div class="s1-resume-actions">
+            <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
+            <button class="btn btn-ghost btn-sm" onclick="dismissResume()">Dismiss</button>
           </div>
         </div>
       </div>
 
       <div class="label" style="margin-bottom:var(--sp-3)">How would you like to work?</div>
 
-      <!-- Primary tiles: Personal + Shared -->
+      <!-- Primary tiles: Personal + Team Session (2.3: Team Session will show active sessions list) -->
       <div class="s1-primary-tiles">
         <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
           <div class="s1-tile-icon">⊙</div>
@@ -69,21 +65,11 @@
         <button class="session-card s1-card-shared" id="cardShared" onclick="setMode('shared')" type="button">
           <div class="s1-tile-icon">⊕</div>
           <div>
-            <div class="card-label">Shared</div>
-            <div class="card-desc">Create a live session your team can join and mark off together in real time.</div>
+            <div class="card-label">Team Session</div>
+            <div class="card-desc">Work through test cases live with your team — start a new session or jump into an active one.</div>
           </div>
         </button>
       </div>
-
-      <!-- Join strip: secondary / compact -->
-      <button class="s1-join-strip" id="cardJoin" onclick="setMode('join')" type="button">
-        <span class="s1-join-icon">↗</span>
-        <div class="s1-join-copy">
-          <span class="s1-join-title">Join a Session</span>
-          <span class="s1-join-desc">Have a 6-character code? Jump into an active shared session.</span>
-        </div>
-        <span class="s1-join-chevron" id="joinChevron">›</span>
-      </button>
 
       <!-- Shared panel (signed-in: email invite · anon: signup prompt) -->
       <div class="shared-panel" id="sharedPanel">
