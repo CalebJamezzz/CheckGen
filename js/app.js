@@ -728,9 +728,13 @@ async function generateChecklist() {
     showStatus('status3', `✓ ${currentChecklist.length} items generated.`, 'success');
   } catch(err) {
     stopGenAnimation();
-    wrap.className = 'empty'; wrap.innerHTML = 'Something went wrong. Try again.';
-    showStatus('status2', 'Error: ' + err.message, 'error');
     goTo(2);
+    const isVague = /no specific|acceptance criteria|feature description|no requirements|insufficient|generic filler/i.test(err.message);
+    const toastMsg = isVague
+      ? 'Add more detail to your ticket — describe what the feature does, list specific fields, user flows, or acceptance criteria.'
+      : err.message === 'max_tokens' ? 'Response was too long. Try selecting fewer testing areas.'
+      : 'Generation failed — please try again.';
+    showAppToast(toastMsg, isVague ? 'warn' : 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Generate Checklist'; updateSummary();
   }
@@ -861,6 +865,16 @@ function setOutcome(id, outcome) {
   checkAllComplete();
 }
 
+/* ── App toast ── */
+function showAppToast(msg, type = 'error', duration = 5500) {
+  const el = $('appToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'app-toast app-toast--' + type + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), duration);
+}
+
 /* ── Generating animation ── */
 let _genTypingTimer = null;
 
@@ -893,17 +907,20 @@ function startGenAnimation() {
 
     const item = document.createElement('div');
     item.className = 'gen-item';
-    item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"></span><span class="gen-cursor"></span>';
+    item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"><span class="gen-cursor"></span></span>';
     container.appendChild(item);
     container.scrollTop = container.scrollHeight;
 
-    const textEl = item.querySelector('.gen-item-text');
+    const textEl  = item.querySelector('.gen-item-text');
     const cursorEl = item.querySelector('.gen-cursor');
+    // Insert a text node BEFORE the cursor so typed chars appear left of it
+    const textNode = document.createTextNode('');
+    textEl.insertBefore(textNode, cursorEl);
     let charIdx = 0;
 
     function typeChar() {
       if (charIdx < label.length) {
-        textEl.textContent += label[charIdx];
+        textNode.nodeValue += label[charIdx];
         charIdx++;
         _genTypingTimer = setTimeout(typeChar, 38);
       } else {

@@ -856,19 +856,48 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   border-color: var(--green);
   color: #000;
 }
-.gen-item-text { flex: 1; letter-spacing: .04em; }
+.gen-item-text { flex: 1; letter-spacing: .04em; line-height: 1.7; }
 .gen-cursor {
   display: inline-block;
-  width: 7px;
-  height: 1em;
+  width: 2px;
+  height: 0.82em;
   background: var(--green);
-  vertical-align: text-bottom;
+  vertical-align: -0.05em;
   border-radius: 1px;
-  animation: genBlink .65s step-end infinite;
-  margin-left: 2px;
-  flex-shrink: 0;
+  animation: genBlink .6s step-end infinite;
+  margin-left: 1px;
 }
 @keyframes genBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── App toast ── */
+.app-toast {
+  position: fixed;
+  top: var(--sp-5);
+  left: 50%;
+  transform: translateX(-50%) translateY(-140%);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 11px 20px;
+  font-size: clamp(12px, .78vw, 13px);
+  color: var(--text);
+  font-family: var(--font-sans);
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+  max-width: min(440px, 90vw);
+  text-align: center;
+  line-height: 1.5;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .25s cubic-bezier(.22,1,.36,1), opacity .2s ease;
+}
+.app-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.app-toast--error { border-color: var(--fail); color: var(--fail); }
+.app-toast--warn  { border-color: #fbbf24; color: #fbbf24; }
+.app-toast--success { border-color: var(--green); color: var(--green); }
 
 /* ── Checklist nav ── */
 .checklist-nav {
