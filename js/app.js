@@ -716,7 +716,7 @@ function renderItemText(text) {
     const step = text.slice(0, idx);
     const exp  = text.slice(idx + 3);
     const expCap = exp.charAt(0).toUpperCase() + exp.slice(1);
-    return `<div class="item-step">${esc2(step)}</div><div class="item-expected"><span class="item-expected-label">Expected</span>${esc2(expCap)}</div>`;
+    return `<div class="item-step">${esc2(step)}</div><div class="item-expected">${esc2(expCap)}</div>`;
   }
   return `<div class="item-step">${esc2(text)}</div>`;
 }
@@ -793,7 +793,7 @@ function renderChecklist() {
                   <div style="flex:1;min-width:0">
                     ${renderItemText(item.text)}
                     <div class="meta-row">
-                      <span class="tag ${item.priority.toLowerCase()}">${({Highest:'🔴',High:'🟠',Medium:'🟡',Low:'🔵',Lowest:'🟣'}[item.priority]||'')} ${item.priority}</span>
+                      <span class="tag ${item.priority.toLowerCase()}">${item.priority}</span>
                       <span class="item-time">${item.time}</span>
                       <div class="item-actions">
                         <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})" title="Add note">✎</button>
