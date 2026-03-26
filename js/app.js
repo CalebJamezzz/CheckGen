@@ -169,6 +169,7 @@ async function startSession() {
   const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
   document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
   ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => { const el = $(id); if (el) el.checked = false; });
+  _completionModalShown = false;
   updateSummary();
   goTo(2);
 }
@@ -326,7 +327,12 @@ function loadSession() {
 function endSession() {
   // Cancel any pending cloud save timer
   if (_cloudSaveTimer) { clearTimeout(_cloudSaveTimer); _cloudSaveTimer = null; }
+  // Mark session abandoned if it wasn't already completed via the modal
+  const allMarked = currentChecklist.length > 0 && currentChecklist.every(i => i.outcome);
+  if (_cloudSaveId && !allMarked) cloudMarkSession(_cloudSaveId, 'abandoned');
   _cloudSaveId = null;
+  _completionModalShown = false;
+  closeCompleteModal();
   stopPolling();
   sharedSessionId = null; sharedCode = null;
   currentChecklist = [];
@@ -684,6 +690,51 @@ function setOutcome(id, outcome) {
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
   refreshGroupStates();
+  checkAllComplete();
+}
+
+let _completionModalShown = false;
+function checkAllComplete() {
+  if (_completionModalShown) return;
+  if (!currentChecklist.length) return;
+  const allDone = currentChecklist.every(i => i.outcome);
+  if (!allDone) return;
+  _completionModalShown = true;
+  showCompleteModal();
+}
+
+function showCompleteModal() {
+  const p = currentChecklist.filter(i => i.outcome === 'pass').length;
+  const f = currentChecklist.filter(i => i.outcome === 'fail').length;
+  const b = currentChecklist.filter(i => i.outcome === 'blocked').length;
+  const name = $('checklistName')?.value.trim() || $('ticketId')?.value.trim() || '';
+  const nameEl = $('completeModalName');
+  if (nameEl) nameEl.textContent = name || '';
+  const sp = $('completeStatPass');    if (sp) sp.textContent = p;
+  const sf = $('completeStatFail');    if (sf) sf.textContent = f;
+  const sb = $('completeStatBlocked'); if (sb) sb.textContent = b;
+  const modal = $('checklistCompleteModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCompleteModal() {
+  const modal = $('checklistCompleteModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function completeAndEndSession() {
+  await cloudMarkSession(_cloudSaveId, 'complete');
+  closeCompleteModal();
+  endSession();
+}
+
+async function cloudMarkSession(sessionId, status) {
+  if (!sessionId) return;
+  if (typeof getSB !== 'function') return;
+  const sb = getSB(); if (!sb) return;
+  try {
+    await sb.from('checklist_sessions').update({ status, updated_at: new Date().toISOString() }).eq('id', sessionId);
+  } catch(e) { console.warn('[CheckGen] cloudMarkSession failed:', e.message); }
 }
 
 function toggleNote(id) {
@@ -735,6 +786,9 @@ function refreshGroupStates() {
     ).length;
     const allDone  = done === total;
 
+    const countEl = card.querySelector('.group-count');
+    if (countEl) countEl.style.display = allDone ? 'none' : '';
+
     const doneEl = card.querySelector('.group-done-count');
     if (doneEl) { doneEl.textContent = (!allDone && done > 0) ? `${done}/${total} done` : ''; doneEl.style.display = (!allDone && done > 0) ? '' : 'none'; }
 
@@ -742,10 +796,10 @@ function refreshGroupStates() {
     if (badge) badge.style.display = allDone ? '' : 'none';
 
     const failEl = card.querySelector('.group-fail-count');
-    if (failEl) { failEl.textContent = `${fails} Fail`; failEl.style.display = fails > 0 ? '' : 'none'; }
+    if (failEl) { failEl.textContent = fails === 1 ? '1 Fail' : `${fails} Fails`; failEl.style.display = fails > 0 ? '' : 'none'; }
 
     const blockedEl = card.querySelector('.group-blocked-count');
-    if (blockedEl) { blockedEl.textContent = `${blocked} Blocked`; blockedEl.style.display = blocked > 0 ? '' : 'none'; }
+    if (blockedEl) { blockedEl.textContent = blocked === 1 ? '1 Blocked' : `${blocked} Blocked`; blockedEl.style.display = blocked > 0 ? '' : 'none'; }
 
     if (allDone) card.dataset.open = 'false';
   });
@@ -1083,6 +1137,7 @@ async function cloudSaveSession() {
       const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', s.user.id).single();
       workspaceId = prof?.workspace_id || null;
     }
+    const allMarked = currentChecklist.length > 0 && currentChecklist.every(i => i.outcome);
     const payload = {
       user_id:      s.user.id,
       session_type: isShared ? 'team' : 'personal',
@@ -1091,6 +1146,7 @@ async function cloudSaveSession() {
       ticket_id:    $('ticketId')?.value || null,
       environment:  $('envBranch')?.value || null,
       items:        currentChecklist,
+      status:       allMarked ? 'complete' : 'in_progress',
       updated_at:   new Date().toISOString(),
     };
     if (_cloudSaveId) {
@@ -1211,31 +1267,36 @@ async function initResumePanel() {
     if (!s?.user) return;
     const sb = getSB(); if (!sb) return;
 
-    // Get the most recent personal session that has incomplete items
     const { data } = await sb
       .from('checklist_sessions')
-      .select('id, name, ticket_id, environment, items, updated_at, session_type')
+      .select('id, name, ticket_id, environment, items, updated_at, session_type, status')
       .eq('user_id', s.user.id)
       .eq('session_type', 'personal')
       .order('updated_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (!data?.length) return;
 
-    // Find first session with at least one unactioned item
-    const incomplete = data.find(sess => {
+    // Prefer in_progress sessions first; fall back to most recent complete
+    let session = data.find(sess => {
       const items = Array.isArray(sess.items) ? sess.items : [];
-      return items.length > 0 && items.some(i => !i.outcome);
+      const isInProgress = sess.status === 'in_progress' || !sess.status; // graceful fallback for old rows
+      return isInProgress && items.length > 0 && items.some(i => !i.outcome);
     });
-    if (!incomplete) return;
 
-    _resumeSession = incomplete;
-    const items = Array.isArray(incomplete.items) ? incomplete.items : [];
-    const remaining = items.filter(i => !i.outcome).length;
-    const label = incomplete.name || incomplete.ticket_id || 'Last session';
-    const ago = incomplete.updated_at
+    let isComplete = false;
+    if (!session) {
+      session = data.find(sess => sess.status === 'complete');
+      if (session) isComplete = true;
+    }
+    if (!session) return;
+
+    _resumeSession = session;
+    const items = Array.isArray(session.items) ? session.items : [];
+    const label  = session.name || session.ticket_id || 'Last session';
+    const ago    = session.updated_at
       ? (() => {
-          const mins = Math.round((Date.now() - new Date(incomplete.updated_at)) / 60000);
+          const mins = Math.round((Date.now() - new Date(session.updated_at)) / 60000);
           if (mins < 60)   return mins + 'm ago';
           if (mins < 1440) return Math.round(mins / 60) + 'h ago';
           const days = Math.round(mins / 1440);
@@ -1243,10 +1304,30 @@ async function initResumePanel() {
         })()
       : '';
 
+    const labelEl = panel.querySelector('.s1-resume-label');
+    if (labelEl) labelEl.textContent = isComplete ? 'Completed checklist' : 'Unfinished checklist';
+    if (isComplete && labelEl) labelEl.style.color = 'var(--pass)';
+
     const metaEl = $('resumeMeta');
-    if (metaEl) metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+    if (metaEl) {
+      if (isComplete) {
+        const p = items.filter(i => i.outcome === 'pass').length;
+        const f = items.filter(i => i.outcome === 'fail').length;
+        const b = items.filter(i => i.outcome === 'blocked').length;
+        const parts = [p ? `${p} passed` : '', f ? `${f} failed` : '', b ? `${b} blocked` : ''].filter(Boolean);
+        metaEl.textContent = parts.join(' · ') + (ago ? ' · ' + ago : '');
+      } else {
+        const remaining = items.filter(i => !i.outcome).length;
+        metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+      }
+    }
+
     const nameEl = $('resumeTitle');
     if (nameEl) nameEl.textContent = label;
+
+    // Update resume button label for complete sessions
+    const resumeBtn = panel.querySelector('.s1-resume-actions .btn-primary');
+    if (resumeBtn) resumeBtn.textContent = isComplete ? 'Review / Export →' : 'Resume →';
 
     panel.style.display = 'block';
   } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }

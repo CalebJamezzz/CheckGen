@@ -367,6 +367,36 @@ Rejected reports require a reason to be entered"></textarea>
   </div>
 </div>
 
+<!-- Checklist complete modal -->
+<div id="checklistCompleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:440px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6)">
+    <div style="text-align:center;margin-bottom:var(--sp-5)">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--pass-dim);border:1px solid rgba(52,211,153,.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);font-size:22px">✓</div>
+      <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.35rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-2)">Checklist Complete</h2>
+      <p id="completeModalName" style="font-size:clamp(12px,.82vw,13px);color:var(--dim);margin:0"></p>
+    </div>
+    <div id="completeModalStats" style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-6);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div style="text-align:center">
+        <div id="completeStatPass" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--pass)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Passed</div>
+      </div>
+      <div style="text-align:center">
+        <div id="completeStatFail" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--fail)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Failed</div>
+      </div>
+      <div style="text-align:center">
+        <div id="completeStatBlocked" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--blocked)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Blocked</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="completeAndEndSession()">End Session →</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="downloadCsv();closeCompleteModal()">Export Results</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="closeCompleteModal()">Keep Reviewing</button>
+    </div>
+  </div>
+</div>
+
 <!-- Back to setup confirmation modal -->
 <div id="backToSetupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
   <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:400px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6)">
