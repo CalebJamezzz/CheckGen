@@ -800,23 +800,75 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   justify-content: center;
   min-height: 72vh;
   text-align: center;
-  gap: 0;
+  gap: var(--sp-5);
 }
-.gen-orrery { position: relative; width: 180px; height: 180px; margin-bottom: var(--sp-7); flex-shrink: 0; }
-.gen-ring-outer { position: absolute; inset: 0;    border-radius: 50%; border: 1px solid rgba(16,185,129,.18); border-top-color: var(--green); animation: genSpin 3s linear infinite; }
-.gen-ring-mid   { position: absolute; inset: 22px; border-radius: 50%; border: 1px solid rgba(52,211,153,.12); border-top-color: var(--pass); animation: genSpin 2s linear infinite reverse; }
-.gen-ring-inner { position: absolute; inset: 45px; border-radius: 50%; border: 1px solid rgba(16,185,129,.08); border-top-color: rgba(16,185,129,.45); animation: genSpin 1.2s linear infinite; }
-.gen-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.gen-star { font-size: 24px; animation: genPulse 1.8s ease-in-out infinite; color: var(--green); }
-.gen-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; top: 50%; left: 50%; margin: -3.5px; }
-.gen-dot-green { background: var(--green); box-shadow: 0 0 8px rgba(16,185,129,.8); animation: genOrbitOuter 3s linear infinite; }
-.gen-dot-pass   { background: var(--pass);  box-shadow: 0 0 8px rgba(52,211,153,.7);  animation: genOrbitInner 2.4s linear infinite reverse; }
-@keyframes genSpin       { to { transform: rotate(360deg); } }
-@keyframes genPulse      { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
-@keyframes genOrbitOuter { from{transform:rotate(0deg) translateX(79px) rotate(0deg)} to{transform:rotate(360deg) translateX(79px) rotate(-360deg)} }
-@keyframes genOrbitInner { from{transform:rotate(0deg) translateX(55px) rotate(0deg)} to{transform:rotate(360deg) translateX(55px) rotate(-360deg)} }
-.gen-label    { font-family: var(--font-mono); font-size: clamp(13px, .88vw, 16px); letter-spacing: .2em; text-transform: uppercase; color: var(--green); margin-bottom: var(--sp-3); }
-.gen-sublabel { font-family: var(--font-mono); font-size: clamp(12px, .78vw, 14px); letter-spacing: .1em;  text-transform: uppercase; color: var(--soft); min-height: 1.2em; }
+.gen-label {
+  font-family: var(--font-mono);
+  font-size: clamp(13px, .88vw, 16px);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+/* Checklist animation panel */
+.gen-checklist {
+  width: min(420px, 88vw);
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--sp-4) var(--sp-4);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: left;
+  scrollbar-width: none;
+}
+.gen-checklist::-webkit-scrollbar { display: none; }
+.gen-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: clamp(11px, .75vw, 13px);
+  color: var(--text);
+  padding: 3px 0;
+  min-height: 1.8em;
+}
+.gen-item--done { color: var(--soft); }
+.gen-item-box {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
+  color: transparent;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.gen-item-box--done {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+}
+.gen-item-text { flex: 1; letter-spacing: .04em; }
+.gen-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  background: var(--green);
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: genBlink .65s step-end infinite;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+@keyframes genBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* ── Checklist nav ── */
 .checklist-nav {

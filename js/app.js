@@ -536,28 +536,7 @@ async function generateChecklist() {
   btn.disabled = true; btn.textContent = 'Generating…';
   goTo(25);
 
-  // Cycle sublabels
-  const sublabels = [
-    'Reading your ticket',
-    'Identifying test surfaces',
-    'Mapping acceptance criteria',
-    'Writing happy path cases',
-    'Hunting for edge cases',
-    'Checking permissions flows',
-    'Validating error states',
-    'Assigning priorities',
-    'Estimating test effort',
-    'Adding expected results',
-    'Reviewing for coverage gaps',
-    'Grouping into sections',
-    'Almost there',
-  ];
-  let sublabelIdx = 0;
-  const sublabelEl = $('genSubLabel');
-  const sublabelTimer = setInterval(() => {
-    sublabelIdx = (sublabelIdx + 1) % sublabels.length;
-    if (sublabelEl) sublabelEl.textContent = sublabels[sublabelIdx];
-  }, 2500);
+  startGenAnimation();
 
   const wrap = $('checklistWrap');
   wrap.className = ''; wrap.innerHTML = '';
@@ -694,7 +673,7 @@ async function generateChecklist() {
   try {
     const items = await callClaude(prompt, 6000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
-    clearInterval(sublabelTimer);
+    stopGenAnimation();
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession();
@@ -741,7 +720,7 @@ async function generateChecklist() {
     }
     showStatus('status3', `✓ ${currentChecklist.length} items generated.`, 'success');
   } catch(err) {
-    clearInterval(sublabelTimer);
+    stopGenAnimation();
     wrap.className = 'empty'; wrap.innerHTML = 'Something went wrong. Try again.';
     showStatus('status2', 'Error: ' + err.message, 'error');
     goTo(2);
@@ -875,6 +854,77 @@ function setOutcome(id, outcome) {
   checkAllComplete();
 }
 
+/* ── Generating animation ── */
+let _genTypingTimer = null;
+
+function startGenAnimation() {
+  const container = $('genChecklist');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const steps = [
+    'Reading your ticket',
+    'Identifying test surfaces',
+    'Mapping acceptance criteria',
+    'Writing happy path cases',
+    'Hunting for edge cases',
+    'Checking permissions flows',
+    'Validating error states',
+    'Assigning priorities',
+    'Estimating test effort',
+    'Adding expected results',
+    'Reviewing for coverage gaps',
+    'Grouping into sections',
+    'Almost there',
+  ];
+
+  let idx = 0;
+
+  function typeItem() {
+    if (idx >= steps.length) return; // stop at last item — cursor stays
+    const label = steps[idx];
+
+    const item = document.createElement('div');
+    item.className = 'gen-item';
+    item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"></span><span class="gen-cursor"></span>';
+    container.appendChild(item);
+    container.scrollTop = container.scrollHeight;
+
+    const textEl = item.querySelector('.gen-item-text');
+    const cursorEl = item.querySelector('.gen-cursor');
+    let charIdx = 0;
+
+    function typeChar() {
+      if (charIdx < label.length) {
+        textEl.textContent += label[charIdx];
+        charIdx++;
+        _genTypingTimer = setTimeout(typeChar, 38);
+      } else {
+        // Pause, then check off and start next
+        _genTypingTimer = setTimeout(() => {
+          const box = item.querySelector('.gen-item-box');
+          box.textContent = '✓';
+          box.classList.add('gen-item-box--done');
+          item.classList.add('gen-item--done');
+          cursorEl.remove();
+          idx++;
+          _genTypingTimer = setTimeout(typeItem, 260);
+        }, 500);
+      }
+    }
+    typeChar();
+  }
+
+  typeItem();
+}
+
+function stopGenAnimation() {
+  if (_genTypingTimer) { clearTimeout(_genTypingTimer); _genTypingTimer = null; }
+  const container = $('genChecklist');
+  if (container) container.innerHTML = '';
+}
+
+/* ── Completion modal ── */
 let _completionModalShown = false;
 function checkAllComplete() {
   if (_completionModalShown) return;
