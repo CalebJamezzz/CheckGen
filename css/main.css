@@ -466,8 +466,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   padding: var(--sp-3) var(--sp-4);
   background: rgba(255,255,255,.02);
   border-bottom: 1px solid rgba(255,255,255,.04);
+  cursor: pointer;
+  user-select: none;
 }
 .group-head-left { display: flex; align-items: center; gap: 10px; }
+.group-toggle { color: var(--muted); font-size: 12px; transition: transform .2s; flex-shrink: 0; }
+.group-card[data-open="false"] .group-toggle { transform: rotate(-90deg); }
+.group-card[data-open="false"] .group-body { display: none; }
 .group-name {
   font-family: var(--font-mono);
   font-size: clamp(11px, .75vw, 13px);
@@ -513,15 +518,17 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .item + .item { border-top: 1px solid rgba(255,255,255,.03); }
 .item-main { min-width: 0; }
 .item-row { display: flex; gap: 10px; align-items: flex-start; }
-.item-text { color: var(--text); line-height: 1.7; font-size: clamp(13px, .9vw, 15px); flex: 1; }
-.item.pass    .item-text { color: var(--pass); }
-.item.fail    .item-text { color: rgba(248,113,113,.75); }
-.item.blocked .item-text { color: rgba(251,191,36,.75); }
+.item-step { color: var(--text); line-height: 1.7; font-size: clamp(13px, .9vw, 15px); }
+.item.pass    .item-step { color: var(--pass); }
+.item.fail    .item-step { color: rgba(248,113,113,.75); }
+.item.blocked .item-step { color: rgba(251,191,36,.75); }
+.item-expected { margin-top: .3rem; font-size: .875em; color: var(--muted); line-height: 1.55; }
+.item-expected-label { display: inline-block; margin-right: .35rem; font-size: .75em; text-transform: uppercase; letter-spacing: .06em; color: var(--green); opacity: .7; font-weight: 600; font-family: var(--font-mono); }
 
 .outcome-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
 .ob-row { display: flex; gap: 4px; }
 .ob {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,.08);
   background: none;
   border-radius: var(--r-sm);
   padding: 4px 8px;
@@ -530,33 +537,36 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   font-size: clamp(9px, .68vw, 11px);
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255,255,255,.28);
   transition: all .15s;
   white-space: nowrap;
 }
-.ob:hover { color: var(--text); border-color: var(--border-md); }
+.ob:hover { color: rgba(255,255,255,.65); border-color: rgba(255,255,255,.22); }
 .ob.ap { color: var(--pass);    border-color: rgba(52,211,153,.4);   background: var(--pass-dim); }
 .ob.af { color: var(--fail);    border-color: rgba(248,113,113,.35); background: var(--fail-dim); }
 .ob.ab { color: var(--blocked); border-color: rgba(251,191,36,.4);  background: var(--blocked-dim); }
 
 .meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.item-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.item:hover .item-actions,
+.item:focus-within .item-actions { opacity: 1; }
+.item-actions .note-btn.has-note { opacity: 1; }
 .item-time { text-align: right; color: var(--muted); font-family: var(--font-mono); font-size: clamp(10px, .65vw, 12px); white-space: nowrap; padding-top: 12px; }
 
 /* Notes */
 .note-btn {
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255,255,255,.08);
   background: none;
   border-radius: var(--r-sm);
-  padding: 2px 7px;
+  padding: 3px 7px;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: clamp(9px, .62vw, 11px);
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-size: clamp(11px, .75vw, 13px);
   color: var(--muted);
   transition: all .15s;
+  line-height: 1;
 }
-.note-btn:hover, .note-btn.has-note { color: var(--green); border-color: rgba(16,185,129,.3); }
+.note-btn:hover { color: var(--green); border-color: rgba(16,185,129,.3); }
+.note-btn.has-note { color: var(--green); border-color: rgba(16,185,129,.3); opacity: 1 !important; }
 .note-wrap { display: none; margin-top: 8px; }
 .note-wrap.open { display: block; }
 .note-input {

@@ -163,8 +163,14 @@ async function startSession() {
       return;
     }
   }
-  goTo(2);
+  // Explicitly clear screen 2 fields so previous session never bleeds through
+  ['ticketText','acText'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  const dl = $('detailLevel'); if (dl) dl.value = 'expanded';
+  const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
+  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   updateSummary();
+  goTo(2);
 }
 
 /* ── History ────────────────────────────────────────────── */
@@ -331,8 +337,7 @@ function endSession() {
   $('detailLevel').value = 'expanded';
   $('focusStyle').value  = 'balanced';
   document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
-  $('includeBreak').checked     = true;
-  $('includeDataHints').checked = true;
+  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   localStorage.removeItem(SK);
   setMode('personal');
   $('shareCodeBadge').style.display = 'none';
@@ -661,6 +666,7 @@ function setOutcome(id, outcome) {
   }
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
+  refreshGroupStates();
 }
 
 function toggleNote(id) {
@@ -687,6 +693,27 @@ function groupChecklist(items) {
   return Object.entries(g);
 }
 
+function renderItemText(text) {
+  const idx = text.indexOf(' → ');
+  if (idx !== -1) {
+    return `<div class="item-step">${esc2(text.slice(0, idx))}</div><div class="item-expected"><span class="item-expected-label">Expected</span>${esc2(text.slice(idx + 3))}</div>`;
+  }
+  return `<div class="item-step">${esc2(text)}</div>`;
+}
+function toggleSection(card) {
+  card.dataset.open = card.dataset.open === 'true' ? 'false' : 'true';
+}
+function refreshGroupStates() {
+  document.querySelectorAll('.group-card').forEach(card => {
+    const items = card.querySelectorAll('.item');
+    if (!items.length) return;
+    const allDone = [...items].every(el =>
+      el.classList.contains('pass') || el.classList.contains('fail') || el.classList.contains('blocked')
+    );
+    if (allDone) card.dataset.open = 'false';
+  });
+}
+
 function renderChecklist() {
   const wrap = $('checklistWrap');
   if (!currentChecklist.length) {
@@ -707,49 +734,54 @@ function renderChecklist() {
     </div>` : '';
 
   wrap.innerHTML = headerHtml + groupChecklist(currentChecklist).map(([section, items]) => `
-    <div class="group-card">
-      <div class="group-head">
+    <div class="group-card" data-open="true">
+      <div class="group-head" onclick="toggleSection(this.closest('.group-card'))">
         <div class="group-head-left">
+          <span class="group-toggle">▾</span>
           <div class="group-name">${esc2(section)}</div>
           <div class="group-count">${items.length} item${items.length === 1 ? '' : 's'}</div>
         </div>
-        <button class="regen-btn" data-section="${esc2(section)}" onclick="regenSection('${esc(section)}')">↺ regen</button>
+        <button class="regen-btn" data-section="${esc2(section)}" onclick="event.stopPropagation();regenSection('${esc(section)}')">↺ regen</button>
       </div>
-      <div class="items">
-        ${items.map(item => `
-          <div class="item ${item.outcome || ''}" data-id="${item.id}">
-            <div class="item-main">
-              <div class="item-row">
-                <div style="flex:1;min-width:0">
-                  <div class="item-text">${esc2(item.text)}</div>
-                  <div class="meta-row">
-                    <span class="tag ${item.priority.toLowerCase()}">${({Highest:'🔴',High:'🟠',Medium:'🟡',Low:'🔵',Lowest:'🟣'}[item.priority]||'')} ${item.priority}</span>
-                    <span class="tag ${typeClass(item.type)}">${item.type}</span>
-                    <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})">✎ note</button>
-                    <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})">✕ remove</button>
+      <div class="group-body">
+        <div class="items">
+          ${items.map(item => `
+            <div class="item ${item.outcome || ''}" data-id="${item.id}">
+              <div class="item-main">
+                <div class="item-row">
+                  <div style="flex:1;min-width:0">
+                    ${renderItemText(item.text)}
+                    <div class="meta-row">
+                      <span class="tag ${item.priority.toLowerCase()}">${({Highest:'🔴',High:'🟠',Medium:'🟡',Low:'🔵',Lowest:'🟣'}[item.priority]||'')} ${item.priority}</span>
+                      <div class="item-actions">
+                        <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})" title="Add note">✎</button>
+                        <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})" title="Remove">✕</button>
+                      </div>
+                    </div>
+                    <div class="note-wrap${item.note ? ' open' : ''}" id="note-wrap-${item.id}">
+                      <textarea class="note-input" rows="2" placeholder="Add a note — e.g. fails on Safari, linked to PROJ-456…" onblur="saveNote(${item.id},this.value)">${esc2(item.note || '')}</textarea>
+                    </div>
                   </div>
-                  <div class="note-wrap${item.note ? ' open' : ''}" id="note-wrap-${item.id}">
-                    <textarea class="note-input" rows="2" placeholder="Add a note — e.g. fails on Safari, linked to PROJ-456…" onblur="saveNote(${item.id},this.value)">${esc2(item.note || '')}</textarea>
+                  <div class="outcome-btns">
+                    <div class="ob-row">
+                      <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
+                      <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
+                      <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                    </div>
+                    <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                   </div>
-                </div>
-                <div class="outcome-btns">
-                  <div class="ob-row">
-                    <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
-                    <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                    <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
-                  </div>
-                  <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
-            </div>
-            <div class="item-time">${item.time}</div>
-          </div>`).join('')}
-      </div>
-      <div class="add-item-row">
-        <input class="add-item-input" placeholder="+ Add a step to ${esc2(section)}…" onkeydown="if(event.key==='Enter')addCustomItem('${esc(section)}',this)">
-        <button class="btn btn-ghost btn-sm" onclick="addCustomItem('${esc(section)}',this.previousElementSibling)">Add</button>
+              <div class="item-time">${item.time}</div>
+            </div>`).join('')}
+        </div>
+        <div class="add-item-row">
+          <input class="add-item-input" placeholder="+ Add a step to ${esc2(section)}…" onkeydown="if(event.key==='Enter')addCustomItem('${esc(section)}',this)">
+          <button class="btn btn-ghost btn-sm" onclick="addCustomItem('${esc(section)}',this.previousElementSibling)">Add</button>
+        </div>
       </div>
     </div>`).join('');
+  refreshGroupStates();
 }
 
 /* ── Export CSV ─────────────────────────────────────────── */
