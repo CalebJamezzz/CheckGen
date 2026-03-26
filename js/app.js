@@ -79,6 +79,10 @@ function setMode(mode) {
   const sessionDetails = $('sessionDetails');
   if (sessionDetails) sessionDetails.style.display = mode === 'join' ? 'none' : '';
 
+  // Hide the Start Session CTA in join mode — the Join → button inside the panel handles it
+  const startBtn = $('startBtn');
+  if (startBtn) startBtn.style.display = mode === 'join' ? 'none' : '';
+
   // Hide both panels first
   const sharedPanel = $('sharedPanel');
   const joinPanel   = $('joinPanel');
