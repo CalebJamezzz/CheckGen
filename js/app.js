@@ -440,35 +440,33 @@ async function callClaude(prompt, maxT, systemPrompt) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
           if (data === '[DONE]') break outer;
-          try {
-            const evt = JSON.parse(data);
-            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-              raw += evt.delta.text;
-            }
-            if (evt.type === 'message_delta' && evt.delta?.stop_reason === 'max_tokens') {
-              throw new Error('max_tokens');
-            }
-            if (evt.type === 'error') {
-              const msg = evt.error?.message || 'Upstream error';
-              console.error('[CheckGen] SSE error event:', msg);
-              throw new Error(msg);
-            }
-          } catch (e) {
-            if (e.message === 'max_tokens' || e.message?.startsWith('Upstream')) throw e;
-            // ignore JSON parse errors on non-data lines
+          let evt;
+          try { evt = JSON.parse(data); } catch { continue; } // skip malformed SSE lines
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            raw += evt.delta.text;
+          } else if (evt.type === 'message_delta' && evt.delta?.stop_reason === 'max_tokens') {
+            throw new Error('max_tokens');
+          } else if (evt.type === 'error') {
+            const msg = evt.error?.message || evt.error?.type || 'Upstream error';
+            console.error('[CheckGen] SSE error event:', msg);
+            throw new Error(msg);
           }
         }
       }
 
-      const cleaned = raw.replace(/```json|```/g, '').trim();
-      try { return JSON.parse(cleaned); }
-      catch {
-        const m = cleaned.match(/\[[\s\S]*\]/);
-        if (m) return JSON.parse(m[0]);
-        const lc = cleaned.lastIndexOf('},');
-        if (lc > 0) return JSON.parse(cleaned.slice(0, lc + 1) + ']');
-        throw new Error('Invalid JSON from AI');
-      }
+      const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+      console.log('[CheckGen] raw length:', raw.length, '| first 300:', cleaned.slice(0, 300));
+      // 1. Direct parse
+      try { return JSON.parse(cleaned); } catch {}
+      // 2. Extract first [...] array
+      const m = cleaned.match(/\[[\s\S]*\]/);
+      if (m) { try { return JSON.parse(m[0]); } catch {} }
+      // 3. Truncate after last complete object
+      const lc = cleaned.lastIndexOf('},');
+      if (lc > 0) { try { return JSON.parse(cleaned.slice(0, lc + 1) + ']'); } catch {} }
+      // 4. Nothing worked — log full raw for debugging
+      console.error('[CheckGen] unparseable response:', cleaned);
+      throw new Error('Invalid JSON from AI');
     }
 
     // ── Fallback: synchronous JSON (legacy regular function) ──
