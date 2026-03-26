@@ -471,13 +471,27 @@ async function generateChecklist() {
   goTo(25);
 
   // Cycle sublabels
-  const sublabels = ['Reading your ticket','Mapping test areas','Writing test steps','Grouping by section','Almost there'];
+  const sublabels = [
+    'Reading your ticket',
+    'Identifying test surfaces',
+    'Mapping acceptance criteria',
+    'Writing happy path cases',
+    'Hunting for edge cases',
+    'Checking permissions flows',
+    'Validating error states',
+    'Assigning priorities',
+    'Estimating test effort',
+    'Adding expected results',
+    'Reviewing for coverage gaps',
+    'Grouping into sections',
+    'Almost there',
+  ];
   let sublabelIdx = 0;
   const sublabelEl = $('genSubLabel');
   const sublabelTimer = setInterval(() => {
     sublabelIdx = (sublabelIdx + 1) % sublabels.length;
     if (sublabelEl) sublabelEl.textContent = sublabels[sublabelIdx];
-  }, 2200);
+  }, 2500);
 
   const wrap = $('checklistWrap');
   wrap.className = ''; wrap.innerHTML = '';
@@ -508,12 +522,22 @@ async function generateChecklist() {
 
   // Item count scales with areas selected
   const areaCount = selectedAreas.length;
-  const minItems  = Math.max(5,  areaCount * 2);
-  const maxItems  = Math.min(30, areaCount * 4);
+  const minItems  = Math.max(6,  areaCount * 2);
+  const maxItems  = Math.min(40, areaCount * 5);
 
   // System prompt
   const systemPrompt = (
     'You are a senior QA engineer creating structured test checklists. ' +
+    'Your goal is meaningful coverage of the ticket — not a long list. ' +
+    'Generate only the test cases that are genuinely necessary to verify the feature described. ' +
+    'Do not pad the checklist to reach a number. A focused set of 10 specific items is far more valuable than 30 generic ones. ' +
+    'Every item must test something distinct — no near-duplicates, no rephrasing the same check, no filler. ' +
+    'If a ticket is simple, keep the checklist short. If it is complex, cover it thoroughly. Let the ticket dictate the depth. ' +
+    'QUALITY RULES FOR EACH ITEM: ' +
+    '(1) Be specific to the ticket — reference the actual field names, UI elements, user flows, and data values mentioned. Never write "the button" or "the input" when the ticket names them specifically. ' +
+    '(2) Write each item so a new team member with no context could execute it without asking a single question. If it requires interpretation, it is too vague. ' +
+    '(3) Test exactly one scenario per item — do not bundle multiple checks into one step. ' +
+    '(4) Avoid these patterns: "Verify the feature works", "Test that X does what it should", "Confirm the page loads correctly" — these are not test cases, they are vague observations. ' +
     'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
     'Think systematically across: boundary values, empty/null inputs, invalid formats, permission levels, ' +
     'state transitions, error recovery, and realistic data scenarios. ' +
@@ -555,8 +579,8 @@ async function generateChecklist() {
     'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
-    '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
-    '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
+    '3. Generate as many items as genuinely needed for coverage — minimum ' + minItems + ', maximum ' + maxItems + '. Do not pad to reach the maximum. Stop when the ticket is covered. ' +
+    '4. Every item must be directly traceable to the specific ticket — no generic filler, no near-duplicates. ' +
     '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
     'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
     'Functional = 2-5m (straightforward feature interaction); ' +
@@ -602,7 +626,7 @@ async function generateChecklist() {
   const messages = [{ role: 'user', content: userPrompt }];
 
   try {
-    const items = await callClaude(prompt, 4000, systemPrompt);
+    const items = await callClaude(prompt, 6000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     clearInterval(sublabelTimer);
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
@@ -674,6 +698,12 @@ async function regenSection(section) {
 
   const regenSystemPrompt = (
     'You are a senior QA engineer regenerating a specific section of a test checklist. ' +
+    'Generate only what is genuinely needed to cover this section — not as many items as possible. ' +
+    'Every item must test something distinct. No near-duplicates, no filler, no generic steps that could apply to any feature. ' +
+    'QUALITY RULES: be specific to the ticket — reference actual field names, UI elements, and flows. ' +
+    'Write each item so a new team member could execute it without asking questions. ' +
+    'Test exactly one scenario per item. ' +
+    'Avoid vague observations like "Verify the feature works" or "Confirm the page loads" — these are not test cases. ' +
     'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
     'The text field must always follow this format: "action step → expected result". ' +
     'Assign priority using exactly these 5 levels — ' +
