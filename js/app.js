@@ -406,7 +406,7 @@ async function callClaude(prompt, maxT, systemPrompt) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: maxT || 4000,
         messages: [{ role: 'user', content: prompt }],
       }, systemPrompt ? { system: systemPrompt } : {})),
