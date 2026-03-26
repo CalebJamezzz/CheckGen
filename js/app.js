@@ -407,10 +407,71 @@ async function callClaude(prompt, maxT, systemPrompt) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({
         model: 'claude-sonnet-4-6',
-        max_tokens: maxT || 4000,
+        max_tokens: maxT || 6000,
         messages: [{ role: 'user', content: prompt }],
       }, systemPrompt ? { system: systemPrompt } : {})),
     });
+
+    if (!r.ok) {
+      // Non-2xx from the edge function means an upstream error JSON
+      const errText = await r.text();
+      let msg = r.statusText;
+      try { msg = JSON.parse(errText).error?.message || msg; } catch {}
+      console.error('[CheckGen] API error:', r.status, msg);
+      throw new Error(msg);
+    }
+
+    const contentType = r.headers.get('content-type') || '';
+
+    // ── Streaming path (edge function returns text/event-stream) ──
+    if (contentType.includes('text/event-stream')) {
+      const reader  = r.body.getReader();
+      const decoder = new TextDecoder();
+      let raw    = '';
+      let buffer = '';
+
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep partial line for next chunk
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break outer;
+          try {
+            const evt = JSON.parse(data);
+            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+              raw += evt.delta.text;
+            }
+            if (evt.type === 'message_delta' && evt.delta?.stop_reason === 'max_tokens') {
+              throw new Error('max_tokens');
+            }
+            if (evt.type === 'error') {
+              const msg = evt.error?.message || 'Upstream error';
+              console.error('[CheckGen] SSE error event:', msg);
+              throw new Error(msg);
+            }
+          } catch (e) {
+            if (e.message === 'max_tokens' || e.message?.startsWith('Upstream')) throw e;
+            // ignore JSON parse errors on non-data lines
+          }
+        }
+      }
+
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+      try { return JSON.parse(cleaned); }
+      catch {
+        const m = cleaned.match(/\[[\s\S]*\]/);
+        if (m) return JSON.parse(m[0]);
+        const lc = cleaned.lastIndexOf('},');
+        if (lc > 0) return JSON.parse(cleaned.slice(0, lc + 1) + ']');
+        throw new Error('Invalid JSON from AI');
+      }
+    }
+
+    // ── Fallback: synchronous JSON (legacy regular function) ──
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
     const d = JSON.parse(text);
@@ -423,12 +484,13 @@ async function callClaude(prompt, maxT, systemPrompt) {
     const raw     = d.content?.find(b => b.type === 'text')?.text || '';
     const cleaned = raw.replace(/```json|```/g, '').trim();
     try { return JSON.parse(cleaned); }
-    catch(e) {
+    catch {
       const lc = cleaned.lastIndexOf('},');
       if (lc > 0) return JSON.parse(cleaned.slice(0, lc + 1) + ']');
-      throw e;
+      throw new Error('Invalid JSON from AI');
     }
   };
+
   try { return await attempt(); }
   catch(e) {
     if (e.message === 'timeout' || e.message === 'max_tokens') return await attempt();
@@ -527,7 +589,7 @@ async function generateChecklist() {
   // Item count scales with areas selected
   const areaCount = selectedAreas.length;
   const minItems  = Math.max(6,  areaCount * 2);
-  const maxItems  = Math.min(40, areaCount * 5);
+  const maxItems  = Math.min(40, areaCount * 4);
 
   // System prompt
   const systemPrompt = (
@@ -759,7 +821,7 @@ async function regenSection(section) {
   );
 
   try {
-    const newItems = await callClaude(regenPromptParts.join('\n'), 1500, regenSystemPrompt);
+    const newItems = await callClaude(regenPromptParts.join('\n'), 3000, regenSystemPrompt);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
     const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
     // Preserve original section order rather than appending to end

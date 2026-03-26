@@ -47,14 +47,14 @@
         <h1 style="font-size:clamp(2rem,3.5vw,4rem);margin-bottom:var(--sp-5)">Built for QA engineers who test seriously.</h1>
         <div class="prose">
           <p>CheckGen started as an internal tool — a way to stop writing the same test cases from scratch every sprint. Paste acceptance criteria, get a grouped checklist, mark outcomes, export. That's it.</p>
-          <p>Built on Claude Haiku for generation speed, Supabase for real-time shared sessions, and Netlify for hosting. No bloat. Just a fast, focused testing tool.</p>
+          <p>Built on Claude Sonnet 4.6 for generation quality, Supabase for real-time shared sessions, and Netlify for hosting. No bloat. Just a focused, thorough testing tool.</p>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:var(--sp-4);padding-top:var(--sp-6)">
         <div class="about-card" style="padding:var(--sp-5)">
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-3)">Stack</div>
           <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
-            <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">AI model</span><span style="color:var(--text)">Claude Haiku</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">AI model</span><span style="color:var(--text)">Claude Sonnet 4.6</span></div>
             <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">Database</span><span style="color:var(--text)">Supabase</span></div>
             <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">Hosting</span><span style="color:var(--text)">Netlify</span></div>
             <div style="display:flex;justify-content:space-between;font-size:clamp(13px,.88vw,15px)"><span style="color:var(--dim)">Domain</span><span style="color:var(--text)">checkgen.dev</span></div>
@@ -64,7 +64,7 @@
           <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-3)">By the numbers</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)">
             <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">2–4×</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">items per area selected</div></div>
-            <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">3–8s</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">generation time</div></div>
+            <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">40</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">max items generated</div></div>
             <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">6</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">char share code</div></div>
             <div><div style="font-family:var(--font-display);font-size:clamp(1.6rem,2.5vw,2.5rem);font-weight:700;color:var(--text)">$0</div><div style="font-size:clamp(11px,.75vw,13px);color:var(--dim)">to get started</div></div>
           </div>
@@ -119,7 +119,7 @@
     <div class="about-feature-deep" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-8)">
       <div>
         <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">AI Checklist Generation</div>
-        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Paste your AC and CheckGen sends it to Claude Haiku with a system prompt that strictly enforces your area selections and scales item count to match — roughly 2–4 items per area selected. Output is structured JSON grouped by section and rendered into a full checklist.</p>
+        <p style="font-size:clamp(13px,.9vw,15px);color:var(--text);opacity:.78;line-height:1.75">Paste your AC and CheckGen sends it to Claude Sonnet 4.6 with a system prompt that strictly enforces your area selections and scales item count to match — roughly 2–4 items per area selected, up to 40 total. Output is structured JSON grouped by section and rendered into a full checklist.</p>
       </div>
       <div>
         <div style="font-family:var(--font-mono);font-size:clamp(10px,.72vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:var(--sp-2)">Real-Time Shared Sessions</div>
@@ -190,7 +190,7 @@
         <summary class="faq-summary">What AI model does it use?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
-        <div class="faq-body">Claude Haiku via the Anthropic API. Haiku is fast — checklist generation typically takes 3–8 seconds — and accurate enough for structured QA output.</div>
+        <div class="faq-body">Claude Sonnet 4.6 via the Anthropic API. Sonnet produces more specific, executable test cases than lighter models — generation typically takes 15–60 seconds depending on ticket complexity and the number of testing areas selected.</div>
       </details>
 
       <details class="faq-details">
@@ -246,7 +246,7 @@
         <summary class="faq-summary">Why does item count vary between runs?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
-        <div class="faq-body">Item count scales with the number of testing areas you select — roughly 2–4 items per area. Selecting 3 areas produces a focused 6–12 item checklist; selecting 8 areas produces a more thorough 16–30 item checklist. This means you're always getting appropriately sized output for the scope you asked for.</div>
+        <div class="faq-body">Item count scales with the number of testing areas you select — roughly 2–4 items per area. Selecting 3 areas produces a focused 6–12 item checklist; selecting 8 areas produces a more thorough 16–40 item checklist. This means you're always getting appropriately sized output for the scope you asked for.</div>
       </details>
 
     </div>
