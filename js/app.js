@@ -70,7 +70,8 @@ function backToSetupCancel() {
 function setMode(mode) {
   sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
-  $('cardShared').classList.toggle('active', mode === 'shared');
+  // Team Session tile stays highlighted for both 'shared' and 'join' (join is accessed from within it)
+  $('cardShared').classList.toggle('active', mode === 'shared' || mode === 'join');
   const joinStrip = $('cardJoin');
   if (joinStrip) joinStrip.classList.toggle('active', mode === 'join');
 

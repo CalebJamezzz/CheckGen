@@ -30,24 +30,24 @@
     <!-- ═══════════ SCREEN 1 — Welcome ═══════════ -->
     <div class="screen active" id="screen1">
 
-      <!-- Hero + resume side by side -->
-      <div class="s1-hero">
-        <div class="s1-hero-copy">
-          <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
-          <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
-          <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:520px;line-height:1.7">
-            Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
-          </p>
+      <div style="margin-bottom:var(--sp-6)">
+        <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
+        <h1 style="margin-bottom:var(--sp-3)">Turn tickets into test cases.</h1>
+        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:560px;line-height:1.7">
+          Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
+        </p>
+      </div>
+
+      <!-- Resume strip — shown only when there's an unfinished session -->
+      <div id="resumePanel" class="s1-resume-bar" style="display:none">
+        <div class="s1-resume-info">
+          <span class="s1-resume-label">Unfinished checklist</span>
+          <span class="s1-resume-title" id="resumeTitle"></span>
+          <span class="s1-resume-meta" id="resumeMeta"></span>
         </div>
-        <!-- Resume card — shown only when there's an unfinished session -->
-        <div id="resumePanel" class="s1-resume-card" style="display:none">
-          <div class="s1-resume-label">Unfinished checklist</div>
-          <div id="resumeTitle" class="s1-resume-title"></div>
-          <div id="resumeMeta" class="s1-resume-meta"></div>
-          <div class="s1-resume-actions">
-            <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
-            <button class="btn btn-ghost btn-sm" onclick="dismissResume()">Dismiss</button>
-          </div>
+        <div class="s1-resume-actions">
+          <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
+          <button class="btn btn-ghost btn-sm" onclick="dismissResume()">Dismiss</button>
         </div>
       </div>
 
@@ -96,6 +96,8 @@
             <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
             <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
           </div>
+          <!-- Temporary join-by-code fallback until 2.3 active sessions list ships -->
+          <button class="s1-join-instead-btn" onclick="setMode('join')" type="button">Have a code? Join an existing session instead →</button>
         </div>
       </div>
 
