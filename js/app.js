@@ -33,6 +33,7 @@ function goTo(n) {
   const el = $('screen' + n);
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
+  if (n === 1) initResumePanel();
 }
 
 function backToSetup() {
@@ -767,7 +768,7 @@ function renderItemText(text) {
     const step = text.slice(0, idx);
     const exp  = text.slice(idx + 3);
     const expCap = exp.charAt(0).toUpperCase() + exp.slice(1);
-    return `<div class="item-step">${esc2(step)}</div><div class="item-expected">${esc2(expCap)}</div>`;
+    return `<div class="item-step">${esc2(step)}</div><div class="item-expected"><span class="item-expected-arrow">↳</span>${esc2(expCap)}</div>`;
   }
   return `<div class="item-step">${esc2(text)}</div>`;
 }

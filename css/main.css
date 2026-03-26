@@ -524,29 +524,27 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .item.blocked .item-step { color: rgba(251,191,36,.75); }
 .item-expected {
   margin-top: .35rem;
-  padding-left: 1.4rem;
+  display: flex;
+  align-items: baseline;
+  gap: .4rem;
   font-size: .875em;
-  color: #93c5fd;
+  color: var(--soft);
   line-height: 1.55;
-  position: relative;
   transition: color .2s;
 }
-.item-expected::before {
-  content: '↳';
-  position: absolute;
-  left: 0;
-  top: .02em;
-  color: rgba(16,185,129,.55);
+.item-expected-arrow {
+  color: rgba(16,185,129,.6);
   font-family: var(--font-mono);
-  font-size: 1.05em;
+  font-size: 1.1em;
+  flex-shrink: 0;
   transition: color .2s;
 }
-.item.pass    .item-expected          { color: rgba(52,211,153,.7);   }
-.item.pass    .item-expected::before  { color: rgba(52,211,153,.55);  }
-.item.fail    .item-expected          { color: rgba(248,113,113,.65); }
-.item.fail    .item-expected::before  { color: rgba(248,113,113,.5);  }
-.item.blocked .item-expected          { color: rgba(251,191,36,.65);  }
-.item.blocked .item-expected::before  { color: rgba(251,191,36,.5);   }
+.item.pass    .item-expected                { color: rgba(52,211,153,.7);   }
+.item.pass    .item-expected-arrow          { color: rgba(52,211,153,.55);  }
+.item.fail    .item-expected                { color: rgba(248,113,113,.65); }
+.item.fail    .item-expected-arrow          { color: rgba(248,113,113,.5);  }
+.item.blocked .item-expected                { color: rgba(251,191,36,.65);  }
+.item.blocked .item-expected-arrow          { color: rgba(251,191,36,.5);   }
 
 .outcome-btns { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
 .ob-row { display: flex; gap: 4px; }
