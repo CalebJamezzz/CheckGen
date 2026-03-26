@@ -414,7 +414,11 @@ async function callClaude(prompt, maxT, systemPrompt) {
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
     const d = JSON.parse(text);
-    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+    if (d.error) {
+      const msg = d.error.message || JSON.stringify(d.error);
+      console.error('[CheckGen] API error:', r.status, msg);
+      throw new Error(msg);
+    }
     if (d.stop_reason === 'max_tokens') throw new Error('max_tokens');
     const raw     = d.content?.find(b => b.type === 'text')?.text || '';
     const cleaned = raw.replace(/```json|```/g, '').trim();
