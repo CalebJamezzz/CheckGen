@@ -8,7 +8,7 @@ let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
 let _currentUserName = null; // set when session starts, used for markedBy
-let _pendingBackToSetup = false;
+let _pendingBackToSetup = false; // kept for legacy safety
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -34,6 +34,10 @@ function goTo(n) {
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
   if (n === 1) initResumePanel();
+}
+
+function newSession() {
+  endSession();
 }
 
 function backToSetup() {
@@ -301,12 +305,13 @@ function updateSummary() {
 function saveSession() {
   try {
     localStorage.setItem(SK, JSON.stringify({
-      checklist: currentChecklist,
-      ticket:    $('ticketText').value,
-      ticketId:  $('ticketId').value,
-      name:      $('checklistName').value,
-      env:       $('envBranch').value,
-      ts:        Date.now(),
+      checklist:    currentChecklist,
+      ticket:       $('ticketText').value,
+      ticketId:     $('ticketId').value,
+      name:         $('checklistName').value,
+      env:          $('envBranch').value,
+      ts:           Date.now(),
+      cloudSaveId:  _cloudSaveId || null,
     }));
     if (sessionMode === 'shared') pushUpdate();
   } catch(e) {}
@@ -321,6 +326,13 @@ function loadSession() {
     if (d.ticketId) $('ticketId').value      = d.ticketId;
     if (d.name)     $('checklistName').value = d.name;
     if (d.env)      $('envBranch').value     = d.env;
+    if (d.cloudSaveId) _cloudSaveId = d.cloudSaveId;
+    if (Array.isArray(d.checklist) && d.checklist.length) {
+      currentChecklist = d.checklist;
+      goTo(3);
+      renderChecklist(); updateProgress(); updateTimeSummary();
+      $('exportBar').style.display = '';
+    }
   } catch(e) {}
 }
 
