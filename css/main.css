@@ -218,10 +218,12 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s2-ac-area::-webkit-scrollbar { width: 4px; }
 .s2-ticket-area::-webkit-scrollbar-track,
 .s2-ac-area::-webkit-scrollbar-track { background: transparent; }
+.s2-ticket-area::-webkit-scrollbar-track,
+.s2-ac-area::-webkit-scrollbar-track { background: rgba(255,255,255,.04); border-radius: 999px; }
 .s2-ticket-area::-webkit-scrollbar-thumb,
-.s2-ac-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.s2-ac-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 999px; }
 .s2-ticket-area::-webkit-scrollbar-thumb:hover,
-.s2-ac-area::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.s2-ac-area::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.38); }
 
 .field-label {
   font-family: var(--font-mono);
@@ -445,7 +447,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s2-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
 
 /* Strategy preset toast */
-.s2-preset-toast { position: fixed; bottom: var(--sp-5); left: 50%; transform: translateX(-50%); background: #1a2238; border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 8px 16px; font-size: clamp(11px,.7vw,12px); color: rgba(255,255,255,.6); font-family: var(--font-mono); box-shadow: 0 4px 16px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 300; white-space: nowrap; }
+.s2-preset-toast { position: fixed; bottom: var(--sp-5); left: calc(50% + 140px); transform: translateX(-50%); background: #1a2238; border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: 8px 16px; font-size: clamp(11px,.7vw,12px); color: rgba(255,255,255,.6); font-family: var(--font-mono); box-shadow: 0 4px 16px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 300; white-space: nowrap; }
 .s2-preset-toast.show { opacity: 1; }
 
 /* ── Checklist items ── */
@@ -1149,6 +1151,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   #appNav.open { transform: translateX(0); }
   .app-content { margin-left: 0; padding: var(--sp-4); max-width: 100%; }
   .mobile-nav-toggle { display: flex; }
+  .s2-preset-toast { left: 50%; }
 }
 
 /* ── Auth pages ── */
