@@ -518,13 +518,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .item + .item { border-top: 1px solid rgba(255,255,255,.03); }
 .item-main { min-width: 0; }
 .item-row { display: flex; gap: 10px; align-items: flex-start; }
-.item-step { color: var(--text); line-height: 1.7; font-size: clamp(13px, .9vw, 15px); }
+.item-step { color: var(--text); line-height: 1.7; font-size: clamp(14px, .95vw, 16px); }
 .item.pass    .item-step { color: var(--pass); }
 .item.fail    .item-step { color: rgba(248,113,113,.75); }
 .item.blocked .item-step { color: rgba(251,191,36,.75); }
 .item-expected {
-  margin-top: .35rem;
-  font-size: .875em;
+  margin-top: .3rem;
+  font-size: clamp(11px, .78vw, 13px);
   color: var(--soft);
   line-height: 1.6;
   transition: color .2s;
@@ -533,8 +533,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   display: inline;
   color: rgba(16,185,129,.6);
   font-family: var(--font-mono);
-  font-size: 1.1em;
+  font-size: 1em;
   margin-right: .3rem;
+  vertical-align: 0.12em;
   transition: color .2s;
 }
 .item.pass    .item-expected                { color: rgba(52,211,153,.7);   }
