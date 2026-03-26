@@ -464,8 +464,13 @@ async function callClaude(prompt, maxT, systemPrompt) {
       // 3. Truncate after last complete object
       const lc = cleaned.lastIndexOf('},');
       if (lc > 0) { try { return JSON.parse(cleaned.slice(0, lc + 1) + ']'); } catch {} }
-      // 4. Nothing worked — log full raw for debugging
+      // 4. Nothing worked — check if AI returned a plain-text refusal
       console.error('[CheckGen] unparseable response:', cleaned);
+      if (!cleaned.trimStart().startsWith('[') && !cleaned.trimStart().startsWith('{')) {
+        // Looks like a text explanation rather than JSON — surface it as a readable error
+        const short = cleaned.replace(/\s+/g, ' ').slice(0, 220).trim();
+        throw new Error(short);
+      }
       throw new Error('Invalid JSON from AI');
     }
 
@@ -484,7 +489,11 @@ async function callClaude(prompt, maxT, systemPrompt) {
     try { return JSON.parse(cleaned); }
     catch {
       const lc = cleaned.lastIndexOf('},');
-      if (lc > 0) return JSON.parse(cleaned.slice(0, lc + 1) + ']');
+      if (lc > 0) { try { return JSON.parse(cleaned.slice(0, lc + 1) + ']'); } catch {} }
+      if (!cleaned.trimStart().startsWith('[') && !cleaned.trimStart().startsWith('{')) {
+        const short = cleaned.replace(/\s+/g, ' ').slice(0, 220).trim();
+        throw new Error(short);
+      }
       throw new Error('Invalid JSON from AI');
     }
   };
