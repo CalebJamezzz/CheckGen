@@ -1694,12 +1694,6 @@ function initLeaveGuard() {
     showLeaveModal(href);
   });
 
-  // Intercept browser back/forward
-  window.addEventListener('beforeunload', function(e) {
-    if (!hasActiveSession()) return;
-    e.preventDefault();
-    e.returnValue = 'You have an active checklist session. Are you sure you want to leave?';
-  });
 }
 
 
