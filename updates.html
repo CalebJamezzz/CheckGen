@@ -89,6 +89,43 @@
     <div class="changelog-entry">
       <div>
         <div class="changelog-date">March 2026</div>
+        <span class="changelog-tag update">Update</span>
+        <div class="changelog-version">v2.2</div>
+      </div>
+      <div class="changelog-content">
+        <h2>Smarter AI &amp; session polish</h2>
+        <p>A focused update on AI quality and session experience. Every test case is now more specific, more actionable, and grounded in the actual ticket — not padding to fill a count.</p>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">AI &amp; Generation</h3>
+        <ul>
+          <li><strong>Upgraded to Claude Sonnet 4.6</strong> — Significantly smarter model with better comprehension of complex tickets and more specific, executable test cases.</li>
+          <li><strong>Streaming generation</strong> — Switched to Netlify Edge Functions with SSE streaming. No more 504 timeouts on large or complex checklists.</li>
+          <li><strong>Step → expected result format</strong> — Every item now explicitly states the action and the expected outcome. No more vague observations.</li>
+          <li><strong>Detailed guidance for all 10 testing areas</strong> — Each section now has specific sub-area instructions so the AI knows exactly what to cover rather than guessing.</li>
+          <li><strong>Realistic time estimates per area</strong> — Time is no longer defaulted to 2m across the board. WCAG items reflect screen reader and audit effort; Permissions reflects login/logout cycles; Integrations reflects API round-trips.</li>
+          <li><strong>Quality rules enforced</strong> — No near-duplicates, no rephrasing the same check, no generic filler. Every item must be traceable to the specific ticket.</li>
+          <li><strong>Test Data is now a modifier</strong> — When selected, specific data values (boundary inputs, realistic strings, edge-case numbers) are woven into items throughout the checklist rather than generating a separate section.</li>
+          <li><strong>Break-It expanded</strong> — Now covers SQL injection, XSS payloads, null bytes, emoji in text fields, concurrent duplicate submissions, negative/zero/max integers, and missing required relationships.</li>
+          <li><strong>Error Handling renamed to Error Handling &amp; Feedback</strong> — Now covers notification text, toast timing, confirmation dialogs, and email triggers alongside error state testing.</li>
+          <li><strong>Regen fully rebuilt</strong> — Section regeneration now includes AC text, uses the same step → expected format, avoids duplicating existing items, and recalculates total session time after completing.</li>
+          <li><strong>Loading animation</strong> — Replaced the spinner with a typing checklist animation that walks through each generation step with a blinking cursor.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Sessions</h3>
+        <ul>
+          <li><strong>Completion modal</strong> — When all items are marked, a modal appears with pass/fail/blocked counts and options to export, mark complete, or keep reviewing.</li>
+          <li><strong>Session status</strong> — Sessions are now tracked as in_progress or complete in cloud storage. The resume panel shows Resume or Review/Export accordingly.</li>
+          <li><strong>Save &amp; Close</strong> — Renamed from End Session. Saves your progress and returns to the start screen without closing the session — pick it up anytime.</li>
+          <li><strong>Page refresh persists</strong> — Refreshing the page now restores you to your active checklist instead of sending you back to screen 1.</li>
+          <li><strong>New Session on screen 3</strong> — Replaced the Edit AC &amp; Options back button. Once a checklist is generated you are in the session — use New Session to start fresh.</li>
+          <li><strong>Section completion indicator</strong> — The item count on each section header hides once every item in that section is marked.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="changelog-entry">
+      <div>
+        <div class="changelog-date">March 2026</div>
         <span class="changelog-tag fix">Fix</span>
         <div class="changelog-version">v2.1</div>
       </div>
