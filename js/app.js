@@ -445,7 +445,7 @@ async function callClaude(prompt, maxT, systemPrompt) {
           if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
             raw += evt.delta.text;
             // Early exit: plain-text refusal detected — no need to wait for full stream
-            if (raw.length > 120 && !raw.trimStart().startsWith('[') && !raw.trimStart().startsWith('{')) {
+            if (raw.length > 120 && !raw.trimStart().startsWith('[') && !raw.trimStart().startsWith('{') && !raw.trimStart().startsWith('`')) {
               const short = raw.replace(/\s+/g, ' ').slice(0, 220).trim();
               throw new Error(short);
             }
