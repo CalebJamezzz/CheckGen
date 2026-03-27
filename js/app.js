@@ -983,7 +983,7 @@ function submitAddItem(el, section) {
   if (!step) { stepEl.focus(); return; }
   const expected = form.querySelector('.add-item-expected').value.trim();
   const priority = form.querySelector('.add-item-select').value;
-  const time     = form.querySelector('.add-item-time').value.trim() || '3m';
+  const time     = form.querySelector('.add-item-time').value;
   const text     = expected ? `${step} → ${expected}` : step;
   const maxId    = Math.max(...currentChecklist.map(i => i.id), 0);
   currentChecklist.push({ id: maxId + 1, section, text, priority, type: 'Happy Path', time, outcome: null, note: '', custom: true });
@@ -1301,7 +1301,17 @@ function renderChecklist() {
                 <option value="Low">Low</option>
                 <option value="Lowest">Lowest</option>
               </select>
-              <input class="add-item-time" placeholder="e.g. 3m" maxlength="6" onkeydown="if(event.key==='Enter')submitAddItem(this,'${esc(section)}');if(event.key==='Escape')toggleAddForm(this)">
+              <select class="add-item-select add-item-time">
+                <option value="2m">2m</option>
+                <option value="3m" selected>3m</option>
+                <option value="4m">4m</option>
+                <option value="5m">5m</option>
+                <option value="8m">8m</option>
+                <option value="10m">10m</option>
+                <option value="15m">15m</option>
+                <option value="20m">20m</option>
+                <option value="30m">30m</option>
+              </select>
               <button class="btn btn-primary btn-sm" onclick="submitAddItem(this,'${esc(section)}')">Add</button>
               <button class="btn btn-ghost btn-sm" onclick="toggleAddForm(this)">Cancel</button>
             </div>

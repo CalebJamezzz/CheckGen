@@ -662,20 +662,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   outline: none;
   cursor: pointer;
 }
-.add-item-time {
-  width: 64px;
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.06);
-  border-radius: var(--r-md);
-  padding: 6px 10px;
-  font-size: clamp(11px,.75vw,13px);
-  font-family: var(--font-mono);
-  color: var(--text);
-  outline: none;
-  transition: border-color .2s;
-}
-.add-item-time:focus { border-color: rgba(16,185,129,.3); }
-.add-item-time::placeholder { color: var(--muted); }
 
 /* ── Empty / loading states ── */
 .empty {
