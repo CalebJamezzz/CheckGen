@@ -739,7 +739,7 @@ async function generateChecklist() {
       ? 'Add more detail to your ticket — describe what the feature does, list specific fields, user flows, or acceptance criteria.'
       : err.message === 'max_tokens' ? 'Response was too long. Try selecting fewer testing areas.'
       : 'Generation failed — please try again.';
-    showAppToast(toastMsg, isVague ? 'warn' : 'error');
+    showAppToast(toastMsg, 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Generate Checklist'; updateSummary();
   }
