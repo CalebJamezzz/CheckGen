@@ -444,6 +444,11 @@ async function callClaude(prompt, maxT, systemPrompt) {
           try { evt = JSON.parse(data); } catch { continue; } // skip malformed SSE lines
           if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
             raw += evt.delta.text;
+            // Early exit: plain-text refusal detected — no need to wait for full stream
+            if (raw.length > 120 && !raw.trimStart().startsWith('[') && !raw.trimStart().startsWith('{')) {
+              const short = raw.replace(/\s+/g, ' ').slice(0, 220).trim();
+              throw new Error(short);
+            }
           } else if (evt.type === 'message_delta' && evt.delta?.stop_reason === 'max_tokens') {
             throw new Error('max_tokens');
           } else if (evt.type === 'error') {
@@ -879,9 +884,9 @@ function showAppToast(msg, type = 'error', duration = 5500) {
 let _genTypingTimer = null;
 
 function startGenAnimation() {
-  const container = $('genChecklist');
-  if (!container) return;
-  container.innerHTML = '';
+  const body = $('genChecklistBody');
+  if (!body) return;
+  body.innerHTML = '';
 
   const steps = [
     'Reading your ticket',
@@ -900,20 +905,21 @@ function startGenAnimation() {
   ];
 
   let idx = 0;
+  let activeItem = null;
 
   function typeItem() {
-    if (idx >= steps.length) return; // stop at last item — cursor stays
+    if (idx >= steps.length) return;
     const label = steps[idx];
 
     const item = document.createElement('div');
-    item.className = 'gen-item';
+    item.className = 'gen-item gen-item--active';
     item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"><span class="gen-cursor"></span></span>';
-    container.appendChild(item);
-    container.scrollTop = container.scrollHeight;
+    body.appendChild(item);
+    body.scrollTop = body.scrollHeight;
+    activeItem = item;
 
-    const textEl  = item.querySelector('.gen-item-text');
+    const textEl   = item.querySelector('.gen-item-text');
     const cursorEl = item.querySelector('.gen-cursor');
-    // Insert a text node BEFORE the cursor so typed chars appear left of it
     const textNode = document.createTextNode('');
     textEl.insertBefore(textNode, cursorEl);
     let charIdx = 0;
@@ -924,11 +930,11 @@ function startGenAnimation() {
         charIdx++;
         _genTypingTimer = setTimeout(typeChar, 38);
       } else {
-        // Pause, then check off and start next
         _genTypingTimer = setTimeout(() => {
           const box = item.querySelector('.gen-item-box');
           box.textContent = '✓';
           box.classList.add('gen-item-box--done');
+          item.classList.remove('gen-item--active');
           item.classList.add('gen-item--done');
           cursorEl.remove();
           idx++;
@@ -944,8 +950,8 @@ function startGenAnimation() {
 
 function stopGenAnimation() {
   if (_genTypingTimer) { clearTimeout(_genTypingTimer); _genTypingTimer = null; }
-  const container = $('genChecklist');
-  if (container) container.innerHTML = '';
+  const body = $('genChecklistBody');
+  if (body) body.innerHTML = '';
 }
 
 /* ── Completion modal ── */

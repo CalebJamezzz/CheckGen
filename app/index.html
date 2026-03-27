@@ -256,14 +256,21 @@ Rejected reports require a reason to be entered"></textarea>
       <div class="status" id="status2"></div>
     </div><!-- end screen2 -->
     <div class="s2-preset-toast" id="presetToast">Areas updated to match strategy · adjust as needed</div>
-    <div class="app-toast" id="appToast"></div>
 
 
     <!-- ═══════════ SCREEN 2.5 — Generating ═══════════ -->
     <div class="screen" id="screen25">
       <div class="generating-screen">
         <div class="gen-label">Generating Test Cases</div>
-        <div class="gen-checklist" id="genChecklist"></div>
+        <div class="gen-checklist" id="genChecklist">
+          <div class="gen-checklist-header">
+            <span class="gen-dot-r"></span>
+            <span class="gen-dot-y"></span>
+            <span class="gen-dot-g"></span>
+            <span class="gen-checklist-title">checklist · generating</span>
+          </div>
+          <div class="gen-checklist-body" id="genChecklistBody"></div>
+        </div>
       </div>
     </div><!-- end screen25 -->
 
@@ -390,5 +397,6 @@ Rejected reports require a reason to be entered"></textarea>
   </div>
 </div>
 
+<div class="app-toast" id="appToast"></div>
 </body>
 </html>
