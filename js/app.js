@@ -173,7 +173,7 @@ async function startSession() {
   const dl = $('detailLevel'); if (dl) dl.value = 'expanded';
   const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
   document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
-  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => { const el = $(id); if (el) el.checked = false; });
+  ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   _completionModalShown = false;
   updateSummary();
   goTo(2);
@@ -292,7 +292,6 @@ function updateSummary() {
   const addons = [];
   if ($('addonBreak')?.checked)        addons.push('Break-it');
   if ($('addonTestData')?.checked)     addons.push('Test Data');
-  if ($('addonCrossBrowser')?.checked) addons.push('Cross-Browser');
   $('summaryWords').textContent = ticketWords + acWords;
   $('summaryAreas').textContent = areas;
   const pl = document.getElementById('summaryAreasPlural');
@@ -353,7 +352,7 @@ function endSession() {
   $('detailLevel').value = 'expanded';
   $('focusStyle').value  = 'balanced';
   document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
-  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => { const el = $(id); if (el) el.checked = false; });
+  ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   localStorage.removeItem(SK);
   setMode('personal');
   $('shareCodeBadge').style.display = 'none';
@@ -559,7 +558,6 @@ async function generateChecklist() {
   const ac     = $('acText')?.value.trim() || '';
   const brk    = $('addonBreak')?.checked;
   const dat    = $('addonTestData')?.checked;
-  const cross  = $('addonCrossBrowser')?.checked;
 
   const focusNote = focus === 'smoke'
     ? 'This is a smoke test — focus on verifying core happy-path flows work. Skip deep edge cases.'
@@ -573,9 +571,8 @@ async function generateChecklist() {
 
   // Areas the user selected — these are the ONLY sections allowed
   const selectedAreas = [...areas];
-  if (brk)   selectedAreas.push('Break-It');
-  if (dat)   selectedAreas.push('Test Data');
-  if (cross) selectedAreas.push('Cross-Browser / Device');
+  if (brk) selectedAreas.push('Break-It');
+  // dat is a modifier, not a section — injected into systemPrompt below
 
   // Item count scales with areas selected
   const areaCount = selectedAreas.length;
@@ -599,18 +596,88 @@ async function generateChecklist() {
     'Think systematically across: boundary values, empty/null inputs, invalid formats, permission levels, ' +
     'state transitions, error recovery, and realistic data scenarios. ' +
     'Assign priority using exactly these 5 levels — ' +
-    'Highest: blocking functionality, crash, or major error; ' +
-    'High: major functionality issue that impairs core use; ' +
-    'Medium: invasive styling issue or minor functionality issue; ' +
-    'Low: non-invasive styling issue or invasive typo; ' +
-    'Lowest: typo or trivial cosmetic issue. ' +
+    'Highest: blocking functionality, crash, or major error — reserve for truly critical issues only, expect fewer than 15% of items; ' +
+    'High: major functionality issue that impairs core use — typically 20-30% of items; ' +
+    'Medium: invasive styling issue or minor functionality issue — the most common priority, 40-50% of items; ' +
+    'Low: non-invasive styling issue or invasive typo — 10-20% of items; ' +
+    'Lowest: typo or trivial cosmetic issue — use sparingly. ' +
+    'Do not default everything to High. Distribute priorities to reflect actual severity across all 5 levels. ' +
     'Assign type using these definitions — ' +
     'Smoke: proves the feature works at all; ' +
     'Happy Path: expected normal use with valid inputs; ' +
     'Edge: boundary conditions or unusual but valid input; ' +
     'Data: data integrity, format validation, or persistence; ' +
     'Break: destructive or adversarial input intended to break the feature. ' +
+    'SECTION BALANCE — within each selected section, generate only items the ticket genuinely warrants. ' +
+    'A section with 2 highly specific items is better than 6 padded ones. ' +
+    'Do not concentrate items in one section at the expense of others — if a section has limited relevance to this ticket, generate fewer items for it. ' +
     'TESTING AREA GUIDANCE — when these sections are present, generate specific actionable cases: ' +
+    'Functional: cover all primary flows for this specific feature — ' +
+    '(1) Happy path: complete the primary user flow with valid inputs from start to finish and verify the correct outcome; ' +
+    '(2) Negative path: attempt the action with missing or invalid inputs and verify rejection with a specific, helpful error message; ' +
+    '(3) State transitions: verify the feature correctly moves between states (e.g. empty→populated, draft→published, inactive→active) and each state is visually distinct; ' +
+    '(4) Dependent actions: verify actions that require prior steps fail gracefully if prerequisites are skipped; ' +
+    '(5) Feedback: every user action produces immediate, clear feedback — success messages, loading indicators, confirmations; ' +
+    '(6) Data reflection: submitted or changed data is immediately and correctly reflected in all relevant UI locations. ' +
+    'Validation: cover all input constraints introduced by this ticket — ' +
+    '(1) Required fields: submit with each required field empty individually — verify the specific field is flagged with a meaningful message, not a generic error; ' +
+    '(2) Format rules: enter incorrectly formatted values (wrong email format, invalid phone, malformed URL) — verify field-specific error messages name what is wrong; ' +
+    '(3) Character limits: test at-limit, one-over-limit, and one-under-minimum values — verify truncation, rejection, or counter feedback as appropriate; ' +
+    '(4) Whitespace handling: enter leading/trailing whitespace and whitespace-only values — verify consistent trimming or rejection; ' +
+    '(5) Cross-field rules: verify fields that depend on each other (end date after start date, password confirmation match) in both valid and invalid combinations; ' +
+    '(6) Error clarity: all error messages identify the specific field and describe exactly what is wrong — never a generic "something went wrong". ' +
+    'Permissions: verify access control for every role that interacts with this feature — ' +
+    '(1) Role matrix: for each user role in the project, verify they can access what they should and are blocked from what they should not see or do; ' +
+    '(2) Direct URL access: attempt to reach restricted pages or resources directly via URL while unauthenticated or as the wrong role — verify redirect or 403, not a blank page; ' +
+    '(3) Privilege escalation: attempt to perform a higher-privilege action by manipulating request parameters, resource IDs, or role values in payloads; ' +
+    '(4) Cross-user isolation: attempt to access or modify another user\'s data by substituting their ID — verify complete isolation; ' +
+    '(5) UI reflection: verify that restricted UI elements (buttons, menu items, sections) are hidden or disabled for unauthorized roles — not merely unclickable; ' +
+    '(6) Session re-evaluation: verify permissions are re-checked after session refresh — stale cached permissions must not grant access. ' +
+    'UI / Layout: cover the visual and interactive correctness of this feature — ' +
+    '(1) Responsive breakpoints: verify layout at mobile (375px), tablet (768px), and desktop (1280px+) — no overflow, clipping, or obscured elements; ' +
+    '(2) Component states: every interactive element shows correct visual states — default, hover, focus, active, disabled, loading, and error; ' +
+    '(3) Empty states: the UI handles zero results or first-time use with a helpful message — not a blank space, broken layout, or raw empty array; ' +
+    '(4) Long content: layout handles unexpectedly long text (names, titles, labels) without breaking — truncation, wrapping, or scrolling as appropriate; ' +
+    '(5) Loading states: skeleton screens or spinners appear during async operations — no content flash, no layout shift during load; ' +
+    '(6) Consistency: spacing, typography, colors, and component patterns match the rest of the application — no one-off styles. ' +
+    'Data / Persistence: verify data integrity throughout the full lifecycle — ' +
+    '(1) Create and verify: after creating a record, confirm it appears correctly in the UI, in the relevant list view, and in the API/database response; ' +
+    '(2) Update and verify: after editing, confirm changes persist after page refresh and are correctly reflected everywhere the data appears; ' +
+    '(3) Delete and verify: after deletion, confirm the record no longer appears in any view and related data is handled correctly (cascade or preserve as designed); ' +
+    '(4) Refresh persistence: data survives browser refresh, tab close/reopen, and navigating away and back; ' +
+    '(5) Concurrent edits: open the same record in two sessions simultaneously and edit — verify last-write-wins or conflict is surfaced, not silently dropped; ' +
+    '(6) Related data integrity: counts, totals, and linked records update correctly after any change — no stale references or incorrect aggregates. ' +
+    'Integrations: verify every external connection this ticket introduces or modifies — ' +
+    '(1) Success path: trigger the integration with valid data and verify the external system receives the correct payload and the UI reflects the response; ' +
+    '(2) External failure: simulate the external service being unavailable or returning an error — verify graceful failure, user-visible messaging, and no data loss; ' +
+    '(3) Retry and queuing: verify failed integration calls are retried or queued as designed — not silently dropped; ' +
+    '(4) Webhook accuracy: if webhooks are involved, verify they fire with the correct payload on the correct events and only on those events; ' +
+    '(5) Data mapping: data sent to and received from the external system is correctly mapped — field names, types, and formats match the API contract exactly; ' +
+    '(6) Auth: integration credentials are correctly applied — requests are rejected when credentials are missing or invalid. ' +
+    'Error Handling: verify every failure mode this feature could encounter — ' +
+    '(1) Network failure: simulate network loss mid-action — the UI shows a recoverable error, not a blank screen or silent failure; ' +
+    '(2) Server errors: trigger 500-level responses — the UI surfaces a clear user-facing message and does not expose stack traces or internal details; ' +
+    '(3) Timeout: simulate slow API responses — loading states persist and a timeout message appears if the threshold is exceeded; ' +
+    '(4) Recovery: after any error, the user can retry without refreshing or losing their entered data; ' +
+    '(5) Server-side validation errors: API validation errors returned after submission are displayed field-specifically, not as a generic toast; ' +
+    '(6) Graceful degradation: if a non-critical feature fails (analytics, third-party widget), the core feature continues to work. ' +
+    'Edge Cases: test scenarios at the boundaries of normal use — ' +
+    '(1) Empty state: the feature behaves correctly with no existing data — first-time user, empty list, zero records; ' +
+    '(2) Single item: test with exactly one record where the feature might implicitly assume plural; ' +
+    '(3) Maximum volume: test with the largest realistic dataset — large lists, maximum file size, bulk operations at scale; ' +
+    '(4) Rapid interaction: click buttons rapidly, submit forms multiple times quickly — verify debouncing or idempotency prevents duplicate actions; ' +
+    '(5) Browser navigation: use browser back/forward during a multi-step flow — verify state is correctly maintained or gracefully reset; ' +
+    '(6) Interrupted flow: close a modal, navigate away, or refresh mid-operation — verify no partial saves, corrupt state, or data loss. ' +
+    'Break-It: generate adversarial test cases targeting failure modes specific to this ticket — ' +
+    '(1) Injection: SQL injection strings (e.g. \' OR 1=1 --), XSS payloads (<script>alert(1)</script>); ' +
+    '(2) Boundary values: max integer (2147483647), zero, negative numbers, empty string, whitespace-only; ' +
+    '(3) Oversized inputs: strings at and beyond the field max length, files exceeding size limits; ' +
+    '(4) Invalid formats: malformed emails, phone numbers, URLs, dates (e.g. 99/99/9999); ' +
+    '(5) Special characters: emoji in text fields, null bytes, RTL characters, newlines in single-line inputs; ' +
+    '(6) Concurrent operations: submitting the same form twice simultaneously, rapid double-click on submit; ' +
+    '(7) Unexpected state: performing actions without required prerequisites, skipping steps in a flow; ' +
+    '(8) Auth boundary: accessing protected resources without authentication, using another user\'s resource IDs. ' +
+    'Only generate Break-It items that are plausible attack vectors for this specific feature — no generic filler. ' +
     'WCAG: generate specific, actionable test cases across these areas — ' +
     '(1) Color contrast: body text meets 4.5:1 AA ratio, large text and UI components meet 3:1, verify using browser DevTools color picker or axe extension; ' +
     '(2) Images and icons: meaningful images have descriptive alt text that conveys function or content (not filenames or "image"), purely decorative images have alt="" and role="presentation", icon-only buttons have an aria-label; ' +
@@ -633,6 +700,12 @@ async function generateChecklist() {
     '(8) Fonts: web fonts use font-display:swap or similar, no invisible text during font load, no layout shift after font swap; ' +
     '(9) Perceived performance: loading states, skeleton screens, and optimistic UI are present where expected; ' +
     '(10) Lighthouse audit: run Lighthouse in Chrome DevTools with CPU throttling (4x slowdown) to simulate low-end devices — Performance score 90+, Best Practices score 90+ (no console errors, no deprecated APIs), SEO score 90+ if publicly accessible. ' +
+    (dat ?
+      'TEST DATA ENRICHMENT — the user has requested data-specific items. Do not add a separate Test Data section. ' +
+      'Instead, enrich every item across all sections with concrete, copy-pasteable test data inline within the step itself. ' +
+      'Use specific values: exact character counts, realistic emails/usernames, boundary numbers, specific file types, date ranges, edge-case strings. ' +
+      'Write "Enter 256 characters in the Title field" not "enter a long string". Write "Submit with email a@b.c" not "submit with invalid email". ' +
+      'Every step should contain enough data specificity that a tester can execute it without inventing their own values. ' : '') +
     'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
@@ -650,9 +723,7 @@ async function generateChecklist() {
     'Edge Cases = 3-6m (boundary value setup, unusual but valid scenario construction); ' +
     'WCAG = 8-20m (screen reader walkthroughs with VoiceOver/NVDA, axe/DevTools audit, keyboard-only nav session, contrast ratio checks); ' +
     'Performance = 10-20m (Lighthouse audit with throttling, DevTools profiling, memory leak check); ' +
-    'Break-It = 3-7m (crafting and submitting adversarial inputs, verifying graceful failure); ' +
-    'Test Data = 3-8m (setting up data fixtures, seeding edge-case values, verifying cleanup); ' +
-    'Cross-Browser / Device = 5-15m (repeating key flows across multiple browsers or device sizes). ' +
+    'Break-It = 3-7m (crafting adversarial inputs, verifying graceful failure and error messages). ' +
     'Never default everything to 2m — vary estimates to reflect actual task complexity.'
   );
 
@@ -755,6 +826,7 @@ async function regenSection(section) {
   if (groupCard) groupCard.classList.add('regen-loading');
 
   const ac = $('acText')?.value.trim() || '';
+  const dat = $('addonTestData')?.checked;
   const existingItems = currentChecklist.filter(i => i.section === section).map(i => i.text);
 
   const regenSystemPrompt = (
@@ -768,17 +840,57 @@ async function regenSection(section) {
     'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
     'The text field must always follow this format: "action step → expected result". ' +
     'Assign priority using exactly these 5 levels — ' +
-    'Highest: blocking functionality, crash, or major error; ' +
-    'High: major functionality issue that impairs core use; ' +
-    'Medium: invasive styling issue or minor functionality issue; ' +
-    'Low: non-invasive styling issue or invasive typo; ' +
-    'Lowest: typo or trivial cosmetic issue. ' +
+    'Highest: blocking functionality, crash, or major error — fewer than 15% of items; ' +
+    'High: major functionality issue that impairs core use — typically 20-30% of items; ' +
+    'Medium: invasive styling issue or minor functionality issue — the most common priority, 40-50% of items; ' +
+    'Low: non-invasive styling issue or invasive typo — 10-20% of items; ' +
+    'Lowest: typo or trivial cosmetic issue — use sparingly. ' +
+    'Do not default everything to High. Distribute priorities to reflect actual severity across all 5 levels. ' +
     'Assign type using these definitions — ' +
     'Smoke: proves the feature works at all; ' +
     'Happy Path: expected normal use with valid inputs; ' +
     'Edge: boundary conditions or unusual but valid input; ' +
     'Data: data integrity, format validation, or persistence; ' +
     'Break: destructive or adversarial input intended to break the feature. ' +
+    (section === 'Break-It' ?
+      'BREAK-IT GUIDANCE — generate adversarial test cases targeting failure modes specific to this ticket: ' +
+      '(1) Injection: SQL injection strings (e.g. \' OR 1=1 --), XSS payloads (<script>alert(1)</script>); ' +
+      '(2) Boundary values: max integer (2147483647), zero, negative numbers, empty string, whitespace-only; ' +
+      '(3) Oversized inputs: strings at and beyond the field max length, files exceeding size limits; ' +
+      '(4) Invalid formats: malformed emails, phone numbers, URLs, dates (e.g. 99/99/9999); ' +
+      '(5) Special characters: emoji, null bytes, RTL characters, newlines in single-line inputs; ' +
+      '(6) Concurrent operations: submitting the same form twice simultaneously, rapid double-click on submit; ' +
+      '(7) Unexpected state: performing actions without required prerequisites, skipping steps in a flow; ' +
+      '(8) Auth boundary: accessing protected resources without authentication, using another user\'s resource IDs. ' +
+      'Only generate items that are plausible attack vectors for this specific feature. ' : '') +
+    (section === 'WCAG' ?
+      'WCAG GUIDANCE — generate specific, actionable test cases across these areas: ' +
+      '(1) Color contrast: body text meets 4.5:1 AA ratio, large text and UI components meet 3:1 — verify with DevTools or axe; ' +
+      '(2) Images and icons: meaningful images have descriptive alt text, decorative images have alt="" and role="presentation", icon-only buttons have aria-label; ' +
+      '(3) Screen reader: use VoiceOver (Mac) or NVDA (Windows) — verify heading hierarchy, landmark regions, reading order, and dynamic content announcements via aria-live; ' +
+      '(4) Keyboard navigation: every interactive element is reachable by Tab, order matches visual flow, no traps, Escape closes modals, Enter/Space activates buttons; ' +
+      '(5) Focus indicators: all focused elements have a clearly visible outline — not removed with outline:none without a replacement; ' +
+      '(6) Forms: every input has a programmatically associated label, required fields are marked, errors are linked via aria-describedby; ' +
+      '(7) ARIA correctness: custom components use correct roles and states (aria-expanded, aria-selected, aria-checked); ' +
+      '(8) Zoom and reflow: content is fully usable at 200% zoom with no horizontal scrolling or overlapping elements; ' +
+      '(9) Motion: animations respect prefers-reduced-motion; ' +
+      '(10) Touch targets: all interactive elements are at least 44×44px on mobile. ' : '') +
+    (section === 'Performance' ?
+      'PERFORMANCE GUIDANCE — generate specific, actionable test cases across these areas: ' +
+      '(1) Core load metrics: LCP under 2.5s, CLS under 0.1, INP under 200ms — measure with Lighthouse or WebPageTest; ' +
+      '(2) API responsiveness: API calls complete within acceptable times under normal load, concurrent requests do not degrade UI; ' +
+      '(3) Large data: feature remains responsive with 100+ and 1000+ records — lists are paginated or virtualised; ' +
+      '(4) Memory and DOM: repeated interactions do not cause memory leaks or DOM bloat — verify with Chrome DevTools Memory tab; ' +
+      '(5) Rendering: animations and scroll are smooth at 60fps — verify with Performance panel; ' +
+      '(6) Assets: images use modern formats (WebP/AVIF), correctly sized, explicit width/height, lazy loading below fold; ' +
+      '(7) Caching: static assets have efficient cache headers, unchanged assets are not re-fetched on navigation; ' +
+      '(8) Fonts: font-display:swap or similar, no invisible text during font load, no layout shift after swap; ' +
+      '(9) Perceived performance: loading states, skeleton screens, and optimistic UI present where expected; ' +
+      '(10) Lighthouse audit: run with 4x CPU throttling — Performance 90+, Best Practices 90+, SEO 90+ if public. ' : '') +
+    (dat ?
+      'TEST DATA ENRICHMENT — enrich every item with concrete, copy-pasteable test data inline within the step. ' +
+      'Use specific values: exact character counts, realistic emails, boundary numbers, specific file types, date ranges. ' +
+      'Write "Enter 256 characters in the Title field" not "enter a long string". Every step should be self-contained. ' : '') +
     'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     `2. Every item's section field must be exactly "${section}". ` +
@@ -791,7 +903,7 @@ async function regenSection(section) {
     'Error Handling = 2-5m; Edge Cases = 3-6m; ' +
     'WCAG = 8-20m (screen reader, axe audit, keyboard nav, contrast checks); ' +
     'Performance = 10-20m (Lighthouse with throttling, profiling); ' +
-    'Break-It = 3-7m; Test Data = 3-8m; Cross-Browser / Device = 5-15m. ' +
+    'Break-It = 3-7m (crafting adversarial inputs, verifying graceful failure). ' +
     'Never default everything to 2m — vary estimates to reflect actual task complexity.'
   );
 
@@ -930,6 +1042,7 @@ function startGenAnimation() {
         charIdx++;
         _genTypingTimer = setTimeout(typeChar, 38);
       } else {
+        const isLast = idx === steps.length - 1;
         _genTypingTimer = setTimeout(() => {
           const box = item.querySelector('.gen-item-box');
           box.textContent = '✓';
@@ -938,7 +1051,15 @@ function startGenAnimation() {
           item.classList.add('gen-item--done');
           cursorEl.remove();
           idx++;
-          _genTypingTimer = setTimeout(typeItem, 260);
+          if (isLast) {
+            // All steps done — show pulsing dots so user knows AI is still working
+            const waitRow = document.createElement('div');
+            waitRow.className = 'gen-wait-row';
+            waitRow.innerHTML = '<span></span><span></span><span></span>';
+            body.appendChild(waitRow);
+          } else {
+            _genTypingTimer = setTimeout(typeItem, 260);
+          }
         }, 500);
       }
     }
@@ -1659,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('ticketText').addEventListener('input', updateSummary);
   $('acText')?.addEventListener('input', updateSummary);
   document.querySelectorAll('.areaCheck').forEach(el => el.addEventListener('change', updateSummary));
-  ['addonBreak','addonTestData','addonCrossBrowser'].forEach(id => {
+  ['addonBreak','addonTestData'].forEach(id => {
     $(id)?.addEventListener('change', updateSummary);
   });
   ['ticketId','envBranch','checklistName'].forEach(id => {
