@@ -401,6 +401,7 @@ function updateTimeSummary() {
 /* ── API ────────────────────────────────────────────────── */
 async function callClaude(prompt, maxT, systemPrompt) {
   const attempt = async () => {
+    console.log('[CheckGen] callClaude → fetching /api/ask, maxT:', maxT);
     const r = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -479,6 +480,7 @@ async function callClaude(prompt, maxT, systemPrompt) {
     }
 
     // ── Fallback: synchronous JSON (legacy regular function) ──
+    console.warn('[CheckGen] edge function not active — falling back to synchronous function');
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
     const d = JSON.parse(text);
