@@ -459,8 +459,9 @@ async function callClaude(prompt, maxT, systemPrompt) {
         }
       }
 
+      console.log('[CheckGen] stream complete, raw length:', raw.length);
       const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
-      console.log('[CheckGen] raw length:', raw.length, '| first 300:', cleaned.slice(0, 300));
+      console.log('[CheckGen] first 300:', cleaned.slice(0, 300));
       // 1. Direct parse
       try { return JSON.parse(cleaned); } catch {}
       // 2. Extract first [...] array
@@ -809,6 +810,7 @@ async function generateChecklist() {
     }
     showStatus('status3', `✓ ${currentChecklist.length} items generated.`, 'success');
   } catch(err) {
+    console.error('[CheckGen] generation failed:', err.message, err);
     stopGenAnimation();
     goTo(2);
     const isVague = /no specific|acceptance criteria|feature description|no requirements|insufficient|generic filler/i.test(err.message);
