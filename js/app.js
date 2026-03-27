@@ -303,17 +303,19 @@ function updateSummary() {
 /* ── Persistence ────────────────────────────────────────── */
 function saveSession() {
   try {
-    localStorage.setItem(SK, JSON.stringify({
-      checklist:    currentChecklist,
-      ticket:       $('ticketText').value,
-      ticketId:     $('ticketId').value,
-      name:         $('checklistName').value,
-      env:          $('envBranch').value,
-      ts:           Date.now(),
-      cloudSaveId:  _cloudSaveId || null,
-    }));
+    const data = {
+      checklist:   currentChecklist,
+      ticket:      $('ticketText')?.value   || '',
+      ticketId:    $('ticketId')?.value     || '',
+      name:        $('checklistName')?.value || '',
+      env:         $('envBranch')?.value    || '',
+      ts:          Date.now(),
+      cloudSaveId: _cloudSaveId || null,
+    };
+    localStorage.setItem(SK, JSON.stringify(data));
+    console.log('[CheckGen] saveSession: saved', data.checklist.length, 'items to', SK);
     if (sessionMode === 'shared') pushUpdate();
-  } catch(e) {}
+  } catch(e) { console.error('[CheckGen] saveSession error:', e.message, e); }
   updateLatestHistory();
 }
 
