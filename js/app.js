@@ -320,7 +320,7 @@ function saveSession() {
 function loadSession() {
   try {
     const d = JSON.parse(localStorage.getItem(SK) || 'null');
-    if (!d) return;
+    if (!d) { console.log('[CheckGen] loadSession: no saved session'); return; }
     if (d.ticket)   $('ticketText').value    = d.ticket;
     if (d.ticketId) $('ticketId').value      = d.ticketId;
     if (d.name)     $('checklistName').value = d.name;
@@ -328,11 +328,12 @@ function loadSession() {
     if (d.cloudSaveId) _cloudSaveId = d.cloudSaveId;
     if (Array.isArray(d.checklist) && d.checklist.length) {
       currentChecklist = d.checklist;
+      console.log('[CheckGen] loadSession: restoring', d.checklist.length, 'items → screen 3');
       goTo(3);
       renderChecklist(); updateProgress(); updateTimeSummary();
       $('exportBar').style.display = '';
     }
-  } catch(e) {}
+  } catch(e) { console.error('[CheckGen] loadSession error:', e.message, e); }
 }
 
 /* ── End session ────────────────────────────────────────── */
