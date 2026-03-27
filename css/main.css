@@ -437,7 +437,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s2-accordion-body { display: none; padding: var(--sp-4); border-top: 1px solid var(--border); }
 
 /* Add-on pills */
-.s2-addon-grid { grid-template-columns: repeat(3, 1fr); }
+.s2-addon-grid { grid-template-columns: repeat(2, 1fr); }
 .s2-addon-check { border-color: rgba(16,185,129,.2) !important; }
 .s2-addon-check:hover { border-color: rgba(16,185,129,.45) !important; background: rgba(16,185,129,.06) !important; }
 .s2-addon-check input[type="checkbox"] { accent-color: var(--green); }

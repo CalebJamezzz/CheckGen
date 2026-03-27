@@ -314,16 +314,15 @@ function saveSession() {
       cloudSaveId: _cloudSaveId || null,
     };
     localStorage.setItem(SK, JSON.stringify(data));
-    console.log('[CheckGen] saveSession: saved', data.checklist.length, 'items to', SK);
     if (sessionMode === 'shared') pushUpdate();
-  } catch(e) { console.error('[CheckGen] saveSession error:', e.message, e); }
+  } catch(e) {}
   updateLatestHistory();
 }
 
 function loadSession() {
   try {
     const d = JSON.parse(localStorage.getItem(SK) || 'null');
-    if (!d) { console.log('[CheckGen] loadSession: no saved session'); return; }
+    if (!d) return;
     if (d.ticket)   $('ticketText').value    = d.ticket;
     if (d.ticketId) $('ticketId').value      = d.ticketId;
     if (d.name)     $('checklistName').value = d.name;
@@ -331,7 +330,6 @@ function loadSession() {
     if (d.cloudSaveId) _cloudSaveId = d.cloudSaveId;
     if (Array.isArray(d.checklist) && d.checklist.length) {
       currentChecklist = d.checklist;
-      console.log('[CheckGen] loadSession: restoring', d.checklist.length, 'items → screen 3');
       goTo(3);
       renderChecklist(); updateProgress(); updateTimeSummary();
       $('exportBar').style.display = '';
@@ -852,12 +850,12 @@ async function regenSection(section) {
     'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
     'The text field must always follow this format: "action step → expected result". ' +
     'Assign priority using exactly these 5 levels — ' +
-    'Highest: blocking functionality, crash, or major error — fewer than 15% of items; ' +
-    'High: major functionality issue that impairs core use — typically 20-30% of items; ' +
-    'Medium: invasive styling issue or minor functionality issue — the most common priority, 40-50% of items; ' +
-    'Low: non-invasive styling issue or invasive typo — 10-20% of items; ' +
-    'Lowest: typo or trivial cosmetic issue — use sparingly. ' +
-    'Do not default everything to High. Distribute priorities to reflect actual severity across all 5 levels. ' +
+    'Highest: blocking functionality, crash, security vulnerability, or data loss — fewer than 10% of items; ' +
+    'High: verifying that core functionality, permissions, or data behaviour works correctly — most functional test cases will be High and that is correct; ' +
+    'Medium: secondary flows, edge case handling, validation messages, notification text, minor UI inconsistencies that have a workaround — expect roughly 25-35% of items; ' +
+    'Low: non-blocking cosmetic issues, low-impact layout quirks — 5-15% of items; ' +
+    'Lowest: trivial cosmetic issues or typos — use sparingly. ' +
+    'Do not force an even distribution. A checklist covering core functionality will naturally be majority High — that is expected and correct. ' +
     'Assign type using these definitions — ' +
     'Smoke: proves the feature works at all; ' +
     'Happy Path: expected normal use with valid inputs; ' +
