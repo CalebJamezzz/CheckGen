@@ -272,6 +272,7 @@ function restoreFromHistory(idx) {
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary();
     $('exportBar').style.display = '';
+    saveSession();
     showStatus('status3', '✓ Restored from history.', 'success');
   } catch(e) {}
 }
@@ -1924,6 +1925,7 @@ document.addEventListener('DOMContentLoaded', () => {
         goTo(3);
         renderChecklist(); updateProgress(); updateTimeSummary();
         $('exportBar').style.display = '';
+        saveSession();
       }
     } catch(e) {}
   }
