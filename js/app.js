@@ -951,11 +951,12 @@ async function regenSection(section) {
     const newItems = await callClaude(regenPromptParts.join('\n'), 8000, regenSystemPrompt);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
     const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
-    // Preserve original section order rather than appending to end
+    // Preserve manual items and original section order
+    const manualItems = currentChecklist.filter(i => i.section === section && i.custom);
     const sectionOrder = [...new Set(currentChecklist.map(i => i.section))];
     const withoutSection = currentChecklist.filter(i => i.section !== section);
     currentChecklist = sectionOrder.flatMap(s =>
-      s === section ? newMapped : withoutSection.filter(i => i.section === s)
+      s === section ? [...newMapped, ...manualItems] : withoutSection.filter(i => i.section === s)
     );
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession(); debouncedCloudSave();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
@@ -967,12 +968,26 @@ async function regenSection(section) {
 }
 
 /* ── Item actions ───────────────────────────────────────── */
-function addCustomItem(section, inputEl) {
-  const text = inputEl.value.trim(); if (!text) return;
-  const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
-  currentChecklist.push({ id: maxId + 1, section, text, priority: 'Medium', type: 'Happy Path', time: '—', outcome: null, note: '', custom: true });
-  inputEl.value = '';
-  renderChecklist(); updateProgress(); saveSession();
+function toggleAddForm(el) {
+  const row  = el.closest('.add-item-row');
+  const form = row.querySelector('.add-item-form');
+  const open = form.style.display !== 'none';
+  form.style.display = open ? 'none' : '';
+  if (!open) row.querySelector('.add-item-step')?.focus();
+}
+
+function submitAddItem(el, section) {
+  const form     = el.closest('.add-item-form');
+  const stepEl   = form.querySelector('.add-item-step');
+  const step     = stepEl.value.trim();
+  if (!step) { stepEl.focus(); return; }
+  const expected = form.querySelector('.add-item-expected').value.trim();
+  const priority = form.querySelector('.add-item-select').value;
+  const time     = form.querySelector('.add-item-time').value.trim() || '3m';
+  const text     = expected ? `${step} → ${expected}` : step;
+  const maxId    = Math.max(...currentChecklist.map(i => i.id), 0);
+  currentChecklist.push({ id: maxId + 1, section, text, priority, type: 'Happy Path', time, outcome: null, note: '', custom: true });
+  renderChecklist(); updateProgress(); updateTimeSummary(); saveSession(); debouncedCloudSave();
 }
 
 function deleteItem(id) {
@@ -1274,8 +1289,23 @@ function renderChecklist() {
             </div>`).join('')}
         </div>
         <div class="add-item-row">
-          <input class="add-item-input" placeholder="+ Add a step to ${esc2(section)}…" onkeydown="if(event.key==='Enter')addCustomItem('${esc(section)}',this)">
-          <button class="btn btn-ghost btn-sm" onclick="addCustomItem('${esc(section)}',this.previousElementSibling)">Add</button>
+          <button class="add-item-trigger" onclick="toggleAddForm(this)">+ Add item</button>
+          <div class="add-item-form" style="display:none">
+            <input class="add-item-field add-item-step" placeholder="Test step — describe what the tester does…" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
+            <input class="add-item-field add-item-expected" placeholder="Expected result — what should happen (optional)" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
+            <div class="add-item-controls">
+              <select class="add-item-select">
+                <option value="Highest">Highest</option>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+                <option value="Lowest">Lowest</option>
+              </select>
+              <input class="add-item-time" placeholder="e.g. 3m" maxlength="6" onkeydown="if(event.key==='Enter')submitAddItem(this,'${esc(section)}');if(event.key==='Escape')toggleAddForm(this)">
+              <button class="btn btn-primary btn-sm" onclick="submitAddItem(this,'${esc(section)}')">Add</button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleAddForm(this)">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>`).join('');
