@@ -654,13 +654,17 @@ async function generateChecklist() {
     '(4) Webhook accuracy: if webhooks are involved, verify they fire with the correct payload on the correct events and only on those events; ' +
     '(5) Data mapping: data sent to and received from the external system is correctly mapped — field names, types, and formats match the API contract exactly; ' +
     '(6) Auth: integration credentials are correctly applied — requests are rejected when credentials are missing or invalid. ' +
-    'Error Handling: verify every failure mode this feature could encounter — ' +
+    'Error Handling & Feedback: verify every failure mode and user feedback surface this feature could encounter — ' +
     '(1) Network failure: simulate network loss mid-action — the UI shows a recoverable error, not a blank screen or silent failure; ' +
     '(2) Server errors: trigger 500-level responses — the UI surfaces a clear user-facing message and does not expose stack traces or internal details; ' +
     '(3) Timeout: simulate slow API responses — loading states persist and a timeout message appears if the threshold is exceeded; ' +
     '(4) Recovery: after any error, the user can retry without refreshing or losing their entered data; ' +
     '(5) Server-side validation errors: API validation errors returned after submission are displayed field-specifically, not as a generic toast; ' +
-    '(6) Graceful degradation: if a non-critical feature fails (analytics, third-party widget), the core feature continues to work. ' +
+    '(6) Graceful degradation: if a non-critical feature fails (analytics, third-party widget), the core feature continues to work; ' +
+    '(7) Success notifications: every successful action surfaces clear confirmation — toast, banner, redirect, or state change as designed; no silent success; ' +
+    '(8) Confirmation dialogs: destructive or irreversible actions (delete, archive, send) require explicit user confirmation before proceeding — cancel works without side effects; ' +
+    '(9) In-app feedback: notification counts, badges, and status indicators update immediately and accurately after relevant actions; ' +
+    '(10) External notifications: actions designed to trigger emails or push notifications do so correctly — verify content, recipients, and timing are accurate. ' +
     'Edge Cases: test scenarios at the boundaries of normal use — ' +
     '(1) Empty state: the feature behaves correctly with no existing data — first-time user, empty list, zero records; ' +
     '(2) Single item: test with exactly one record where the feature might implicitly assume plural; ' +
@@ -719,7 +723,7 @@ async function generateChecklist() {
     'UI / Layout = 2-4m (visual inspection, responsive breakpoints); ' +
     'Data / Persistence = 4-8m (CRUD verification, checking DB state, refresh/reload confirmation); ' +
     'Integrations = 5-15m (external API calls, webhook verification, third-party service interaction); ' +
-    'Error Handling = 2-5m (triggering failure states, verifying recovery); ' +
+    'Error Handling & Feedback = 2-6m (triggering failure states, verifying recovery, checking notifications and confirmation dialogs); ' +
     'Edge Cases = 3-6m (boundary value setup, unusual but valid scenario construction); ' +
     'WCAG = 8-20m (screen reader walkthroughs with VoiceOver/NVDA, axe/DevTools audit, keyboard-only nav session, contrast ratio checks); ' +
     'Performance = 10-20m (Lighthouse audit with throttling, DevTools profiling, memory leak check); ' +
@@ -754,7 +758,7 @@ async function generateChecklist() {
   const messages = [{ role: 'user', content: userPrompt }];
 
   try {
-    const items = await callClaude(prompt, 6000, systemPrompt);
+    const items = await callClaude(prompt, 16000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     stopGenAnimation();
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
@@ -887,6 +891,18 @@ async function regenSection(section) {
       '(8) Fonts: font-display:swap or similar, no invisible text during font load, no layout shift after swap; ' +
       '(9) Perceived performance: loading states, skeleton screens, and optimistic UI present where expected; ' +
       '(10) Lighthouse audit: run with 4x CPU throttling — Performance 90+, Best Practices 90+, SEO 90+ if public. ' : '') +
+    (section === 'Error Handling & Feedback' ?
+      'ERROR HANDLING & FEEDBACK GUIDANCE — verify every failure mode and user feedback surface: ' +
+      '(1) Network failure: simulate network loss mid-action — UI shows a recoverable error, not a blank screen or silent failure; ' +
+      '(2) Server errors: trigger 500-level responses — UI surfaces a clear user-facing message, no stack traces exposed; ' +
+      '(3) Timeout: simulate slow API responses — loading states persist, timeout message appears if threshold exceeded; ' +
+      '(4) Recovery: after any error, user can retry without refreshing or losing entered data; ' +
+      '(5) Server-side validation errors: API validation errors are displayed field-specifically, not as a generic toast; ' +
+      '(6) Graceful degradation: if a non-critical feature fails (analytics, widget), core feature continues working; ' +
+      '(7) Success notifications: every successful action surfaces clear confirmation — toast, banner, redirect, or state change as designed; no silent success; ' +
+      '(8) Confirmation dialogs: destructive or irreversible actions require explicit user confirmation — cancel works without side effects; ' +
+      '(9) In-app feedback: notification counts, badges, and status indicators update immediately and accurately after actions; ' +
+      '(10) External notifications: actions that trigger emails or push notifications do so correctly — verify content, recipients, and timing. ' : '') +
     (dat ?
       'TEST DATA ENRICHMENT — enrich every item with concrete, copy-pasteable test data inline within the step. ' +
       'Use specific values: exact character counts, realistic emails, boundary numbers, specific file types, date ranges. ' +
@@ -900,7 +916,7 @@ async function regenSection(section) {
     'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
     'Functional = 2-5m; Validation = 2-4m; Permissions = 4-8m (role switching required); ' +
     'UI / Layout = 2-4m; Data / Persistence = 4-8m; Integrations = 5-15m; ' +
-    'Error Handling = 2-5m; Edge Cases = 3-6m; ' +
+    'Error Handling & Feedback = 2-6m (triggering failure states, verifying recovery, checking notifications); Edge Cases = 3-6m; ' +
     'WCAG = 8-20m (screen reader, axe audit, keyboard nav, contrast checks); ' +
     'Performance = 10-20m (Lighthouse with throttling, profiling); ' +
     'Break-It = 3-7m (crafting adversarial inputs, verifying graceful failure). ' +
@@ -928,7 +944,7 @@ async function regenSection(section) {
   );
 
   try {
-    const newItems = await callClaude(regenPromptParts.join('\n'), 3000, regenSystemPrompt);
+    const newItems = await callClaude(regenPromptParts.join('\n'), 8000, regenSystemPrompt);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
     const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
     // Preserve original section order rather than appending to end
@@ -1730,9 +1746,9 @@ function toggleAccordion(id) {
 function applyStrategyPreset() {
   const strategy = $('focusStyle')?.value;
   const presets = {
-    balanced: ['Functional','Validation','Permissions','UI / Layout','Data / Persistence','Integrations','Error Handling','Edge Cases','WCAG','Performance'],
-    smoke:    ['Functional','UI / Layout','Error Handling'],
-    edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling','Edge Cases','Integrations']
+    balanced: ['Functional','Validation','Permissions','UI / Layout','Data / Persistence','Integrations','Error Handling & Feedback','Edge Cases','WCAG','Performance'],
+    smoke:    ['Functional','UI / Layout','Error Handling & Feedback'],
+    edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling & Feedback','Edge Cases','Integrations']
   };
   const selected = presets[strategy] || presets.balanced;
   document.querySelectorAll('.areaCheck').forEach(cb => {

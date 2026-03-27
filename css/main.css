@@ -438,10 +438,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 
 /* Add-on pills */
 .s2-addon-grid { grid-template-columns: repeat(3, 1fr); }
-.s2-addon-check { border-color: rgba(99,102,241,.2) !important; }
-.s2-addon-check:hover { border-color: rgba(99,102,241,.45) !important; background: rgba(99,102,241,.06) !important; }
-.s2-addon-check input[type="checkbox"] { accent-color: #818cf8; }
-.s2-addon-check:has(input:checked) { border-color: rgba(99,102,241,.45) !important; background: rgba(99,102,241,.08) !important; color: #a5b4fc !important; }
+.s2-addon-check { border-color: rgba(16,185,129,.2) !important; }
+.s2-addon-check:hover { border-color: rgba(16,185,129,.45) !important; background: rgba(16,185,129,.06) !important; }
+.s2-addon-check input[type="checkbox"] { accent-color: var(--green); }
+.s2-addon-check:has(input:checked) { border-color: rgba(16,185,129,.45) !important; background: rgba(16,185,129,.08) !important; color: var(--green) !important; }
 
 /* Optional fields grid */
 .s2-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
