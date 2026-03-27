@@ -32,6 +32,7 @@ function openHistorySession(session) {
     <div class="page-header">
       <h1 class="page-title">History</h1>
       <p class="page-sub">Your cloud-saved checklists. Pick up where you left off.</p>
+      <p style="font-size:clamp(11px,.75vw,12px);color:var(--muted);margin-top:var(--sp-2);font-family:var(--font-mono);letter-spacing:.04em">Showing your 25 most recent checklists. Older sessions are preserved in your account.</p>
     </div>
 
     <div id="historyContent">
@@ -107,7 +108,7 @@ function openHistorySession(session) {
       .select('*')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
-      .limit(50);
+      .limit(25);
 
     if (error) throw new Error(error.message);
 
