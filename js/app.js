@@ -1064,7 +1064,7 @@ function startGenAnimation() {
 
   // Est. tests counter — ticks up toward a plausible estimate over ~10s
   const testTarget = Math.max(4, areaCount * 2);
-  const testInterval = Math.round(10000 / testTarget);
+  const testInterval = Math.round(20000 / testTarget);
   let testCount = 0;
   _genTestsTimer = setInterval(() => {
     if (testCount >= testTarget) { clearInterval(_genTestsTimer); _genTestsTimer = null; return; }
