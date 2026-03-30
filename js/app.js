@@ -1036,41 +1036,87 @@ function showAppToast(msg, type = 'error', duration = 5500) {
 
 /* ── Generating animation ── */
 let _genTypingTimer = null;
+let _genStatusTimer = null;
 
 function startGenAnimation() {
   const body = $('genChecklistBody');
   if (!body) return;
   body.innerHTML = '';
 
-  const steps = [
-    'Reading your ticket',
-    'Identifying test surfaces',
-    'Mapping acceptance criteria',
-    'Writing happy path cases',
-    'Hunting for edge cases',
-    'Checking permissions flows',
-    'Validating error states',
-    'Assigning priorities',
-    'Estimating test effort',
-    'Adding expected results',
-    'Reviewing for coverage gaps',
-    'Grouping into sections',
-    'Almost there',
+  // Reset progress bar + status line
+  const fill = $('genProgressFill');
+  if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
+  const statusEl = $('genStatusLine');
+  if (statusEl) { statusEl.textContent = 'scanning your ticket…'; statusEl.style.opacity = '1'; }
+
+  const phases = [
+    {
+      label: 'analyzing',
+      steps: ['Reading your ticket', 'Identifying test surfaces', 'Mapping acceptance criteria'],
+    },
+    {
+      label: 'building',
+      steps: ['Writing happy path cases', 'Hunting for edge cases', 'Checking permissions flows', 'Validating error states', 'Assigning priorities', 'Estimating test effort'],
+    },
+    {
+      label: 'reviewing',
+      steps: ['Adding expected results', 'Reviewing for coverage gaps', 'Grouping into sections', 'Almost there'],
+    },
   ];
+  const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
+  let globalIdx = 0;
 
-  let idx = 0;
-  let activeItem = null;
+  // Status line cycles independently
+  const statusMessages = [
+    'scanning your ticket…',
+    'mapping test surfaces…',
+    'writing test cases…',
+    'checking edge cases…',
+    'reviewing coverage…',
+    'almost ready…',
+  ];
+  let statusMsgIdx = 0;
+  _genStatusTimer = setInterval(() => {
+    if (!statusEl) return;
+    statusEl.style.opacity = '0';
+    setTimeout(() => {
+      statusMsgIdx = (statusMsgIdx + 1) % statusMessages.length;
+      statusEl.textContent = statusMessages[statusMsgIdx];
+      statusEl.style.opacity = '1';
+    }, 300);
+  }, 2800);
 
-  function typeItem() {
-    if (idx >= steps.length) return;
-    const label = steps[idx];
+  function updateProgress(done) {
+    if (!fill) return;
+    const pct = Math.min(88, Math.round((done / totalSteps) * 88));
+    fill.style.width = pct + '%';
+    if (done >= totalSteps) fill.classList.add('gen-progress-fill--shimmer');
+  }
 
+  function typePhase(phaseIdx, stepIdx) {
+    if (phaseIdx >= phases.length) return;
+    const phase = phases[phaseIdx];
+
+    // Phase header at the start of each group
+    if (stepIdx === 0) {
+      const phaseRow = document.createElement('div');
+      phaseRow.className = 'gen-phase-row';
+      phaseRow.textContent = '· ' + phase.label;
+      body.appendChild(phaseRow);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    if (stepIdx >= phase.steps.length) {
+      _genTypingTimer = setTimeout(() => typePhase(phaseIdx + 1, 0), 200);
+      return;
+    }
+
+    const label = phase.steps[stepIdx];
     const item = document.createElement('div');
     item.className = 'gen-item gen-item--active';
     item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"><span class="gen-cursor"></span></span>';
     body.appendChild(item);
     body.scrollTop = body.scrollHeight;
-    activeItem = item;
 
     const textEl   = item.querySelector('.gen-item-text');
     const cursorEl = item.querySelector('.gen-cursor');
@@ -1084,7 +1130,7 @@ function startGenAnimation() {
         charIdx++;
         _genTypingTimer = setTimeout(typeChar, 38);
       } else {
-        const isLast = idx === steps.length - 1;
+        const isLastStep = phaseIdx === phases.length - 1 && stepIdx === phase.steps.length - 1;
         _genTypingTimer = setTimeout(() => {
           const box = item.querySelector('.gen-item-box');
           box.textContent = '✓';
@@ -1092,15 +1138,16 @@ function startGenAnimation() {
           item.classList.remove('gen-item--active');
           item.classList.add('gen-item--done');
           cursorEl.remove();
-          idx++;
-          if (isLast) {
-            // All steps done — show pulsing dots so user knows AI is still working
+          globalIdx++;
+          updateProgress(globalIdx);
+          if (isLastStep) {
             const waitRow = document.createElement('div');
             waitRow.className = 'gen-wait-row';
             waitRow.innerHTML = '<span></span><span></span><span></span>';
             body.appendChild(waitRow);
+            body.scrollTop = body.scrollHeight;
           } else {
-            _genTypingTimer = setTimeout(typeItem, 260);
+            _genTypingTimer = setTimeout(() => typePhase(phaseIdx, stepIdx + 1), 260);
           }
         }, 500);
       }
@@ -1108,13 +1155,16 @@ function startGenAnimation() {
     typeChar();
   }
 
-  typeItem();
+  typePhase(0, 0);
 }
 
 function stopGenAnimation() {
   if (_genTypingTimer) { clearTimeout(_genTypingTimer); _genTypingTimer = null; }
+  if (_genStatusTimer) { clearInterval(_genStatusTimer); _genStatusTimer = null; }
   const body = $('genChecklistBody');
   if (body) body.innerHTML = '';
+  const fill = $('genProgressFill');
+  if (fill) { fill.style.width = '100%'; fill.classList.remove('gen-progress-fill--shimmer'); }
 }
 
 /* ── Completion modal ── */

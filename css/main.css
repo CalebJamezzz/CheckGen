@@ -730,11 +730,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   box-shadow: var(--glow-green);
 }
 .s1-mode-desc {
-  font-size: clamp(12px, .85vw, 14px);
-  color: var(--dim);
+  font-size: clamp(13px, .95vw, 15px);
+  color: var(--text);
   line-height: 1.6;
-  margin-bottom: var(--sp-5);
+  margin: var(--sp-2) 0 var(--sp-5);
   min-height: 1.6em;
+  padding: var(--sp-3) var(--sp-4);
+  background: rgba(255,255,255,.025);
+  border-radius: var(--r-md);
+  border-left: 2px solid rgba(16,185,129,.35);
 }
 
 /* Join-instead link (inside Team Session panel — temporary until 2.3) */
@@ -743,6 +747,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 
 /* Session metadata grid (screen 1 — inline, no wrapper label) */
 .s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-5); }
+
+/* Screen 1 sticky CTA row — stays visible even when shared panel is open */
+.s1-cta-row { position: sticky; bottom: var(--sp-5); display: flex; justify-content: flex-end; margin-top: var(--sp-4); pointer-events: none; z-index: 10; }
+.s1-cta-row .btn { pointer-events: all; box-shadow: 0 4px 24px rgba(16,185,129,.25); }
 
 /* Shared sub-options */
 .shared-panel {
@@ -958,6 +966,22 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   margin-left: 1px;
 }
 @keyframes genBlink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* Progress bar inside terminal header */
+.gen-progress-track { height: 2px; background: rgba(255,255,255,.05); }
+.gen-progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 1px; transition: width .55s ease; }
+.gen-progress-fill--shimmer { animation: genProgressShimmer 1.6s ease-in-out infinite; }
+@keyframes genProgressShimmer { 0%,100%{opacity:.65} 50%{opacity:1; box-shadow:0 0 8px rgba(16,185,129,.55)} }
+
+/* Phase row — dim section label between item groups */
+.gen-phase-row { font-family: var(--font-mono); font-size: 10px; color: var(--green); letter-spacing: .18em; text-transform: uppercase; padding: 10px 14px 4px; opacity: .5; }
+
+/* Status line below terminal */
+.gen-status-line { font-family: var(--font-mono); font-size: clamp(10px,.68vw,11px); color: var(--muted); letter-spacing: .12em; text-align: center; min-height: 1.4em; transition: opacity .3s ease; }
+
+/* Subtle pulsing glow on the card during generation */
+@keyframes genCardGlow { 0%,100%{box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(16,185,129,.08)} 50%{box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(16,185,129,.18),0 0 40px rgba(16,185,129,.07)} }
+.gen-checklist { animation: genCardGlow 3s ease-in-out infinite; }
 
 /* ── App toast ── */
 .app-toast {
