@@ -1059,15 +1059,16 @@ function startGenAnimation() {
   if (testsFill) testsFill.style.width = '0%';
   if (testsNum)  testsNum.textContent  = '--';
 
-  // Est. tests counter — ticks up toward a plausible estimate
-  const testTarget = Math.round(areaCount * 2.3 + Math.random() * 5 + 3);
+  // Est. tests counter — ticks up toward a plausible estimate over ~10s
+  const testTarget = Math.max(4, areaCount * 2);
+  const testInterval = Math.round(10000 / testTarget);
   let testCount = 0;
   _genTestsTimer = setInterval(() => {
     if (testCount >= testTarget) { clearInterval(_genTestsTimer); _genTestsTimer = null; return; }
     testCount++;
     if (testsNum)  testsNum.textContent  = '~' + testCount;
-    if (testsFill) testsFill.style.width = Math.min(94, Math.round((testCount / (testTarget * 1.05)) * 100)) + '%';
-  }, 650);
+    if (testsFill) testsFill.style.width = Math.min(94, Math.round((testCount / testTarget) * 94)) + '%';
+  }, testInterval);
 
   // Observation line — rotates with AI commentary distinct from step list
   const observations = [
