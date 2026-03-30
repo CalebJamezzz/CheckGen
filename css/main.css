@@ -980,7 +980,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 /* Stats panel below terminal — 2×2 grid */
 .gen-stats-panel { width: min(460px, 90vw); background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3) var(--sp-5); }
 .gen-stat-row { display: flex; align-items: center; gap: 8px; }
-.gen-stat-row:nth-child(1), .gen-stat-row:nth-child(2) { padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border); }
+.gen-stat-row:nth-child(1), .gen-stat-row:nth-child(2) { padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border); justify-content: center; }
 .gen-stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
 .gen-stat-value { font-family: var(--font-mono); font-size: 11px; color: var(--dim); white-space: nowrap; }
 .gen-stat-bar-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }

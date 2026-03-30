@@ -1044,7 +1044,7 @@ function startGenAnimation() {
   if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
 
   // Populate stats panel
-  const strategyMap = { balanced: 'full cov', smoke: 'smoke', edge: 'deep dive' };
+  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive' };
   const formatMap   = { expanded: 'detailed', concise: 'quick' };
   const stratEl  = $('genStatStrategy');
   const formatEl = $('genStatFormat');
