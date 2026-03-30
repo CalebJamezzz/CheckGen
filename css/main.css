@@ -679,23 +679,22 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .screen { display: none; }
 .screen.active { display: block; }
 
-/* ── Screen 1 resume card ── */
-.s1-resume-card {
+/* ── Screen 1 resume strip ── */
+.s1-resume-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px solid rgba(16,185,129,.2);
-  border-radius: var(--r-lg);
+  padding: 10px var(--sp-4);
+  border-left: 3px solid rgba(16,185,129,.5);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
   background: rgba(16,185,129,.04);
-  margin-bottom: var(--sp-6);
-  flex-wrap: wrap;
+  margin-bottom: var(--sp-5);
 }
-.s1-resume-left    { flex: 1; min-width: 0; }
-.s1-resume-label   { font-family: var(--font-mono); font-size: clamp(9px,.62vw,10px); letter-spacing: .12em; text-transform: uppercase; color: var(--green); margin-bottom: 5px; }
-.s1-resume-name    { font-size: clamp(14px,.95vw,16px); color: var(--text); font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.s1-resume-meta    { font-size: clamp(11px,.75vw,12px); color: var(--muted); }
+.s1-resume-left    { display: flex; align-items: baseline; gap: 8px; flex: 1; min-width: 0; overflow: hidden; }
+.s1-resume-label   { font-family: var(--font-mono); font-size: clamp(9px,.62vw,10px); letter-spacing: .12em; text-transform: uppercase; color: var(--green); flex-shrink: 0; }
+.s1-resume-name    { font-size: clamp(13px,.88vw,14px); color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.s1-resume-meta    { font-size: clamp(11px,.72vw,12px); color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .s1-resume-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ── Session mode toggle (screen 1) ── */
@@ -742,10 +741,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s1-join-instead-btn { background: none; border: none; padding: 0; font-size: clamp(12px,.82vw,13px); color: var(--muted); cursor: pointer; text-align: left; transition: color .15s; border-top: 1px solid var(--border); padding-top: var(--sp-3); width: 100%; margin-top: var(--sp-2); }
 .s1-join-instead-btn:hover { color: var(--green); }
 
-/* Session Details (optional fields on screen 1) */
-.s1-session-details { margin-bottom: var(--sp-6); }
-.s1-details-header { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-4); }
-.s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+/* Session metadata grid (screen 1 — inline, no wrapper label) */
+.s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-5); }
 
 /* Shared sub-options */
 .shared-panel {

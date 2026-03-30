@@ -1773,7 +1773,7 @@ async function initResumePanel() {
     const resumeBtn = panel.querySelector('.s1-resume-actions .btn-primary');
     if (resumeBtn) resumeBtn.textContent = isComplete ? 'Review / Export →' : 'Resume →';
 
-    panel.style.display = 'block';
+    panel.style.display = 'flex';
   } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }
 }
 

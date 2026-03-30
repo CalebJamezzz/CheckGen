@@ -38,12 +38,12 @@
         </p>
       </div>
 
-      <!-- Resume card — shown only when there's an unfinished session -->
-      <div id="resumePanel" class="s1-resume-card" style="display:none">
+      <!-- Resume strip — shown only when there's an unfinished session -->
+      <div id="resumePanel" class="s1-resume-strip" style="display:none">
         <div class="s1-resume-left">
-          <div class="s1-resume-label">Unfinished checklist</div>
-          <div class="s1-resume-name" id="resumeTitle"></div>
-          <div class="s1-resume-meta" id="resumeMeta"></div>
+          <span class="s1-resume-label">Continue</span>
+          <span class="s1-resume-name" id="resumeTitle"></span>
+          <span class="s1-resume-meta" id="resumeMeta"></span>
         </div>
         <div class="s1-resume-actions">
           <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
@@ -59,6 +59,22 @@
         <button class="s1-mode-btn" id="cardShared" onclick="setMode('shared')" type="button">Team Session</button>
       </div>
       <div class="s1-mode-desc" id="modeDesc">Generate and track test cases saved to your cloud history.</div>
+
+      <!-- Session metadata — optional fields, always visible -->
+      <div class="s1-meta-grid">
+        <div class="field">
+          <label class="field-label">Checklist Name</label>
+          <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
+        </div>
+        <div class="field">
+          <label class="field-label">Ticket ID</label>
+          <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
+        </div>
+        <div class="field">
+          <label class="field-label">Environment / Branch</label>
+          <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
+        </div>
+      </div>
 
       <!-- Shared panel (signed-in: email invite · anon: signup prompt) -->
       <div class="shared-panel" id="sharedPanel">
@@ -102,28 +118,6 @@
           <div class="join-row">
             <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em;font-family:var(--font-mono)" maxlength="6">
             <button class="btn btn-primary" onclick="joinSharedSession()" type="button">Join →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Session Details — optional, shown for personal + shared only -->
-      <div class="s1-session-details" id="sessionDetails">
-        <div class="s1-details-header">
-          <span class="label" style="margin:0;line-height:1">Session Details</span>
-          <span class="s2-badge s2-badge-optional">Optional</span>
-        </div>
-        <div class="s1-meta-grid">
-          <div class="field">
-            <label class="field-label">Ticket ID</label>
-            <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
-          </div>
-          <div class="field">
-            <label class="field-label">Environment / Branch</label>
-            <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
-          </div>
-          <div class="field">
-            <label class="field-label">Checklist Name</label>
-            <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
           </div>
         </div>
       </div>
