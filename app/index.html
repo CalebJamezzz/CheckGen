@@ -61,7 +61,7 @@
       <div class="s1-mode-desc" id="modeDesc">Generate and track test cases saved to your cloud history.</div>
 
       <!-- Session metadata — optional fields, always visible -->
-      <div class="s1-meta-grid">
+      <div class="s1-meta-grid" id="sessionMeta">
         <div class="field">
           <label class="field-label">Checklist Name</label>
           <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
@@ -106,13 +106,8 @@
         </div>
       </div>
 
-      <!-- Join panel: name + code (signed-in only) -->
+      <!-- Join panel: code (signed-in only) — name comes from account -->
       <div class="shared-panel" id="joinPanel">
-        <div class="field" style="margin-bottom:var(--sp-3)">
-          <label class="field-label">Your Name</label>
-          <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-          <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
-        </div>
         <div class="field">
           <label class="field-label">Session Code</label>
           <div class="join-row">
@@ -254,7 +249,27 @@ Rejected reports require a reason to be entered"></textarea>
           <div class="gen-progress-track"><div class="gen-progress-fill" id="genProgressFill"></div></div>
           <div class="gen-checklist-body" id="genChecklistBody"></div>
         </div>
-        <div class="gen-status-line" id="genStatusLine">scanning your ticket…</div>
+        <div class="gen-stats-panel">
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">strategy</span>
+            <span class="gen-stat-value" id="genStatStrategy">—</span>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">areas</span>
+            <div class="gen-stat-bar-wrap">
+              <div class="gen-stat-bar"><div class="gen-stat-fill" id="genAreasFill"></div></div>
+              <span class="gen-stat-num" id="genAreasNum">0</span>
+            </div>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">est. tests</span>
+            <div class="gen-stat-bar-wrap">
+              <div class="gen-stat-bar"><div class="gen-stat-fill" id="genTestsFill"></div></div>
+              <span class="gen-stat-num" id="genTestsNum">--</span>
+            </div>
+          </div>
+        </div>
+        <div class="gen-observation" id="genObservation"><span class="gen-obs-prefix">[ claude ]</span>&nbsp;<span id="genObsText"></span></div>
       </div>
     </div><!-- end screen25 -->
 

@@ -746,7 +746,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s1-join-instead-btn:hover { color: var(--green); }
 
 /* Session metadata grid (screen 1 — inline, no wrapper label) */
-.s1-meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.s1-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-5); }
+.s1-meta-grid .field:first-child { grid-column: 1 / -1; }
 
 /* Screen 1 sticky CTA row — stays visible even when shared panel is open */
 .s1-cta-row { position: sticky; bottom: var(--sp-5); display: flex; justify-content: flex-end; margin-top: var(--sp-4); pointer-events: none; z-index: 10; }
@@ -976,8 +977,19 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 /* Phase row — dim section label between item groups */
 .gen-phase-row { font-family: var(--font-mono); font-size: 10px; color: var(--green); letter-spacing: .18em; text-transform: uppercase; padding: 10px 14px 4px; opacity: .5; }
 
-/* Status line below terminal */
-.gen-status-line { font-family: var(--font-mono); font-size: clamp(10px,.68vw,11px); color: var(--muted); letter-spacing: .12em; text-align: center; min-height: 1.4em; transition: opacity .3s ease; }
+/* Stats panel below terminal */
+.gen-stats-panel { width: min(460px, 90vw); background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); display: flex; flex-direction: column; gap: 10px; }
+.gen-stat-row { display: flex; align-items: center; gap: var(--sp-3); }
+.gen-stat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); width: 72px; flex-shrink: 0; }
+.gen-stat-value { font-family: var(--font-mono); font-size: 11px; color: var(--dim); }
+.gen-stat-bar-wrap { display: flex; align-items: center; gap: var(--sp-2); flex: 1; }
+.gen-stat-bar { flex: 1; height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+.gen-stat-fill { height: 100%; width: 0%; background: var(--green); border-radius: 2px; transition: width .6s ease; }
+.gen-stat-num { font-family: var(--font-mono); font-size: 11px; color: var(--dim); width: 32px; text-align: right; flex-shrink: 0; }
+
+/* Observation line below stats */
+.gen-observation { font-family: var(--font-mono); font-size: clamp(10px,.68vw,11px); color: var(--muted); letter-spacing: .06em; text-align: center; min-height: 1.4em; transition: opacity .3s ease; }
+.gen-obs-prefix { color: rgba(16,185,129,.5); }
 
 /* Subtle pulsing glow on the card during generation */
 @keyframes genCardGlow { 0%,100%{box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(16,185,129,.08)} 50%{box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(16,185,129,.18),0 0 40px rgba(16,185,129,.07)} }

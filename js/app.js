@@ -85,9 +85,9 @@ function setMode(mode) {
   const joinStrip = $('cardJoin');
   if (joinStrip) joinStrip.classList.toggle('active', mode === 'join');
 
-  // Show/hide session details (optional fields) — not relevant for joining someone else's session
-  const sessionDetails = $('sessionDetails');
-  if (sessionDetails) sessionDetails.style.display = mode === 'join' ? 'none' : '';
+  // Hide metadata fields in join mode — joining someone else's session, not creating one
+  const sessionMeta = $('sessionMeta');
+  if (sessionMeta) sessionMeta.style.display = mode === 'join' ? 'none' : '';
 
   // Hide the Start Session CTA in join mode — the Join → button inside the panel handles it
   const startBtn = $('startBtn');
@@ -110,11 +110,6 @@ function setMode(mode) {
         return;
       }
       if (joinPanel) joinPanel.classList.add('visible');
-      const un = $('userName');
-      if (un && !un.value) {
-        const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
-        un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
-      }
     })();
   } else if (mode === 'shared') {
     (async () => {
@@ -1037,17 +1032,68 @@ function showAppToast(msg, type = 'error', duration = 5500) {
 /* ── Generating animation ── */
 let _genTypingTimer = null;
 let _genStatusTimer = null;
+let _genTestsTimer  = null;
 
 function startGenAnimation() {
   const body = $('genChecklistBody');
   if (!body) return;
   body.innerHTML = '';
 
-  // Reset progress bar + status line
+  // Reset progress bar
   const fill = $('genProgressFill');
   if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
-  const statusEl = $('genStatusLine');
-  if (statusEl) { statusEl.textContent = 'scanning your ticket…'; statusEl.style.opacity = '1'; }
+
+  // Populate stats panel
+  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive' };
+  const stratEl = $('genStatStrategy');
+  if (stratEl) stratEl.textContent = strategyMap[$('focusStyle')?.value] || '—';
+
+  const areaCount = document.querySelectorAll('.areaCheck:checked').length;
+  const areasFill = $('genAreasFill');
+  const areasNum  = $('genAreasNum');
+  if (areasFill) areasFill.style.width = ((areaCount / 10) * 100) + '%';
+  if (areasNum)  areasNum.textContent  = areaCount;
+
+  const testsFill = $('genTestsFill');
+  const testsNum  = $('genTestsNum');
+  if (testsFill) testsFill.style.width = '0%';
+  if (testsNum)  testsNum.textContent  = '--';
+
+  // Est. tests counter — ticks up toward a plausible estimate
+  const testTarget = Math.round(areaCount * 2.3 + Math.random() * 5 + 3);
+  let testCount = 0;
+  _genTestsTimer = setInterval(() => {
+    if (testCount >= testTarget) { clearInterval(_genTestsTimer); _genTestsTimer = null; return; }
+    testCount++;
+    if (testsNum)  testsNum.textContent  = '~' + testCount;
+    if (testsFill) testsFill.style.width = Math.min(94, Math.round((testCount / (testTarget * 1.05)) * 100)) + '%';
+  }, 650);
+
+  // Observation line — rotates with AI commentary distinct from step list
+  const observations = [
+    'cross-referencing acceptance criteria',
+    'auth boundary detected',
+    'flagging validation paths',
+    'mapping user flow edges',
+    'checking error state coverage',
+    'scanning integration touchpoints',
+    'identifying edge case surfaces',
+    'reviewing permission models',
+  ];
+  let obsIdx = 0;
+  const obsEl  = $('genObsText');
+  const obsWrap = $('genObservation');
+  if (obsEl) obsEl.textContent = observations[0];
+  if (obsWrap) obsWrap.style.opacity = '1';
+  _genStatusTimer = setInterval(() => {
+    if (!obsWrap) return;
+    obsWrap.style.opacity = '0';
+    setTimeout(() => {
+      obsIdx = (obsIdx + 1) % observations.length;
+      if (obsEl) obsEl.textContent = observations[obsIdx];
+      if (obsWrap) obsWrap.style.opacity = '1';
+    }, 300);
+  }, 2800);
 
   const phases = [
     {
@@ -1161,6 +1207,7 @@ function startGenAnimation() {
 function stopGenAnimation() {
   if (_genTypingTimer) { clearTimeout(_genTypingTimer); _genTypingTimer = null; }
   if (_genStatusTimer) { clearInterval(_genStatusTimer); _genStatusTimer = null; }
+  if (_genTestsTimer)  { clearInterval(_genTestsTimer);  _genTestsTimer  = null; }
   const body = $('genChecklistBody');
   if (body) body.innerHTML = '';
   const fill = $('genProgressFill');
@@ -1436,7 +1483,7 @@ async function createSharedSession() {
     environment: $('envBranch').value.trim()     || null,
     ticket_ac:   $('ticketText').value.trim()    || null,
     items:       currentChecklist,
-    created_by:  $('userName').value.trim()       || 'anonymous',
+    created_by:  _currentUserName || 'anonymous',
   });
   sharedSessionId = data.id; sharedCode = code;
   showShareBadge();
@@ -1497,14 +1544,7 @@ async function joinSharedSession() {
   }
   const code = $('joinCode').value.trim().toUpperCase();
   if (code.length !== 6) { alert('Enter a valid 6-character code.'); return; }
-  const name = $('userName').value.trim();
-  if (!name) {
-    $('userName').focus();
-    $('userName').style.borderColor = 'rgba(248,113,113,.6)';
-    setTimeout(() => $('userName').style.borderColor = '', 3000);
-    return;
-  }
-  localStorage.setItem('cg_user_name', name);
+  const name = _currentUserName || 'anonymous';
   _currentUserName = name;
   try {
     const rows = await sbGet('checklist_sessions', 'code', code);
@@ -1883,10 +1923,6 @@ function resumeLastSession() {
 
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore saved name
-  const savedName = localStorage.getItem('cg_user_name');
-  if (savedName) $('userName').value = savedName;
-
   // Wire up summary updates
   $('ticketText').addEventListener('input', updateSummary);
   $('acText')?.addEventListener('input', updateSummary);
