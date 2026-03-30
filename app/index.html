@@ -173,7 +173,7 @@ Rejected reports require a reason to be entered"></textarea>
             <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
               <span>Test Strategy</span>
               <span class="s2-badge s2-badge-required">Required</span>
-              <span class="info-icon">i<span class="info-tooltip">Full Coverage: spread evenly across all areas · Smoke Test: core happy paths only · Deep Dive: edge cases, errors &amp; boundary conditions first</span></span>
+              <span class="info-icon">i<span class="info-tooltip"><strong>Full Coverage</strong> — balanced across all areas, happy paths &amp; edge cases<br><br><strong>Smoke Test</strong> — core happy paths only, minimal scope<br><br><strong>Deep Dive</strong> — edge cases, errors &amp; boundary conditions first</span></span>
             </div>
             <select id="focusStyle" onchange="applyStrategyPreset()">
               <option value="balanced" selected>Full Coverage</option>
@@ -185,7 +185,7 @@ Rejected reports require a reason to be entered"></textarea>
             <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
               <span>Output Format</span>
               <span class="s2-badge s2-badge-required">Required</span>
-              <span class="info-icon">i<span class="info-tooltip">Detailed: every item written as action + expected outcome ("Do X → Y should happen") · Quick Checklist: action only, no expected result — short reminders for testers who know the system</span></span>
+              <span class="info-icon">i<span class="info-tooltip"><strong>Detailed</strong> — action + expected outcome on every item ("Do X → Y should happen")<br><br><strong>Quick Checklist</strong> — action only, no expected result. Short reminders for testers who know the system</span></span>
             </div>
             <select id="detailLevel">
               <option value="expanded" selected>Detailed</option>
