@@ -698,27 +698,45 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .s1-resume-meta    { font-size: clamp(11px,.75vw,12px); color: var(--muted); }
 .s1-resume-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-/* ── Session tiles (screen 1) ── */
-.s1-primary-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-5); }
-.session-card {
-  padding: var(--sp-5);
+/* ── Session mode toggle (screen 1) ── */
+.s1-mode-toggle {
+  display: flex;
+  background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--bg2);
-  cursor: pointer;
-  transition: border-color .2s, transform .2s, box-shadow .2s;
-  text-align: left;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-4);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: var(--sp-3);
 }
-.session-card:hover { border-color: rgba(16,185,129,.3); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.session-card.active { border-color: rgba(16,185,129,.55); background: rgba(16,185,129,.06); box-shadow: var(--glow-green); }
-.s1-card-shared:not(.active) { border-color: rgba(16,185,129,.18); }
-.s1-tile-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--r-md); border: 1px solid var(--border); background: rgba(255,255,255,.04); font-size: 16px; color: var(--muted); margin-top: 2px; }
-.session-card.active .s1-tile-icon { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.1); color: var(--green); }
-.card-label { font-family: var(--font-mono); font-size: clamp(11px,.75vw,13px); letter-spacing: .14em; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
-.card-desc { font-size: clamp(12px,.85vw,14px); color: var(--dim); line-height: 1.65; }
+.s1-mode-btn {
+  flex: 1;
+  padding: 10px var(--sp-4);
+  border-radius: calc(var(--r-lg) - 4px);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: clamp(12px, .82vw, 13px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: all .18s ease;
+  text-align: center;
+}
+.s1-mode-btn:hover:not(.active) { color: var(--text); }
+.s1-mode-btn.active {
+  background: rgba(16,185,129,.08);
+  border-color: rgba(16,185,129,.3);
+  color: var(--green);
+  box-shadow: var(--glow-green);
+}
+.s1-mode-desc {
+  font-size: clamp(12px, .85vw, 14px);
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: var(--sp-5);
+  min-height: 1.6em;
+}
 
 /* Join-instead link (inside Team Session panel — temporary until 2.3) */
 .s1-join-instead-btn { background: none; border: none; padding: 0; font-size: clamp(12px,.82vw,13px); color: var(--muted); cursor: pointer; text-align: left; transition: color .15s; border-top: 1px solid var(--border); padding-top: var(--sp-3); width: 100%; margin-top: var(--sp-2); }

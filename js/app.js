@@ -75,8 +75,13 @@ function backToSetupCancel() {
 function setMode(mode) {
   sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
-  // Team Session tile stays highlighted for both 'shared' and 'join' (join is accessed from within it)
   $('cardShared').classList.toggle('active', mode === 'shared' || mode === 'join');
+  const desc = $('modeDesc');
+  if (desc) {
+    if (mode === 'personal') desc.textContent = 'Generate and track test cases saved to your cloud history.';
+    else if (mode === 'shared') desc.textContent = 'Work through test cases live with your team — real-time outcomes, shared progress.';
+    else if (mode === 'join') desc.textContent = 'Enter a share code to join a teammate\'s active session.';
+  }
   const joinStrip = $('cardJoin');
   if (joinStrip) joinStrip.classList.toggle('active', mode === 'join');
 

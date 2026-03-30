@@ -51,25 +51,14 @@
         </div>
       </div>
 
-      <div class="label" style="margin-bottom:var(--sp-4)">How would you like to work?</div>
+      <div class="label" style="margin-bottom:var(--sp-3)">How would you like to work?</div>
 
-      <!-- Primary tiles: Personal + Team Session (2.3: Team Session will show active sessions list) -->
-      <div class="s1-primary-tiles">
-        <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
-          <div class="s1-tile-icon">⊙</div>
-          <div>
-            <div class="card-label">Personal</div>
-            <div class="card-desc">Just for you — generate and track test cases saved to your cloud history.</div>
-          </div>
-        </button>
-        <button class="session-card s1-card-shared" id="cardShared" onclick="setMode('shared')" type="button">
-          <div class="s1-tile-icon">⊕</div>
-          <div>
-            <div class="card-label">Team Session</div>
-            <div class="card-desc">Work through test cases live with your team — start a new session or jump into an active one.</div>
-          </div>
-        </button>
+      <!-- Session mode toggle -->
+      <div class="s1-mode-toggle">
+        <button class="s1-mode-btn active" id="cardPersonal" onclick="setMode('personal')" type="button">Personal</button>
+        <button class="s1-mode-btn" id="cardShared" onclick="setMode('shared')" type="button">Team Session</button>
       </div>
+      <div class="s1-mode-desc" id="modeDesc">Generate and track test cases saved to your cloud history.</div>
 
       <!-- Shared panel (signed-in: email invite · anon: signup prompt) -->
       <div class="shared-panel" id="sharedPanel">
