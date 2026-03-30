@@ -677,7 +677,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 
 /* ── Screen management ── */
 .screen { display: none; }
-.screen.active { display: block; }
+.screen.active { display: block; padding-bottom: var(--sp-10); }
 
 /* ── Screen 1 resume strip ── */
 .s1-resume-strip {
@@ -1227,7 +1227,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 }
 .app-footer {
   margin-top: auto;
-  padding: var(--sp-8) 0 var(--sp-4);
+  padding: var(--sp-3) 0 var(--sp-3);
   text-align: center;
   border-top: 1px solid var(--border);
 }
