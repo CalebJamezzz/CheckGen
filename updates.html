@@ -93,8 +93,8 @@
         <div class="changelog-version">v2.2</div>
       </div>
       <div class="changelog-content">
-        <h2>Smarter AI &amp; session polish</h2>
-        <p>A focused update on AI quality and session experience. Every test case is now more specific, more actionable, and grounded in the actual ticket — not padding to fill a count.</p>
+        <h2>Smarter output, cleaner setup, rebuilt generation experience</h2>
+        <p>A quality and experience pass across the board. The AI produces more specific, traceable test cases. Session setup is cleaner and faster. And the generation screen is now a proper loading experience rather than a spinner.</p>
 
         <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">AI &amp; Generation</h3>
         <ul>
@@ -103,23 +103,41 @@
           <li><strong>Step → expected result format</strong> — Every item now explicitly states the action and the expected outcome. No more vague observations.</li>
           <li><strong>Detailed guidance for all 10 testing areas</strong> — Each section now has specific sub-area instructions so the AI knows exactly what to cover rather than guessing.</li>
           <li><strong>Realistic time estimates per area</strong> — Time is no longer defaulted to 2m across the board. WCAG items reflect screen reader and audit effort; Permissions reflects login/logout cycles; Integrations reflects API round-trips.</li>
+          <li><strong>Balanced priority distribution</strong> — Priority rules now produce a realistic spread of High, Medium, and Low rather than weighting everything High.</li>
           <li><strong>Quality rules enforced</strong> — No near-duplicates, no rephrasing the same check, no generic filler. Every item must be traceable to the specific ticket.</li>
           <li><strong>Test Data is now a modifier</strong> — When selected, specific data values (boundary inputs, realistic strings, edge-case numbers) are woven into items throughout the checklist rather than generating a separate section.</li>
           <li><strong>Break-It expanded</strong> — Now covers SQL injection, XSS payloads, null bytes, emoji in text fields, concurrent duplicate submissions, negative/zero/max integers, and missing required relationships.</li>
-          <li><strong>Error Handling renamed to Error Handling &amp; Feedback</strong> — Now covers notification text, toast timing, confirmation dialogs, and email triggers alongside error state testing.</li>
+          <li><strong>Error Handling &amp; Feedback</strong> — Renamed from Error Handling. Now covers notification text, toast timing, confirmation dialogs, and email triggers alongside error state testing.</li>
           <li><strong>Regen fully rebuilt</strong> — Section regeneration now includes AC text, uses the same step → expected format, avoids duplicating existing items, and recalculates total session time after completing.</li>
-          <li><strong>Loading animation</strong> — Replaced the spinner with a typing checklist animation that walks through each generation step with a blinking cursor.</li>
+          <li><strong>Quick Checklist output format</strong> — When selected, items are written as short action-only reminders (no expected result sentence). Useful for experienced testers who need a reminder list, not a full script.</li>
         </ul>
 
-        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Sessions</h3>
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Session Setup</h3>
         <ul>
+          <li><strong>Screen 1 redesigned</strong> — Personal and Team Session are now a compact segmented toggle instead of large selection cards. Cleaner, faster to use.</li>
+          <li><strong>Metadata always visible</strong> — Checklist Name, Ticket ID, and Environment sit inline below the mode toggle — no "Session Details" accordion to open.</li>
+          <li><strong>Compact resume strip</strong> — The unfinished session panel is now a slim strip with a left border accent rather than a full card.</li>
+          <li><strong>Account name auto-filled</strong> — Team session and join flows use your account name automatically. No manual name field.</li>
+          <li><strong>Start Session stays in view</strong> — The CTA is now sticky so it remains visible even when the Team Session panel is expanded.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Sessions &amp; Checklist</h3>
+        <ul>
+          <li><strong>Manual test cases</strong> — Add your own items to any section directly from the checklist. Set the step, expected result, priority, and time estimate. Manual items survive section regeneration.</li>
           <li><strong>Completion modal</strong> — When all items are marked, a modal appears with pass/fail/blocked counts and options to export, mark complete, or keep reviewing.</li>
-          <li><strong>Session status</strong> — Sessions are now tracked as in_progress or complete in cloud storage. The resume panel shows Resume or Review/Export accordingly.</li>
-          <li><strong>Save &amp; Close</strong> — Renamed from End Session. Saves your progress and returns to the start screen without closing the session — pick it up anytime.</li>
-          <li><strong>Page refresh persists</strong> — Refreshing the page now restores you to your active checklist instead of sending you back to screen 1.</li>
-          <li><strong>New Session on screen 3</strong> — Replaced the Edit AC &amp; Options back button. Once a checklist is generated you are in the session — use New Session to start fresh.</li>
+          <li><strong>Session status</strong> — Sessions are now tracked as in_progress or complete in cloud storage. The resume strip shows Resume or Review/Export accordingly.</li>
+          <li><strong>Save &amp; Close</strong> — Renamed from End Session. Saves your progress and returns to the start screen — pick it up anytime.</li>
+          <li><strong>Page refresh persists</strong> — Refreshing the page restores you to your active checklist, including history-restored sessions.</li>
+          <li><strong>History limited to 25</strong> — The app shows your 25 most recent checklists. Older sessions remain in the database and will be surfaced in a future update.</li>
           <li><strong>Section completion indicator</strong> — The item count on each section header hides once every item in that section is marked.</li>
-          <li><strong>Manual test cases</strong> — Add your own items to any section directly from the checklist. Set the step, expected result, priority, and time — manual items survive section regeneration.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Generation Screen</h3>
+        <ul>
+          <li><strong>Terminal card animation</strong> — The generation screen is now a macOS-style terminal card that types through each step in three phases: analyzing, building, and reviewing.</li>
+          <li><strong>Progress bar</strong> — A thin green bar under the terminal title fills as each step completes, then shimmers while the AI finishes writing.</li>
+          <li><strong>Live stats panel</strong> — Shows your selected strategy, output format, areas count, and an estimated test case count that increments as generation runs.</li>
+          <li><strong>AI observation line</strong> — A rotating line below the stats shows what the AI is noticing in your ticket — distinct from the step list above it.</li>
         </ul>
       </div>
     </div>
