@@ -8,7 +8,7 @@ let sharedSessionId = null;
 let sharedCode   = null;
 let pollTimer    = null;
 let _currentUserName = null; // set when session starts, used for markedBy
-let _pendingBackToSetup = false;
+let _pendingBackToSetup = false; // kept for legacy safety
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
@@ -33,6 +33,11 @@ function goTo(n) {
   const el = $('screen' + n);
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
+  if (n === 1) initResumePanel();
+}
+
+function newSession() {
+  endSession();
 }
 
 function backToSetup() {
@@ -70,8 +75,23 @@ function backToSetupCancel() {
 function setMode(mode) {
   sessionMode = mode === 'join' ? 'shared' : mode; // 'join' maps to shared mode for session logic
   $('cardPersonal').classList.toggle('active', mode === 'personal');
-  $('cardShared').classList.toggle('active', mode === 'shared');
-  if ($('cardJoin')) $('cardJoin').classList.toggle('active', mode === 'join');
+  $('cardShared').classList.toggle('active', mode === 'shared' || mode === 'join');
+  const desc = $('modeDesc');
+  if (desc) {
+    if (mode === 'personal') desc.textContent = 'Generate and track test cases saved to your cloud history.';
+    else if (mode === 'shared') desc.textContent = 'Work through test cases live with your team — real-time outcomes, shared progress.';
+    else if (mode === 'join') desc.textContent = 'Enter a share code to join a teammate\'s active session.';
+  }
+  const joinStrip = $('cardJoin');
+  if (joinStrip) joinStrip.classList.toggle('active', mode === 'join');
+
+  // Hide metadata fields in join mode — joining someone else's session, not creating one
+  const sessionMeta = $('sessionMeta');
+  if (sessionMeta) sessionMeta.style.display = mode === 'join' ? 'none' : '';
+
+  // Hide the Start Session CTA in join mode — the Join → button inside the panel handles it
+  const startBtn = $('startBtn');
+  if (startBtn) startBtn.style.display = mode === 'join' ? 'none' : '';
 
   // Hide both panels first
   const sharedPanel = $('sharedPanel');
@@ -90,11 +110,6 @@ function setMode(mode) {
         return;
       }
       if (joinPanel) joinPanel.classList.add('visible');
-      const un = $('userName');
-      if (un && !un.value) {
-        const p = typeof getProfile === 'function' ? await getProfile().catch(()=>null) : null;
-        un.value = p?.name || s.user.user_metadata?.name || s.user.email?.split('@')[0] || '';
-      }
     })();
   } else if (mode === 'shared') {
     (async () => {
@@ -118,9 +133,9 @@ function setMode(mode) {
 
 function setSharedSub(sub) {
   sharedSub = sub;
-  $('subStart').classList.toggle('active', sub === 'start');
-  $('subJoin').classList.toggle('active', sub === 'join');
-  $('joinSection').classList.toggle('visible', sub === 'join');
+  $('subStart')?.classList.toggle('active', sub === 'start');
+  $('subJoin')?.classList.toggle('active', sub === 'join');
+  $('joinSection')?.classList.toggle('visible', sub === 'join');
   $('startBtn').textContent = sub === 'join' ? 'Join Session →' : 'Start Session →';
 }
 
@@ -153,8 +168,15 @@ async function startSession() {
       return;
     }
   }
-  goTo(2);
+  // Explicitly clear screen 2 fields so previous session never bleeds through
+  ['ticketText','acText'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  const dl = $('detailLevel'); if (dl) dl.value = 'expanded';
+  const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
+  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
+  _completionModalShown = false;
   updateSummary();
+  goTo(2);
 }
 
 /* ── History ────────────────────────────────────────────── */
@@ -250,6 +272,7 @@ function restoreFromHistory(idx) {
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary();
     $('exportBar').style.display = '';
+    saveSession();
     showStatus('status3', '✓ Restored from history.', 'success');
   } catch(e) {}
 }
@@ -264,23 +287,33 @@ function clearHistory(e) {
 
 /* ── Screen 2 ───────────────────────────────────────────── */
 function updateSummary() {
-  const words = $('ticketText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
+  const ticketWords = $('ticketText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
+  const acWords     = $('acText')?.value.trim().split(/\s+/).filter(Boolean).length || 0;
   const areas = document.querySelectorAll('.areaCheck:checked').length;
-  $('summaryWords').textContent = words;
+  const addons = [];
+  if ($('addonBreak')?.checked)        addons.push('Break-it');
+  if ($('addonTestData')?.checked)     addons.push('Test Data');
+  $('summaryWords').textContent = ticketWords + acWords;
   $('summaryAreas').textContent = areas;
+  const pl = document.getElementById('summaryAreasPlural');
+  if (pl) pl.textContent = areas === 1 ? '' : 's';
+  const addonsEl = $('summaryAddons');
+  if (addonsEl) addonsEl.textContent = addons.length ? ' · ' + addons.join(', ') : '';
 }
 
 /* ── Persistence ────────────────────────────────────────── */
 function saveSession() {
   try {
-    localStorage.setItem(SK, JSON.stringify({
-      checklist: currentChecklist,
-      ticket:    $('ticketText').value,
-      ticketId:  $('ticketId').value,
-      name:      $('checklistName').value,
-      env:       $('envBranch').value,
-      ts:        Date.now(),
-    }));
+    const data = {
+      checklist:   currentChecklist,
+      ticket:      $('ticketText')?.value   || '',
+      ticketId:    $('ticketId')?.value     || '',
+      name:        $('checklistName')?.value || '',
+      env:         $('envBranch')?.value    || '',
+      ts:          Date.now(),
+      cloudSaveId: _cloudSaveId || null,
+    };
+    localStorage.setItem(SK, JSON.stringify(data));
     if (sessionMode === 'shared') pushUpdate();
   } catch(e) {}
   updateLatestHistory();
@@ -294,7 +327,14 @@ function loadSession() {
     if (d.ticketId) $('ticketId').value      = d.ticketId;
     if (d.name)     $('checklistName').value = d.name;
     if (d.env)      $('envBranch').value     = d.env;
-  } catch(e) {}
+    if (d.cloudSaveId) _cloudSaveId = d.cloudSaveId;
+    if (Array.isArray(d.checklist) && d.checklist.length) {
+      currentChecklist = d.checklist;
+      goTo(3);
+      renderChecklist(); updateProgress(); updateTimeSummary();
+      $('exportBar').style.display = '';
+    }
+  } catch(e) { console.error('[CheckGen] loadSession error:', e.message, e); }
 }
 
 /* ── End session ────────────────────────────────────────── */
@@ -302,25 +342,26 @@ function endSession() {
   // Cancel any pending cloud save timer
   if (_cloudSaveTimer) { clearTimeout(_cloudSaveTimer); _cloudSaveTimer = null; }
   _cloudSaveId = null;
+  _completionModalShown = false;
+  closeCompleteModal();
   stopPolling();
   sharedSessionId = null; sharedCode = null;
   currentChecklist = [];
   sessionMode = 'personal'; sharedSub = 'start';
-  ['ticketText','ticketId','checklistName','envBranch'].forEach(id => {
+  ['ticketText','acText','ticketId','checklistName','envBranch'].forEach(id => {
     const el = $(id); if (el) el.value = '';
   });
   $('detailLevel').value = 'expanded';
   $('focusStyle').value  = 'balanced';
   document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
-  $('includeBreak').checked     = true;
-  $('includeDataHints').checked = true;
+  ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   localStorage.removeItem(SK);
   setMode('personal');
   $('shareCodeBadge').style.display = 'none';
   $('liveIndicator').style.display  = 'none';
   $('exportBar').style.display      = 'none';
   // Reset export filter + share emails
-  const csvSel = $('exportCsvMode'); if (csvSel) csvSel.value = 'all';
+  const csvSel = $('exportCsvMode2'); if (csvSel) csvSel.value = 'all';
   _shareEmails = [];
   // Clear any sessionStorage session restore (history → app navigation)
   sessionStorage.removeItem('cg_restore_session');
@@ -362,29 +403,110 @@ function updateTimeSummary() {
 /* ── API ────────────────────────────────────────────────── */
 async function callClaude(prompt, maxT, systemPrompt) {
   const attempt = async () => {
+    console.log('[CheckGen] callClaude → fetching /api/ask, maxT:', maxT);
     const r = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: maxT || 4000,
+        model: 'claude-sonnet-4-6',
+        max_tokens: maxT || 6000,
         messages: [{ role: 'user', content: prompt }],
       }, systemPrompt ? { system: systemPrompt } : {})),
     });
+
+    if (!r.ok) {
+      // Non-2xx from the edge function means an upstream error JSON
+      const errText = await r.text();
+      let msg = r.statusText;
+      try { msg = JSON.parse(errText).error?.message || msg; } catch {}
+      console.error('[CheckGen] API error:', r.status, msg);
+      throw new Error(msg);
+    }
+
+    const contentType = r.headers.get('content-type') || '';
+
+    // ── Streaming path (edge function returns text/event-stream) ──
+    if (contentType.includes('text/event-stream')) {
+      const reader  = r.body.getReader();
+      const decoder = new TextDecoder();
+      let raw    = '';
+      let buffer = '';
+
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep partial line for next chunk
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break outer;
+          let evt;
+          try { evt = JSON.parse(data); } catch { continue; } // skip malformed SSE lines
+          if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+            raw += evt.delta.text;
+            // Early exit: plain-text refusal detected — no need to wait for full stream
+            if (raw.length > 120 && !raw.trimStart().startsWith('[') && !raw.trimStart().startsWith('{') && !raw.trimStart().startsWith('`')) {
+              const short = raw.replace(/\s+/g, ' ').slice(0, 220).trim();
+              throw new Error(short);
+            }
+          } else if (evt.type === 'message_delta' && evt.delta?.stop_reason === 'max_tokens') {
+            throw new Error('max_tokens');
+          } else if (evt.type === 'error') {
+            const msg = evt.error?.message || evt.error?.type || 'Upstream error';
+            console.error('[CheckGen] SSE error event:', msg);
+            throw new Error(msg);
+          }
+        }
+      }
+
+      console.log('[CheckGen] stream complete, raw length:', raw.length);
+      const cleaned = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim();
+      console.log('[CheckGen] first 300:', cleaned.slice(0, 300));
+      // 1. Direct parse
+      try { return JSON.parse(cleaned); } catch {}
+      // 2. Extract first [...] array
+      const m = cleaned.match(/\[[\s\S]*\]/);
+      if (m) { try { return JSON.parse(m[0]); } catch {} }
+      // 3. Truncate after last complete object
+      const lc = cleaned.lastIndexOf('},');
+      if (lc > 0) { try { return JSON.parse(cleaned.slice(0, lc + 1) + ']'); } catch {} }
+      // 4. Nothing worked — check if AI returned a plain-text refusal
+      console.error('[CheckGen] unparseable response:', cleaned);
+      if (!cleaned.trimStart().startsWith('[') && !cleaned.trimStart().startsWith('{')) {
+        // Looks like a text explanation rather than JSON — surface it as a readable error
+        const short = cleaned.replace(/\s+/g, ' ').slice(0, 220).trim();
+        throw new Error(short);
+      }
+      throw new Error('Invalid JSON from AI');
+    }
+
+    // ── Fallback: synchronous JSON (legacy regular function) ──
+    console.warn('[CheckGen] edge function not active — falling back to synchronous function');
     const text = await r.text();
     if (text.trim().startsWith('<')) throw new Error('timeout');
     const d = JSON.parse(text);
-    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+    if (d.error) {
+      const msg = d.error.message || JSON.stringify(d.error);
+      console.error('[CheckGen] API error:', r.status, msg);
+      throw new Error(msg);
+    }
     if (d.stop_reason === 'max_tokens') throw new Error('max_tokens');
     const raw     = d.content?.find(b => b.type === 'text')?.text || '';
     const cleaned = raw.replace(/```json|```/g, '').trim();
     try { return JSON.parse(cleaned); }
-    catch(e) {
+    catch {
       const lc = cleaned.lastIndexOf('},');
-      if (lc > 0) return JSON.parse(cleaned.slice(0, lc + 1) + ']');
-      throw e;
+      if (lc > 0) { try { return JSON.parse(cleaned.slice(0, lc + 1) + ']'); } catch {} }
+      if (!cleaned.trimStart().startsWith('[') && !cleaned.trimStart().startsWith('{')) {
+        const short = cleaned.replace(/\s+/g, ' ').slice(0, 220).trim();
+        throw new Error(short);
+      }
+      throw new Error('Invalid JSON from AI');
     }
   };
+
   try { return await attempt(); }
   catch(e) {
     if (e.message === 'timeout' || e.message === 'max_tokens') return await attempt();
@@ -430,14 +552,7 @@ async function generateChecklist() {
   btn.disabled = true; btn.textContent = 'Generating…';
   goTo(25);
 
-  // Cycle sublabels
-  const sublabels = ['Reading your ticket','Mapping test areas','Writing test steps','Grouping by section','Almost there'];
-  let sublabelIdx = 0;
-  const sublabelEl = $('genSubLabel');
-  const sublabelTimer = setInterval(() => {
-    sublabelIdx = (sublabelIdx + 1) % sublabels.length;
-    if (sublabelEl) sublabelEl.textContent = sublabels[sublabelIdx];
-  }, 2200);
+  startGenAnimation();
 
   const wrap = $('checklistWrap');
   wrap.className = ''; wrap.innerHTML = '';
@@ -445,61 +560,212 @@ async function generateChecklist() {
 
   const detail = $('detailLevel').value;
   const focus  = $('focusStyle').value;
-  const brk    = $('includeBreak').checked;
-  const dat    = $('includeDataHints').checked;
+  const ac     = $('acText')?.value.trim() || '';
+  const brk    = $('addonBreak')?.checked;
+  const dat    = $('addonTestData')?.checked;
 
   const focusNote = focus === 'smoke'
-    ? 'Lean toward smoke and happy-path checks.'
+    ? 'This is a smoke test — focus on verifying core happy-path flows work. Skip deep edge cases.'
     : focus === 'edge'
-      ? 'Lean heavily toward edge cases and boundary conditions.'
-      : 'Balance happy-path, validation, and edge cases evenly.';
+      ? 'This is a deep dive — prioritise edge cases, boundary conditions, and error paths. Go beyond the obvious.'
+      : 'Provide full coverage — balance happy-path, validation, edge cases, and error handling across all areas.';
+
+  const detailNote = detail === 'concise'
+    ? 'Write each item as a SHORT ACTION ONLY — maximum 8 words, no expected result, no "→" separator, no outcome sentence. Just the test action itself. Example: "Submit form with empty required fields".'
+    : 'Write each item as a clear action + expected outcome using this format: "Do X → Y should happen."';
 
   // Areas the user selected — these are the ONLY sections allowed
   const selectedAreas = [...areas];
   if (brk) selectedAreas.push('Break-It');
-  if (dat) selectedAreas.push('Test Data');
-  const areaList = selectedAreas.join(', ');
+  // dat is a modifier, not a section — injected into systemPrompt below
 
-  // Item count: let Claude decide the right number, but give a range
-  // based on areas selected so fewer areas = fewer items
+  // Item count scales with areas selected
   const areaCount = selectedAreas.length;
-  const minItems  = Math.max(5,  areaCount * 2);
-  const maxItems  = Math.min(30, areaCount * 4);
+  const minItems  = Math.max(6,  areaCount * 2);
+  const maxItems  = Math.min(40, areaCount * 4);
 
-  const detailNote = detail === 'concise'
-    ? 'Write each item in 1 concise sentence.'
-    : 'Write each item as a clear 1-2 sentence actionable step.';
-
-  // System prompt goes into the messages array as a system role
+  // System prompt
   const systemPrompt = (
-    'You are a precise QA engineer generating test checklists as JSON arrays. ' +
-    'RULES: ' +
+    'You are a senior QA engineer creating structured test checklists. ' +
+    'Your goal is meaningful coverage of the ticket — not a long list. ' +
+    'Generate only the test cases that are genuinely necessary to verify the feature described. ' +
+    'Do not pad the checklist to reach a number. A focused set of 10 specific items is far more valuable than 30 generic ones. ' +
+    'Every item must test something distinct — no near-duplicates, no rephrasing the same check, no filler. ' +
+    'If a ticket is simple, keep the checklist short. If it is complex, cover it thoroughly. Let the ticket dictate the depth. ' +
+    'QUALITY RULES FOR EACH ITEM: ' +
+    '(1) Be specific to the ticket — reference the actual field names, UI elements, user flows, and data values mentioned. Never write "the button" or "the input" when the ticket names them specifically. ' +
+    '(2) Write each item so a new team member with no context could execute it without asking a single question. If it requires interpretation, it is too vague. ' +
+    '(3) Test exactly one scenario per item — do not bundle multiple checks into one step. ' +
+    '(4) Avoid these patterns: "Verify the feature works", "Test that X does what it should", "Confirm the page loads correctly" — these are not test cases, they are vague observations. ' +
+    'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
+    'Think systematically across: boundary values, empty/null inputs, invalid formats, permission levels, ' +
+    'state transitions, error recovery, and realistic data scenarios. ' +
+    'Assign priority using exactly these 5 levels — ' +
+    'Highest: blocking functionality, crash, security vulnerability, or data loss — fewer than 10% of items; ' +
+    'High: verifying that core functionality, permissions, or data behaviour works correctly — most functional test cases will be High and that is correct; ' +
+    'Medium: secondary flows, edge case handling, validation messages, notification text, minor UI inconsistencies that have a workaround — expect roughly 25-35% of items; ' +
+    'Low: non-blocking cosmetic issues, low-impact layout quirks — 5-15% of items; ' +
+    'Lowest: trivial cosmetic issues or typos — use sparingly. ' +
+    'Do not force an even distribution. A checklist covering core functionality will naturally be majority High — that is expected and correct. ' +
+    'Assign type using these definitions — ' +
+    'Smoke: proves the feature works at all; ' +
+    'Happy Path: expected normal use with valid inputs; ' +
+    'Edge: boundary conditions or unusual but valid input; ' +
+    'Data: data integrity, format validation, or persistence; ' +
+    'Break: destructive or adversarial input intended to break the feature. ' +
+    'SECTION BALANCE — within each selected section, generate only items the ticket genuinely warrants. ' +
+    'A section with 2 highly specific items is better than 6 padded ones. ' +
+    'Do not concentrate items in one section at the expense of others — if a section has limited relevance to this ticket, generate fewer items for it. ' +
+    'TESTING AREA GUIDANCE — when these sections are present, generate specific actionable cases: ' +
+    'Functional: cover all primary flows for this specific feature — ' +
+    '(1) Happy path: complete the primary user flow with valid inputs from start to finish and verify the correct outcome; ' +
+    '(2) Negative path: attempt the action with missing or invalid inputs and verify rejection with a specific, helpful error message; ' +
+    '(3) State transitions: verify the feature correctly moves between states (e.g. empty→populated, draft→published, inactive→active) and each state is visually distinct; ' +
+    '(4) Dependent actions: verify actions that require prior steps fail gracefully if prerequisites are skipped; ' +
+    '(5) Feedback: every user action produces immediate, clear feedback — success messages, loading indicators, confirmations; ' +
+    '(6) Data reflection: submitted or changed data is immediately and correctly reflected in all relevant UI locations. ' +
+    'Validation: cover all input constraints introduced by this ticket — ' +
+    '(1) Required fields: submit with each required field empty individually — verify the specific field is flagged with a meaningful message, not a generic error; ' +
+    '(2) Format rules: enter incorrectly formatted values (wrong email format, invalid phone, malformed URL) — verify field-specific error messages name what is wrong; ' +
+    '(3) Character limits: test at-limit, one-over-limit, and one-under-minimum values — verify truncation, rejection, or counter feedback as appropriate; ' +
+    '(4) Whitespace handling: enter leading/trailing whitespace and whitespace-only values — verify consistent trimming or rejection; ' +
+    '(5) Cross-field rules: verify fields that depend on each other (end date after start date, password confirmation match) in both valid and invalid combinations; ' +
+    '(6) Error clarity: all error messages identify the specific field and describe exactly what is wrong — never a generic "something went wrong". ' +
+    'Permissions: verify access control for every role that interacts with this feature — ' +
+    '(1) Role matrix: for each user role in the project, verify they can access what they should and are blocked from what they should not see or do; ' +
+    '(2) Direct URL access: attempt to reach restricted pages or resources directly via URL while unauthenticated or as the wrong role — verify redirect or 403, not a blank page; ' +
+    '(3) Privilege escalation: attempt to perform a higher-privilege action by manipulating request parameters, resource IDs, or role values in payloads; ' +
+    '(4) Cross-user isolation: attempt to access or modify another user\'s data by substituting their ID — verify complete isolation; ' +
+    '(5) UI reflection: verify that restricted UI elements (buttons, menu items, sections) are hidden or disabled for unauthorized roles — not merely unclickable; ' +
+    '(6) Session re-evaluation: verify permissions are re-checked after session refresh — stale cached permissions must not grant access. ' +
+    'UI / Layout: cover the visual and interactive correctness of this feature — ' +
+    '(1) Responsive breakpoints: verify layout at mobile (375px), tablet (768px), and desktop (1280px+) — no overflow, clipping, or obscured elements; ' +
+    '(2) Component states: every interactive element shows correct visual states — default, hover, focus, active, disabled, loading, and error; ' +
+    '(3) Empty states: the UI handles zero results or first-time use with a helpful message — not a blank space, broken layout, or raw empty array; ' +
+    '(4) Long content: layout handles unexpectedly long text (names, titles, labels) without breaking — truncation, wrapping, or scrolling as appropriate; ' +
+    '(5) Loading states: skeleton screens or spinners appear during async operations — no content flash, no layout shift during load; ' +
+    '(6) Consistency: spacing, typography, colors, and component patterns match the rest of the application — no one-off styles. ' +
+    'Data / Persistence: verify data integrity throughout the full lifecycle — ' +
+    '(1) Create and verify: after creating a record, confirm it appears correctly in the UI, in the relevant list view, and in the API/database response; ' +
+    '(2) Update and verify: after editing, confirm changes persist after page refresh and are correctly reflected everywhere the data appears; ' +
+    '(3) Delete and verify: after deletion, confirm the record no longer appears in any view and related data is handled correctly (cascade or preserve as designed); ' +
+    '(4) Refresh persistence: data survives browser refresh, tab close/reopen, and navigating away and back; ' +
+    '(5) Concurrent edits: open the same record in two sessions simultaneously and edit — verify last-write-wins or conflict is surfaced, not silently dropped; ' +
+    '(6) Related data integrity: counts, totals, and linked records update correctly after any change — no stale references or incorrect aggregates. ' +
+    'Integrations: verify every external connection this ticket introduces or modifies — ' +
+    '(1) Success path: trigger the integration with valid data and verify the external system receives the correct payload and the UI reflects the response; ' +
+    '(2) External failure: simulate the external service being unavailable or returning an error — verify graceful failure, user-visible messaging, and no data loss; ' +
+    '(3) Retry and queuing: verify failed integration calls are retried or queued as designed — not silently dropped; ' +
+    '(4) Webhook accuracy: if webhooks are involved, verify they fire with the correct payload on the correct events and only on those events; ' +
+    '(5) Data mapping: data sent to and received from the external system is correctly mapped — field names, types, and formats match the API contract exactly; ' +
+    '(6) Auth: integration credentials are correctly applied — requests are rejected when credentials are missing or invalid. ' +
+    'Error Handling & Feedback: verify every failure mode and user feedback surface this feature could encounter — ' +
+    '(1) Network failure: simulate network loss mid-action — the UI shows a recoverable error, not a blank screen or silent failure; ' +
+    '(2) Server errors: trigger 500-level responses — the UI surfaces a clear user-facing message and does not expose stack traces or internal details; ' +
+    '(3) Timeout: simulate slow API responses — loading states persist and a timeout message appears if the threshold is exceeded; ' +
+    '(4) Recovery: after any error, the user can retry without refreshing or losing their entered data; ' +
+    '(5) Server-side validation errors: API validation errors returned after submission are displayed field-specifically, not as a generic toast; ' +
+    '(6) Graceful degradation: if a non-critical feature fails (analytics, third-party widget), the core feature continues to work; ' +
+    '(7) Success notifications: every successful action surfaces clear confirmation — toast, banner, redirect, or state change as designed; no silent success; ' +
+    '(8) Confirmation dialogs: destructive or irreversible actions (delete, archive, send) require explicit user confirmation before proceeding — cancel works without side effects; ' +
+    '(9) In-app feedback: notification counts, badges, and status indicators update immediately and accurately after relevant actions; ' +
+    '(10) External notifications: actions designed to trigger emails or push notifications do so correctly — verify content, recipients, and timing are accurate. ' +
+    'Edge Cases: test scenarios at the boundaries of normal use — ' +
+    '(1) Empty state: the feature behaves correctly with no existing data — first-time user, empty list, zero records; ' +
+    '(2) Single item: test with exactly one record where the feature might implicitly assume plural; ' +
+    '(3) Maximum volume: test with the largest realistic dataset — large lists, maximum file size, bulk operations at scale; ' +
+    '(4) Rapid interaction: click buttons rapidly, submit forms multiple times quickly — verify debouncing or idempotency prevents duplicate actions; ' +
+    '(5) Browser navigation: use browser back/forward during a multi-step flow — verify state is correctly maintained or gracefully reset; ' +
+    '(6) Interrupted flow: close a modal, navigate away, or refresh mid-operation — verify no partial saves, corrupt state, or data loss. ' +
+    'Break-It: generate adversarial test cases targeting failure modes specific to this ticket — ' +
+    '(1) Injection: SQL injection strings (e.g. \' OR 1=1 --), XSS payloads (<script>alert(1)</script>); ' +
+    '(2) Boundary values: max integer (2147483647), zero, negative numbers, empty string, whitespace-only; ' +
+    '(3) Oversized inputs: strings at and beyond the field max length, files exceeding size limits; ' +
+    '(4) Invalid formats: malformed emails, phone numbers, URLs, dates (e.g. 99/99/9999); ' +
+    '(5) Special characters: emoji in text fields, null bytes, RTL characters, newlines in single-line inputs; ' +
+    '(6) Concurrent operations: submitting the same form twice simultaneously, rapid double-click on submit; ' +
+    '(7) Unexpected state: performing actions without required prerequisites, skipping steps in a flow; ' +
+    '(8) Auth boundary: accessing protected resources without authentication, using another user\'s resource IDs. ' +
+    'Only generate Break-It items that are plausible attack vectors for this specific feature — no generic filler. ' +
+    'WCAG: generate specific, actionable test cases across these areas — ' +
+    '(1) Color contrast: body text meets 4.5:1 AA ratio, large text and UI components meet 3:1, verify using browser DevTools color picker or axe extension; ' +
+    '(2) Images and icons: meaningful images have descriptive alt text that conveys function or content (not filenames or "image"), purely decorative images have alt="" and role="presentation", icon-only buttons have an aria-label; ' +
+    '(3) Screen reader accuracy: use VoiceOver (Mac) or NVDA (Windows) to verify heading hierarchy is logical, landmark regions are present (main, nav, header), reading order matches visual order, and dynamic content changes (toasts, modals, loading states) are announced via aria-live regions; ' +
+    '(4) Keyboard navigation: every interactive element is reachable by Tab key, tab order matches visual flow, no keyboard traps, Escape closes modals/dropdowns, Enter/Space activates buttons; ' +
+    '(5) Focus indicators: all focused elements have a clearly visible outline — not removed with outline:none without a custom replacement; ' +
+    '(6) Forms: every input has a programmatically associated label (not just visually adjacent text), required fields are marked, error messages are linked via aria-describedby and announced on submit; ' +
+    '(7) ARIA correctness: custom components (tabs, accordions, modals, comboboxes) use correct roles, states (aria-expanded, aria-selected, aria-checked), and properties — verify with axe or browser accessibility tree; ' +
+    '(8) Zoom and reflow: content is fully usable at 200% browser zoom with no horizontal scrolling and no overlapping elements; ' +
+    '(9) Motion: animations and transitions respect prefers-reduced-motion media query; ' +
+    '(10) Touch targets: all interactive elements are at least 44×44px on mobile. ' +
+    'Performance: generate specific, actionable test cases across these areas — ' +
+    '(1) Core load metrics: initial page load and time-to-interactive meet defined thresholds, Largest Contentful Paint (LCP) under 2.5s, Cumulative Layout Shift (CLS) under 0.1, Interaction to Next Paint (INP) under 200ms; ' +
+    '(2) API responsiveness: API calls complete within acceptable response times under normal load, concurrent requests do not degrade UI responsiveness; ' +
+    '(3) Large data: feature behaves correctly and remains responsive with 100+ and 1000+ records, lists are paginated or virtualised; ' +
+    '(4) Memory and DOM: repeated interactions (open/close, add/remove) do not cause memory leaks or DOM bloat — verify with Chrome DevTools Memory tab; ' +
+    '(5) Rendering: animations and scroll are smooth with no jank — target 60fps, verify with Performance panel; ' +
+    '(6) Assets: images use modern formats (WebP/AVIF), are correctly sized for their display size, and have explicit width/height to prevent layout shift; below-fold images use lazy loading; ' +
+    '(7) Caching: static assets are served with efficient cache headers, unchanged assets are not re-fetched on navigation; ' +
+    '(8) Fonts: web fonts use font-display:swap or similar, no invisible text during font load, no layout shift after font swap; ' +
+    '(9) Perceived performance: loading states, skeleton screens, and optimistic UI are present where expected; ' +
+    '(10) Lighthouse audit: run Lighthouse in Chrome DevTools with CPU throttling (4x slowdown) to simulate low-end devices — Performance score 90+, Best Practices score 90+ (no console errors, no deprecated APIs), SEO score 90+ if publicly accessible. ' +
+    (dat ?
+      'TEST DATA ENRICHMENT — the user has requested data-specific items. Do not add a separate Test Data section. ' +
+      'Instead, enrich every item across all sections with concrete, copy-pasteable test data inline within the step itself. ' +
+      'Use specific values: exact character counts, realistic emails/usernames, boundary numbers, specific file types, date ranges, edge-case strings. ' +
+      'Write "Enter 256 characters in the Title field" not "enter a long string". Write "Submit with email a@b.c" not "submit with invalid email". ' +
+      'Every step should contain enough data specificity that a tester can execute it without inventing their own values. ' : '') +
+    'OUTPUT RULES: ' +
     '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
-    '3. Generate between ' + minItems + ' and ' + maxItems + ' items spread across all provided areas. ' +
-    '4. Every item must be specific to the ticket, never generic. ' +
-    '5. Each object must have: section, text, priority (High|Medium|Low), type (Smoke|Happy Path|Edge|Data|Break), time (e.g. 2m).'
+    '3. Generate as many items as genuinely needed for coverage — minimum ' + minItems + ', maximum ' + maxItems + '. Do not pad to reach the maximum. Stop when the ticket is covered. ' +
+    '4. Every item must be directly traceable to the specific ticket — no generic filler, no near-duplicates. ' +
+    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
+    'Functional = 2-5m (straightforward feature interaction); ' +
+    'Validation = 2-4m (form input checks, error message verification); ' +
+    'Permissions = 4-8m (requires switching user roles or accounts, login/logout cycles); ' +
+    'UI / Layout = 2-4m (visual inspection, responsive breakpoints); ' +
+    'Data / Persistence = 4-8m (CRUD verification, checking DB state, refresh/reload confirmation); ' +
+    'Integrations = 5-15m (external API calls, webhook verification, third-party service interaction); ' +
+    'Error Handling & Feedback = 2-6m (triggering failure states, verifying recovery, checking notifications and confirmation dialogs); ' +
+    'Edge Cases = 3-6m (boundary value setup, unusual but valid scenario construction); ' +
+    'WCAG = 8-20m (screen reader walkthroughs with VoiceOver/NVDA, axe/DevTools audit, keyboard-only nav session, contrast ratio checks); ' +
+    'Performance = 10-20m (Lighthouse audit with throttling, DevTools profiling, memory leak check); ' +
+    'Break-It = 3-7m (crafting adversarial inputs, verifying graceful failure and error messages). ' +
+    'Never default everything to 2m — vary estimates to reflect actual task complexity.'
   );
 
-  const userPrompt = [
-    'Generate a QA test checklist for this ticket:',
+  // User prompt — treat ticket and AC as separate signals
+  const userPromptParts = [
+    'Generate a QA test checklist for this ticket or acceptance criteria:',
     '',
+    'TICKET / USER STORY:',
     ticket,
+  ];
+  if (ac) {
+    userPromptParts.push('', 'ACCEPTANCE CRITERIA (each clause must have at least one test case covering it):');
+    userPromptParts.push(ac);
+  }
+  userPromptParts.push(
     '',
     'TESTING AREAS (use ONLY these as section names, no others):',
     selectedAreas.map(a => '- ' + a).join('\n'),
     '',
-    'Focus style: ' + focusNote,
+    'Test strategy: ' + focusNote,
     detailNote,
-  ].join('\n');
+    'Each item must be directly traceable to this specific ticket — no generic filler.',
+  );
+  if (ac) userPromptParts.push('Each acceptance criteria clause must have at least one explicit test case covering it.');
+  const userPrompt = userPromptParts.join('\n');
 
   const prompt = userPrompt; // kept for callClaude signature compat
   const messages = [{ role: 'user', content: userPrompt }];
 
   try {
-    const items = await callClaude(prompt, 4000, systemPrompt);
+    const items = await callClaude(prompt, 16000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
-    clearInterval(sublabelTimer);
+    stopGenAnimation();
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession();
@@ -546,10 +812,15 @@ async function generateChecklist() {
     }
     showStatus('status3', `✓ ${currentChecklist.length} items generated.`, 'success');
   } catch(err) {
-    clearInterval(sublabelTimer);
-    wrap.className = 'empty'; wrap.innerHTML = 'Something went wrong. Try again.';
-    showStatus('status2', 'Error: ' + err.message, 'error');
+    console.error('[CheckGen] generation failed:', err.message, err);
+    stopGenAnimation();
     goTo(2);
+    const isVague = /no specific|acceptance criteria|feature description|no requirements|insufficient|generic filler/i.test(err.message);
+    const toastMsg = isVague
+      ? 'Add more detail to your ticket — describe what the feature does, list specific fields, user flows, or acceptance criteria.'
+      : err.message === 'max_tokens' ? 'Response was too long. Try selecting fewer testing areas.'
+      : 'Generation failed — please try again.';
+    showAppToast(toastMsg, 'error');
   } finally {
     btn.disabled = false; btn.textContent = 'Generate Checklist'; updateSummary();
   }
@@ -563,18 +834,133 @@ async function regenSection(section) {
   const groupCard = btn?.closest('.group-card');
   if (btn) { btn.textContent = '↺ regen'; btn.classList.add('loading'); btn.disabled = true; }
   if (groupCard) groupCard.classList.add('regen-loading');
-  const prompt = `Regenerate the "${section}" section for: ${ticket.slice(0, 300)}\n\n3-6 specific items. Return ONLY a JSON array, each: {"section":"${section}","text":"step","priority":"High|Medium|Low","type":"Smoke|Happy Path|Edge|Data|Break","time":"Xm"}`;
+
+  const ac = $('acText')?.value.trim() || '';
+  const dat = $('addonTestData')?.checked;
+  const existingItems = currentChecklist.filter(i => i.section === section).map(i => i.text);
+
+  const regenSystemPrompt = (
+    'You are a senior QA engineer regenerating a specific section of a test checklist. ' +
+    'Generate only what is genuinely needed to cover this section — not as many items as possible. ' +
+    'Every item must test something distinct. No near-duplicates, no filler, no generic steps that could apply to any feature. ' +
+    'QUALITY RULES: be specific to the ticket — reference actual field names, UI elements, and flows. ' +
+    'Write each item so a new team member could execute it without asking questions. ' +
+    'Test exactly one scenario per item. ' +
+    'Avoid vague observations like "Verify the feature works" or "Confirm the page loads" — these are not test cases. ' +
+    'For every test item, write the action AND the expected outcome in the format "Do X → Y should happen". ' +
+    'The text field must always follow this format: "action step → expected result". ' +
+    'Assign priority using exactly these 5 levels — ' +
+    'Highest: blocking functionality, crash, security vulnerability, or data loss — fewer than 10% of items; ' +
+    'High: verifying that core functionality, permissions, or data behaviour works correctly — most functional test cases will be High and that is correct; ' +
+    'Medium: secondary flows, edge case handling, validation messages, notification text, minor UI inconsistencies that have a workaround — expect roughly 25-35% of items; ' +
+    'Low: non-blocking cosmetic issues, low-impact layout quirks — 5-15% of items; ' +
+    'Lowest: trivial cosmetic issues or typos — use sparingly. ' +
+    'Do not force an even distribution. A checklist covering core functionality will naturally be majority High — that is expected and correct. ' +
+    'Assign type using these definitions — ' +
+    'Smoke: proves the feature works at all; ' +
+    'Happy Path: expected normal use with valid inputs; ' +
+    'Edge: boundary conditions or unusual but valid input; ' +
+    'Data: data integrity, format validation, or persistence; ' +
+    'Break: destructive or adversarial input intended to break the feature. ' +
+    (section === 'Break-It' ?
+      'BREAK-IT GUIDANCE — generate adversarial test cases targeting failure modes specific to this ticket: ' +
+      '(1) Injection: SQL injection strings (e.g. \' OR 1=1 --), XSS payloads (<script>alert(1)</script>); ' +
+      '(2) Boundary values: max integer (2147483647), zero, negative numbers, empty string, whitespace-only; ' +
+      '(3) Oversized inputs: strings at and beyond the field max length, files exceeding size limits; ' +
+      '(4) Invalid formats: malformed emails, phone numbers, URLs, dates (e.g. 99/99/9999); ' +
+      '(5) Special characters: emoji, null bytes, RTL characters, newlines in single-line inputs; ' +
+      '(6) Concurrent operations: submitting the same form twice simultaneously, rapid double-click on submit; ' +
+      '(7) Unexpected state: performing actions without required prerequisites, skipping steps in a flow; ' +
+      '(8) Auth boundary: accessing protected resources without authentication, using another user\'s resource IDs. ' +
+      'Only generate items that are plausible attack vectors for this specific feature. ' : '') +
+    (section === 'WCAG' ?
+      'WCAG GUIDANCE — generate specific, actionable test cases across these areas: ' +
+      '(1) Color contrast: body text meets 4.5:1 AA ratio, large text and UI components meet 3:1 — verify with DevTools or axe; ' +
+      '(2) Images and icons: meaningful images have descriptive alt text, decorative images have alt="" and role="presentation", icon-only buttons have aria-label; ' +
+      '(3) Screen reader: use VoiceOver (Mac) or NVDA (Windows) — verify heading hierarchy, landmark regions, reading order, and dynamic content announcements via aria-live; ' +
+      '(4) Keyboard navigation: every interactive element is reachable by Tab, order matches visual flow, no traps, Escape closes modals, Enter/Space activates buttons; ' +
+      '(5) Focus indicators: all focused elements have a clearly visible outline — not removed with outline:none without a replacement; ' +
+      '(6) Forms: every input has a programmatically associated label, required fields are marked, errors are linked via aria-describedby; ' +
+      '(7) ARIA correctness: custom components use correct roles and states (aria-expanded, aria-selected, aria-checked); ' +
+      '(8) Zoom and reflow: content is fully usable at 200% zoom with no horizontal scrolling or overlapping elements; ' +
+      '(9) Motion: animations respect prefers-reduced-motion; ' +
+      '(10) Touch targets: all interactive elements are at least 44×44px on mobile. ' : '') +
+    (section === 'Performance' ?
+      'PERFORMANCE GUIDANCE — generate specific, actionable test cases across these areas: ' +
+      '(1) Core load metrics: LCP under 2.5s, CLS under 0.1, INP under 200ms — measure with Lighthouse or WebPageTest; ' +
+      '(2) API responsiveness: API calls complete within acceptable times under normal load, concurrent requests do not degrade UI; ' +
+      '(3) Large data: feature remains responsive with 100+ and 1000+ records — lists are paginated or virtualised; ' +
+      '(4) Memory and DOM: repeated interactions do not cause memory leaks or DOM bloat — verify with Chrome DevTools Memory tab; ' +
+      '(5) Rendering: animations and scroll are smooth at 60fps — verify with Performance panel; ' +
+      '(6) Assets: images use modern formats (WebP/AVIF), correctly sized, explicit width/height, lazy loading below fold; ' +
+      '(7) Caching: static assets have efficient cache headers, unchanged assets are not re-fetched on navigation; ' +
+      '(8) Fonts: font-display:swap or similar, no invisible text during font load, no layout shift after swap; ' +
+      '(9) Perceived performance: loading states, skeleton screens, and optimistic UI present where expected; ' +
+      '(10) Lighthouse audit: run with 4x CPU throttling — Performance 90+, Best Practices 90+, SEO 90+ if public. ' : '') +
+    (section === 'Error Handling & Feedback' ?
+      'ERROR HANDLING & FEEDBACK GUIDANCE — verify every failure mode and user feedback surface: ' +
+      '(1) Network failure: simulate network loss mid-action — UI shows a recoverable error, not a blank screen or silent failure; ' +
+      '(2) Server errors: trigger 500-level responses — UI surfaces a clear user-facing message, no stack traces exposed; ' +
+      '(3) Timeout: simulate slow API responses — loading states persist, timeout message appears if threshold exceeded; ' +
+      '(4) Recovery: after any error, user can retry without refreshing or losing entered data; ' +
+      '(5) Server-side validation errors: API validation errors are displayed field-specifically, not as a generic toast; ' +
+      '(6) Graceful degradation: if a non-critical feature fails (analytics, widget), core feature continues working; ' +
+      '(7) Success notifications: every successful action surfaces clear confirmation — toast, banner, redirect, or state change as designed; no silent success; ' +
+      '(8) Confirmation dialogs: destructive or irreversible actions require explicit user confirmation — cancel works without side effects; ' +
+      '(9) In-app feedback: notification counts, badges, and status indicators update immediately and accurately after actions; ' +
+      '(10) External notifications: actions that trigger emails or push notifications do so correctly — verify content, recipients, and timing. ' : '') +
+    (dat ?
+      'TEST DATA ENRICHMENT — enrich every item with concrete, copy-pasteable test data inline within the step. ' +
+      'Use specific values: exact character counts, realistic emails, boundary numbers, specific file types, date ranges. ' +
+      'Write "Enter 256 characters in the Title field" not "enter a long string". Every step should be self-contained. ' : '') +
+    'OUTPUT RULES: ' +
+    '1. Output ONLY a raw JSON array, no markdown, no backticks, no explanation. ' +
+    `2. Every item's section field must be exactly "${section}". ` +
+    '3. Generate 4-7 items. ' +
+    '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
+    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
+    'Functional = 2-5m; Validation = 2-4m; Permissions = 4-8m (role switching required); ' +
+    'UI / Layout = 2-4m; Data / Persistence = 4-8m; Integrations = 5-15m; ' +
+    'Error Handling & Feedback = 2-6m (triggering failure states, verifying recovery, checking notifications); Edge Cases = 3-6m; ' +
+    'WCAG = 8-20m (screen reader, axe audit, keyboard nav, contrast checks); ' +
+    'Performance = 10-20m (Lighthouse with throttling, profiling); ' +
+    'Break-It = 3-7m (crafting adversarial inputs, verifying graceful failure). ' +
+    'Never default everything to 2m — vary estimates to reflect actual task complexity.'
+  );
+
+  const regenPromptParts = [
+    `Regenerate the "${section}" testing section for this ticket:`,
+    '',
+    'TICKET / USER STORY:',
+    ticket,
+  ];
+  if (ac) {
+    regenPromptParts.push('', 'ACCEPTANCE CRITERIA (cover each clause where relevant to this section):');
+    regenPromptParts.push(ac);
+  }
+  if (existingItems.length) {
+    regenPromptParts.push('', 'EXISTING ITEMS TO REPLACE (generate fresh alternatives, do not repeat these):');
+    existingItems.forEach(t => regenPromptParts.push('- ' + t));
+  }
+  regenPromptParts.push(
+    '',
+    `Generate 4-7 fresh "${section}" test cases. Each item text must follow: "action step → expected result".`,
+    'Every item must be directly traceable to this specific ticket — no generic filler.',
+  );
+
   try {
-    const newItems = await callClaude(prompt, 1200);
+    const newItems = await callClaude(regenPromptParts.join('\n'), 8000, regenSystemPrompt);
     const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
     const newMapped = newItems.map((item, idx) => ({ ...item, id: maxId + idx + 1, outcome: null, note: '' }));
-    // Preserve original section order rather than appending to end
+    // Preserve manual items and original section order
+    const manualItems = currentChecklist.filter(i => i.section === section && i.custom);
     const sectionOrder = [...new Set(currentChecklist.map(i => i.section))];
     const withoutSection = currentChecklist.filter(i => i.section !== section);
     currentChecklist = sectionOrder.flatMap(s =>
-      s === section ? newMapped : withoutSection.filter(i => i.section === s)
+      s === section ? [...newMapped, ...manualItems] : withoutSection.filter(i => i.section === s)
     );
-    renderChecklist(); updateProgress(); saveSession();
+    renderChecklist(); updateProgress(); updateTimeSummary(); saveSession(); debouncedCloudSave();
     showStatus('status3', `✓ "${section}" regenerated.`, 'success');
   } catch(err) { showStatus('status3', 'Regenerate failed: ' + err.message, 'error'); }
   finally {
@@ -584,12 +970,26 @@ async function regenSection(section) {
 }
 
 /* ── Item actions ───────────────────────────────────────── */
-function addCustomItem(section, inputEl) {
-  const text = inputEl.value.trim(); if (!text) return;
-  const maxId = Math.max(...currentChecklist.map(i => i.id), 0);
-  currentChecklist.push({ id: maxId + 1, section, text, priority: 'Medium', type: 'Happy Path', time: '—', outcome: null, note: '', custom: true });
-  inputEl.value = '';
-  renderChecklist(); updateProgress(); saveSession();
+function toggleAddForm(el) {
+  const row  = el.closest('.add-item-row');
+  const form = row.querySelector('.add-item-form');
+  const open = form.style.display !== 'none';
+  form.style.display = open ? 'none' : '';
+  if (!open) row.querySelector('.add-item-step')?.focus();
+}
+
+function submitAddItem(el, section) {
+  const form     = el.closest('.add-item-form');
+  const stepEl   = form.querySelector('.add-item-step');
+  const step     = stepEl.value.trim();
+  if (!step) { stepEl.focus(); return; }
+  const expected = form.querySelector('.add-item-expected').value.trim();
+  const priority = form.querySelector('.add-item-select').value;
+  const time     = form.querySelector('.add-item-time').value;
+  const text     = expected ? `${step} → ${expected}` : step;
+  const maxId    = Math.max(...currentChecklist.map(i => i.id), 0);
+  currentChecklist.push({ id: maxId + 1, section, text, priority, type: 'Happy Path', time, outcome: null, note: '', custom: true });
+  renderChecklist(); updateProgress(); updateTimeSummary(); saveSession(); debouncedCloudSave();
 }
 
 function deleteItem(id) {
@@ -615,6 +1015,252 @@ function setOutcome(id, outcome) {
   }
   updateProgress(); saveSession();
   debouncedCloudSave(); // debounced cloud save
+  refreshGroupStates();
+  checkAllComplete();
+}
+
+/* ── App toast ── */
+function showAppToast(msg, type = 'error', duration = 5500) {
+  const el = $('appToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'app-toast app-toast--' + type + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+/* ── Generating animation ── */
+let _genTypingTimer = null;
+let _genStatusTimer = null;
+let _genTestsTimer  = null;
+
+function startGenAnimation() {
+  const body = $('genChecklistBody');
+  if (!body) return;
+  body.innerHTML = '';
+
+  // Reset progress bar
+  const fill = $('genProgressFill');
+  if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
+
+  // Populate stats panel
+  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive' };
+  const formatMap   = { expanded: 'detailed', concise: 'quick' };
+  const stratEl  = $('genStatStrategy');
+  const formatEl = $('genStatFormat');
+  if (stratEl)  stratEl.textContent  = strategyMap[$('focusStyle')?.value]   || '—';
+  if (formatEl) formatEl.textContent = formatMap[$('detailLevel')?.value]     || '—';
+
+  const areaCount = document.querySelectorAll('.areaCheck:checked').length;
+  const areasFill = $('genAreasFill');
+  const areasNum  = $('genAreasNum');
+  if (areasFill) areasFill.style.width = ((areaCount / 10) * 100) + '%';
+  if (areasNum)  areasNum.textContent  = areaCount;
+
+  const testsFill = $('genTestsFill');
+  const testsNum  = $('genTestsNum');
+  if (testsFill) testsFill.style.width = '0%';
+  if (testsNum)  testsNum.textContent  = '--';
+
+  // Est. tests counter — ticks up toward a plausible estimate over ~10s
+  const testTarget = Math.max(4, areaCount * 2);
+  const testInterval = Math.round(20000 / testTarget);
+  let testCount = 0;
+  _genTestsTimer = setInterval(() => {
+    if (testCount >= testTarget) { clearInterval(_genTestsTimer); _genTestsTimer = null; return; }
+    testCount++;
+    if (testsNum)  testsNum.textContent  = '~' + testCount;
+    if (testsFill) testsFill.style.width = Math.min(94, Math.round((testCount / testTarget) * 94)) + '%';
+  }, testInterval);
+
+  // Observation line — rotates with AI commentary distinct from step list
+  const observations = [
+    'cross-referencing acceptance criteria',
+    'auth boundary detected',
+    'flagging validation paths',
+    'mapping user flow edges',
+    'checking error state coverage',
+    'scanning integration touchpoints',
+    'identifying edge case surfaces',
+    'reviewing permission models',
+  ];
+  let obsIdx = 0;
+  const obsEl  = $('genObsText');
+  const obsWrap = $('genObservation');
+  if (obsEl) obsEl.textContent = observations[0];
+  if (obsWrap) obsWrap.style.opacity = '1';
+  _genStatusTimer = setInterval(() => {
+    if (!obsWrap) return;
+    obsWrap.style.opacity = '0';
+    setTimeout(() => {
+      obsIdx = (obsIdx + 1) % observations.length;
+      if (obsEl) obsEl.textContent = observations[obsIdx];
+      if (obsWrap) obsWrap.style.opacity = '1';
+    }, 300);
+  }, 2800);
+
+  const phases = [
+    {
+      label: 'analyzing',
+      steps: ['Reading your ticket', 'Identifying test surfaces', 'Mapping acceptance criteria'],
+    },
+    {
+      label: 'building',
+      steps: ['Writing happy path cases', 'Hunting for edge cases', 'Checking permissions flows', 'Validating error states', 'Assigning priorities', 'Estimating test effort'],
+    },
+    {
+      label: 'reviewing',
+      steps: ['Adding expected results', 'Reviewing for coverage gaps', 'Grouping into sections', 'Almost there'],
+    },
+  ];
+  const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
+  let globalIdx = 0;
+
+  // Status line cycles independently
+  const statusMessages = [
+    'scanning your ticket…',
+    'mapping test surfaces…',
+    'writing test cases…',
+    'checking edge cases…',
+    'reviewing coverage…',
+    'almost ready…',
+  ];
+  let statusMsgIdx = 0;
+  _genStatusTimer = setInterval(() => {
+    if (!statusEl) return;
+    statusEl.style.opacity = '0';
+    setTimeout(() => {
+      statusMsgIdx = (statusMsgIdx + 1) % statusMessages.length;
+      statusEl.textContent = statusMessages[statusMsgIdx];
+      statusEl.style.opacity = '1';
+    }, 300);
+  }, 2800);
+
+  function updateProgress(done) {
+    if (!fill) return;
+    const pct = Math.min(88, Math.round((done / totalSteps) * 88));
+    fill.style.width = pct + '%';
+    if (done >= totalSteps) fill.classList.add('gen-progress-fill--shimmer');
+  }
+
+  function typePhase(phaseIdx, stepIdx) {
+    if (phaseIdx >= phases.length) return;
+    const phase = phases[phaseIdx];
+
+    // Phase header at the start of each group
+    if (stepIdx === 0) {
+      const phaseRow = document.createElement('div');
+      phaseRow.className = 'gen-phase-row';
+      phaseRow.textContent = '· ' + phase.label;
+      body.appendChild(phaseRow);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    if (stepIdx >= phase.steps.length) {
+      _genTypingTimer = setTimeout(() => typePhase(phaseIdx + 1, 0), 200);
+      return;
+    }
+
+    const label = phase.steps[stepIdx];
+    const item = document.createElement('div');
+    item.className = 'gen-item gen-item--active';
+    item.innerHTML = '<span class="gen-item-box"></span><span class="gen-item-text"><span class="gen-cursor"></span></span>';
+    body.appendChild(item);
+    body.scrollTop = body.scrollHeight;
+
+    const textEl   = item.querySelector('.gen-item-text');
+    const cursorEl = item.querySelector('.gen-cursor');
+    const textNode = document.createTextNode('');
+    textEl.insertBefore(textNode, cursorEl);
+    let charIdx = 0;
+
+    function typeChar() {
+      if (charIdx < label.length) {
+        textNode.nodeValue += label[charIdx];
+        charIdx++;
+        _genTypingTimer = setTimeout(typeChar, 38);
+      } else {
+        const isLastStep = phaseIdx === phases.length - 1 && stepIdx === phase.steps.length - 1;
+        _genTypingTimer = setTimeout(() => {
+          const box = item.querySelector('.gen-item-box');
+          box.textContent = '✓';
+          box.classList.add('gen-item-box--done');
+          item.classList.remove('gen-item--active');
+          item.classList.add('gen-item--done');
+          cursorEl.remove();
+          globalIdx++;
+          updateProgress(globalIdx);
+          if (isLastStep) {
+            const waitRow = document.createElement('div');
+            waitRow.className = 'gen-wait-row';
+            waitRow.innerHTML = '<span></span><span></span><span></span>';
+            body.appendChild(waitRow);
+            body.scrollTop = body.scrollHeight;
+          } else {
+            _genTypingTimer = setTimeout(() => typePhase(phaseIdx, stepIdx + 1), 260);
+          }
+        }, 500);
+      }
+    }
+    typeChar();
+  }
+
+  typePhase(0, 0);
+}
+
+function stopGenAnimation() {
+  if (_genTypingTimer) { clearTimeout(_genTypingTimer); _genTypingTimer = null; }
+  if (_genStatusTimer) { clearInterval(_genStatusTimer); _genStatusTimer = null; }
+  if (_genTestsTimer)  { clearInterval(_genTestsTimer);  _genTestsTimer  = null; }
+  const body = $('genChecklistBody');
+  if (body) body.innerHTML = '';
+  const fill = $('genProgressFill');
+  if (fill) { fill.style.width = '100%'; fill.classList.remove('gen-progress-fill--shimmer'); }
+}
+
+/* ── Completion modal ── */
+let _completionModalShown = false;
+function checkAllComplete() {
+  if (_completionModalShown) return;
+  if (!currentChecklist.length) return;
+  const allDone = currentChecklist.every(i => i.outcome);
+  if (!allDone) return;
+  _completionModalShown = true;
+  showCompleteModal();
+}
+
+function showCompleteModal() {
+  const p = currentChecklist.filter(i => i.outcome === 'pass').length;
+  const f = currentChecklist.filter(i => i.outcome === 'fail').length;
+  const b = currentChecklist.filter(i => i.outcome === 'blocked').length;
+  const name = $('checklistName')?.value.trim() || $('ticketId')?.value.trim() || '';
+  const nameEl = $('completeModalName');
+  if (nameEl) nameEl.textContent = name || '';
+  const sp = $('completeStatPass');    if (sp) sp.textContent = p;
+  const sf = $('completeStatFail');    if (sf) sf.textContent = f;
+  const sb = $('completeStatBlocked'); if (sb) sb.textContent = b;
+  const modal = $('checklistCompleteModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCompleteModal() {
+  const modal = $('checklistCompleteModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function completeAndEndSession() {
+  await cloudMarkSession(_cloudSaveId, 'complete');
+  closeCompleteModal();
+  endSession();
+}
+
+async function cloudMarkSession(sessionId, status) {
+  if (!sessionId) return;
+  if (typeof getSB !== 'function') return;
+  const sb = getSB(); if (!sb) return;
+  try {
+    await sb.from('checklist_sessions').update({ status, updated_at: new Date().toISOString() }).eq('id', sessionId);
+  } catch(e) { console.warn('[CheckGen] cloudMarkSession failed:', e.message); }
 }
 
 function toggleNote(id) {
@@ -641,6 +1287,50 @@ function groupChecklist(items) {
   return Object.entries(g);
 }
 
+function renderItemText(text) {
+  const idx = text.indexOf(' → ');
+  if (idx !== -1) {
+    const step = text.slice(0, idx);
+    const exp  = text.slice(idx + 3);
+    const expCap = exp.charAt(0).toUpperCase() + exp.slice(1);
+    return `<div class="item-step">${esc2(step)}</div><div class="item-expected"><span class="item-expected-arrow">↳</span>${esc2(expCap)}</div>`;
+  }
+  return `<div class="item-step">${esc2(text)}</div>`;
+}
+function toggleSection(card) {
+  card.dataset.open = card.dataset.open === 'true' ? 'false' : 'true';
+}
+function refreshGroupStates() {
+  document.querySelectorAll('.group-card').forEach(card => {
+    const itemEls = card.querySelectorAll('.item');
+    if (!itemEls.length) return;
+    const total    = itemEls.length;
+    const fails    = [...itemEls].filter(el => el.classList.contains('fail')).length;
+    const blocked  = [...itemEls].filter(el => el.classList.contains('blocked')).length;
+    const done     = [...itemEls].filter(el =>
+      el.classList.contains('pass') || el.classList.contains('fail') || el.classList.contains('blocked')
+    ).length;
+    const allDone  = done === total;
+
+    const countEl = card.querySelector('.group-count');
+    if (countEl) countEl.style.display = allDone ? 'none' : '';
+
+    const doneEl = card.querySelector('.group-done-count');
+    if (doneEl) { doneEl.textContent = (!allDone && done > 0) ? `${done}/${total} done` : ''; doneEl.style.display = (!allDone && done > 0) ? '' : 'none'; }
+
+    const badge = card.querySelector('.group-complete-badge');
+    if (badge) badge.style.display = allDone ? '' : 'none';
+
+    const failEl = card.querySelector('.group-fail-count');
+    if (failEl) { failEl.textContent = fails === 1 ? '1 Fail' : `${fails} Fails`; failEl.style.display = fails > 0 ? '' : 'none'; }
+
+    const blockedEl = card.querySelector('.group-blocked-count');
+    if (blockedEl) { blockedEl.textContent = blocked === 1 ? '1 Blocked' : `${blocked} Blocked`; blockedEl.style.display = blocked > 0 ? '' : 'none'; }
+
+    if (allDone) card.dataset.open = 'false';
+  });
+}
+
 function renderChecklist() {
   const wrap = $('checklistWrap');
   if (!currentChecklist.length) {
@@ -661,55 +1351,89 @@ function renderChecklist() {
     </div>` : '';
 
   wrap.innerHTML = headerHtml + groupChecklist(currentChecklist).map(([section, items]) => `
-    <div class="group-card">
-      <div class="group-head">
+    <div class="group-card" data-open="true">
+      <div class="group-head" onclick="toggleSection(this.closest('.group-card'))">
         <div class="group-head-left">
+          <span class="group-toggle">▾</span>
           <div class="group-name">${esc2(section)}</div>
           <div class="group-count">${items.length} item${items.length === 1 ? '' : 's'}</div>
+          <span class="group-done-count" style="display:none"></span>
+          <span class="group-complete-badge" style="display:none">✓ Complete</span>
+          <span class="group-fail-count" style="display:none"></span>
+          <span class="group-blocked-count" style="display:none"></span>
         </div>
-        <button class="regen-btn" data-section="${esc2(section)}" onclick="regenSection('${esc(section)}')">↺ regen</button>
+        <button class="regen-btn" data-section="${esc2(section)}" onclick="event.stopPropagation();regenSection('${esc(section)}')">↺ regen</button>
       </div>
-      <div class="items">
-        ${items.map(item => `
-          <div class="item ${item.outcome || ''}" data-id="${item.id}">
-            <div class="item-main">
-              <div class="item-row">
-                <div style="flex:1;min-width:0">
-                  <div class="item-text">${esc2(item.text)}</div>
-                  <div class="meta-row">
-                    <span class="tag ${item.priority.toLowerCase()}">${item.priority}</span>
-                    <span class="tag ${typeClass(item.type)}">${item.type}</span>
-                    <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})">✎ note</button>
-                    <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})">✕ remove</button>
+      <div class="group-body">
+        <div class="items">
+          ${items.map(item => `
+            <div class="item ${item.outcome || ''}" data-id="${item.id}">
+              <div class="item-main">
+                <div class="item-row">
+                  <div style="flex:1;min-width:0">
+                    ${renderItemText(item.text)}
+                    <div class="meta-row">
+                      <span class="tag ${item.priority.toLowerCase()}">${item.priority}</span>
+                      <span class="item-time">${item.time}</span>
+                      <div class="item-actions">
+                        <button class="note-btn${item.note ? ' has-note' : ''}" onclick="toggleNote(${item.id})" title="Add note">✎</button>
+                        <button class="btn-danger btn-xs" onclick="deleteItem(${item.id})" title="Remove">✕</button>
+                      </div>
+                    </div>
+                    <div class="note-wrap${item.note ? ' open' : ''}" id="note-wrap-${item.id}">
+                      <textarea class="note-input" rows="2" placeholder="Add a note — e.g. fails on Safari, linked to PROJ-456…" onblur="saveNote(${item.id},this.value)">${esc2(item.note || '')}</textarea>
+                    </div>
                   </div>
-                  <div class="note-wrap${item.note ? ' open' : ''}" id="note-wrap-${item.id}">
-                    <textarea class="note-input" rows="2" placeholder="Add a note — e.g. fails on Safari, linked to PROJ-456…" onblur="saveNote(${item.id},this.value)">${esc2(item.note || '')}</textarea>
+                  <div class="outcome-btns">
+                    <div class="ob-row">
+                      <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
+                      <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
+                      <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
+                    </div>
+                    <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                   </div>
-                </div>
-                <div class="outcome-btns">
-                  <div class="ob-row">
-                    <button class="ob${item.outcome === 'pass'    ? ' ap' : ''}" data-o="pass"    onclick="setOutcome(${item.id},'pass')">Pass</button>
-                    <button class="ob${item.outcome === 'fail'    ? ' af' : ''}" data-o="fail"    onclick="setOutcome(${item.id},'fail')">Fail</button>
-                    <button class="ob${item.outcome === 'blocked' ? ' ab' : ''}" data-o="blocked" onclick="setOutcome(${item.id},'blocked')">Blocked</button>
-                  </div>
-                  <span class="marked-by">${sessionMode === 'shared' && item.markedBy ? item.markedBy : ''}</span>
                 </div>
               </div>
+            </div>`).join('')}
+        </div>
+        <div class="add-item-row">
+          <button class="add-item-trigger" onclick="toggleAddForm(this)">+ Add item</button>
+          <div class="add-item-form" style="display:none">
+            <input class="add-item-field add-item-step" placeholder="${$('detailLevel')?.value === 'concise' ? 'Test action — short and direct…' : 'Test step — describe what the tester does…'}" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
+            ${$('detailLevel')?.value !== 'concise' ? '<input class="add-item-field add-item-expected" placeholder="Expected result — what should happen (optional)" onkeydown="if(event.key===\'Escape\')toggleAddForm(this)">' : '<input class="add-item-field add-item-expected" type="hidden" value="">'}
+            <div class="add-item-controls">
+              <select class="add-item-select">
+                <option value="Highest">Highest</option>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+                <option value="Lowest">Lowest</option>
+              </select>
+              <select class="add-item-select add-item-time">
+                <option value="2m">2m</option>
+                <option value="3m" selected>3m</option>
+                <option value="4m">4m</option>
+                <option value="5m">5m</option>
+                <option value="8m">8m</option>
+                <option value="10m">10m</option>
+                <option value="15m">15m</option>
+                <option value="20m">20m</option>
+                <option value="30m">30m</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="submitAddItem(this,'${esc(section)}')">Add</button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleAddForm(this)">Cancel</button>
             </div>
-            <div class="item-time">${item.time}</div>
-          </div>`).join('')}
-      </div>
-      <div class="add-item-row">
-        <input class="add-item-input" placeholder="+ Add a step to ${esc2(section)}…" onkeydown="if(event.key==='Enter')addCustomItem('${esc(section)}',this)">
-        <button class="btn btn-ghost btn-sm" onclick="addCustomItem('${esc(section)}',this.previousElementSibling)">Add</button>
+          </div>
+        </div>
       </div>
     </div>`).join('');
+  refreshGroupStates();
 }
 
 /* ── Export CSV ─────────────────────────────────────────── */
 function downloadCsv() {
   if (!currentChecklist.length) { showStatus('status3', 'Generate a checklist first.', 'error'); return; }
-  const mode    = $('exportCsvMode').value;
+  const mode    = $('exportCsvMode2').value;
   const tid     = $('ticketId').value.trim();
   const env     = $('envBranch').value.trim();
   const name    = $('checklistName').value.trim();
@@ -763,7 +1487,7 @@ async function createSharedSession() {
     environment: $('envBranch').value.trim()     || null,
     ticket_ac:   $('ticketText').value.trim()    || null,
     items:       currentChecklist,
-    created_by:  $('userName').value.trim()       || 'anonymous',
+    created_by:  _currentUserName || 'anonymous',
   });
   sharedSessionId = data.id; sharedCode = code;
   showShareBadge();
@@ -824,14 +1548,7 @@ async function joinSharedSession() {
   }
   const code = $('joinCode').value.trim().toUpperCase();
   if (code.length !== 6) { alert('Enter a valid 6-character code.'); return; }
-  const name = $('userName').value.trim();
-  if (!name) {
-    $('userName').focus();
-    $('userName').style.borderColor = 'rgba(248,113,113,.6)';
-    setTimeout(() => $('userName').style.borderColor = '', 3000);
-    return;
-  }
-  localStorage.setItem('cg_user_name', name);
+  const name = _currentUserName || 'anonymous';
   _currentUserName = name;
   try {
     const rows = await sbGet('checklist_sessions', 'code', code);
@@ -964,6 +1681,7 @@ async function cloudSaveSession() {
       const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', s.user.id).single();
       workspaceId = prof?.workspace_id || null;
     }
+    const allMarked = currentChecklist.length > 0 && currentChecklist.every(i => i.outcome);
     const payload = {
       user_id:      s.user.id,
       session_type: isShared ? 'team' : 'personal',
@@ -972,6 +1690,7 @@ async function cloudSaveSession() {
       ticket_id:    $('ticketId')?.value || null,
       environment:  $('envBranch')?.value || null,
       items:        currentChecklist,
+      status:       allMarked ? 'complete' : 'in_progress',
       updated_at:   new Date().toISOString(),
     };
     if (_cloudSaveId) {
@@ -1072,12 +1791,6 @@ function initLeaveGuard() {
     showLeaveModal(href);
   });
 
-  // Intercept browser back/forward
-  window.addEventListener('beforeunload', function(e) {
-    if (!hasActiveSession()) return;
-    e.preventDefault();
-    e.returnValue = 'You have an active checklist session. Are you sure you want to leave?';
-  });
 }
 
 
@@ -1092,43 +1805,104 @@ async function initResumePanel() {
     if (!s?.user) return;
     const sb = getSB(); if (!sb) return;
 
-    // Get the most recent personal session that has incomplete items
     const { data } = await sb
       .from('checklist_sessions')
-      .select('id, name, ticket_id, environment, items, updated_at, session_type')
+      .select('id, name, ticket_id, environment, items, updated_at, session_type, status')
       .eq('user_id', s.user.id)
       .eq('session_type', 'personal')
       .order('updated_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (!data?.length) return;
 
-    // Find first session with at least one unactioned item
-    const incomplete = data.find(sess => {
+    // Prefer in_progress sessions first; fall back to most recent complete
+    let session = data.find(sess => {
       const items = Array.isArray(sess.items) ? sess.items : [];
-      return items.length > 0 && items.some(i => !i.outcome);
+      const isInProgress = sess.status === 'in_progress' || !sess.status; // graceful fallback for old rows
+      return isInProgress && items.length > 0 && items.some(i => !i.outcome);
     });
-    if (!incomplete) return;
 
-    _resumeSession = incomplete;
-    const items = Array.isArray(incomplete.items) ? incomplete.items : [];
-    const remaining = items.filter(i => !i.outcome).length;
-    const label = incomplete.name || incomplete.ticket_id || 'Last session';
-    const ago = incomplete.updated_at
+    let isComplete = false;
+    if (!session) {
+      session = data.find(sess => sess.status === 'complete');
+      if (session) isComplete = true;
+    }
+    if (!session) return;
+
+    _resumeSession = session;
+    const items = Array.isArray(session.items) ? session.items : [];
+    const label  = session.name || session.ticket_id || 'Last session';
+    const ago    = session.updated_at
       ? (() => {
-          const mins = Math.round((Date.now() - new Date(incomplete.updated_at)) / 60000);
-          return mins < 60 ? mins + 'm ago' : Math.round(mins/60) + 'h ago';
+          const mins = Math.round((Date.now() - new Date(session.updated_at)) / 60000);
+          if (mins < 60)   return mins + 'm ago';
+          if (mins < 1440) return Math.round(mins / 60) + 'h ago';
+          const days = Math.round(mins / 1440);
+          return days + ' day' + (days !== 1 ? 's' : '') + ' ago';
         })()
       : '';
 
+    const labelEl = panel.querySelector('.s1-resume-label');
+    if (labelEl) labelEl.textContent = isComplete ? 'Completed checklist' : 'Unfinished checklist';
+    if (isComplete && labelEl) labelEl.style.color = 'var(--pass)';
+
     const metaEl = $('resumeMeta');
-    if (metaEl) metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+    if (metaEl) {
+      if (isComplete) {
+        const p = items.filter(i => i.outcome === 'pass').length;
+        const f = items.filter(i => i.outcome === 'fail').length;
+        const b = items.filter(i => i.outcome === 'blocked').length;
+        const parts = [p ? `${p} passed` : '', f ? `${f} failed` : '', b ? `${b} blocked` : ''].filter(Boolean);
+        metaEl.textContent = parts.join(' · ') + (ago ? ' · ' + ago : '');
+      } else {
+        const remaining = items.filter(i => !i.outcome).length;
+        metaEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' remaining' + (ago ? ' · ' + ago : '');
+      }
+    }
+
     const nameEl = $('resumeTitle');
     if (nameEl) nameEl.textContent = label;
 
-    panel.style.display = 'block';
+    // Update resume button label for complete sessions
+    const resumeBtn = panel.querySelector('.s1-resume-actions .btn-primary');
+    if (resumeBtn) resumeBtn.textContent = isComplete ? 'Review / Export →' : 'Resume →';
+
+    panel.style.display = 'flex';
   } catch(e) { console.warn('[CheckGen] initResumePanel:', e.message); }
 }
+
+
+/* ── Screen 2 helpers ───────────────────────────────────── */
+function toggleAccordion(id) {
+  const body    = document.getElementById(id + 'Body');
+  const chevron = document.getElementById(id + 'Chevron');
+  if (!body) return;
+  const opening = body.style.display === 'none' || body.style.display === '';
+  body.style.display = opening ? 'block' : 'none';
+  if (chevron) chevron.classList.toggle('open', opening);
+}
+
+function applyStrategyPreset() {
+  const strategy = $('focusStyle')?.value;
+  const presets = {
+    balanced: ['Functional','Validation','Permissions','UI / Layout','Data / Persistence','Integrations','Error Handling & Feedback','Edge Cases','WCAG','Performance'],
+    smoke:    ['Functional','UI / Layout','Error Handling & Feedback'],
+    edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling & Feedback','Edge Cases','Integrations']
+  };
+  const selected = presets[strategy] || presets.balanced;
+  document.querySelectorAll('.areaCheck').forEach(cb => {
+    cb.checked = selected.includes(cb.value);
+  });
+  updateSummary();
+  // Show soft toast so user knows areas changed
+  const toast = $('presetToast');
+  if (toast) {
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+}
+
 
 
 function dismissResume() {
@@ -1153,13 +1927,13 @@ function resumeLastSession() {
 
 /* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore saved name
-  const savedName = localStorage.getItem('cg_user_name');
-  if (savedName) $('userName').value = savedName;
-
   // Wire up summary updates
   $('ticketText').addEventListener('input', updateSummary);
+  $('acText')?.addEventListener('input', updateSummary);
   document.querySelectorAll('.areaCheck').forEach(el => el.addEventListener('change', updateSummary));
+  ['addonBreak','addonTestData'].forEach(id => {
+    $(id)?.addEventListener('change', updateSummary);
+  });
   ['ticketId','envBranch','checklistName'].forEach(id => {
     $(id)?.addEventListener('input', () => { if (currentChecklist.length) renderChecklist(); });
   });
@@ -1238,6 +2012,7 @@ document.addEventListener('DOMContentLoaded', () => {
         goTo(3);
         renderChecklist(); updateProgress(); updateTimeSummary();
         $('exportBar').style.display = '';
+        saveSession();
       }
     } catch(e) {}
   }

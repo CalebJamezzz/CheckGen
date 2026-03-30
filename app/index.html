@@ -32,85 +32,52 @@
 
       <div style="margin-bottom:var(--sp-6)">
         <p class="eyebrow" style="margin-bottom:var(--sp-3)">✦ Test Planning</p>
-        <h1 style="margin-bottom:var(--sp-3)">Generate your<br>checklist.</h1>
-        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);max-width:560px;line-height:1.7">
+        <h1 style="margin-bottom:var(--sp-3)">Turn tickets into test cases.</h1>
+        <p style="font-size:clamp(15px,1.1vw,17px);color:var(--dim);line-height:1.7">
           Paste your ticket or AC, select testing areas, and get a grouped QA checklist in seconds.
         </p>
       </div>
 
-      <!-- Resume last session — signed-in users with incomplete session only -->
-      <div id="resumePanel" style="display:none;margin-bottom:var(--sp-5)">
-        <div class="panel" style="border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3)">
-            <div>
-              <div style="font-family:var(--font-mono);font-size:clamp(10px,.7vw,12px);letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:4px">Continue where you left off</div>
-              <div id="resumeTitle" style="font-size:clamp(14px,.95vw,16px);color:var(--text);font-weight:500"></div>
-              <div id="resumeMeta" style="font-size:clamp(11px,.75vw,13px);color:var(--muted);margin-top:2px"></div>
-            </div>
-            <div style="display:flex;gap:8px;flex-shrink:0">
-              <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
-              <button class="btn btn-ghost btn-sm" onclick="dismissResume()">New instead</button>
-            </div>
-          </div>
+      <!-- Resume strip — shown only when there's an unfinished session -->
+      <div id="resumePanel" class="s1-resume-strip" style="display:none">
+        <div class="s1-resume-left">
+          <span class="s1-resume-label">Continue</span>
+          <span class="s1-resume-name" id="resumeTitle"></span>
+          <span class="s1-resume-meta" id="resumeMeta"></span>
+        </div>
+        <div class="s1-resume-actions">
+          <button class="btn btn-primary btn-sm" onclick="resumeLastSession()">Resume →</button>
+          <button class="btn btn-ghost btn-sm" onclick="dismissResume()">Dismiss</button>
         </div>
       </div>
 
-      <div class="label mb-3">How would you like to work?</div>
-      <div class="session-cards">
-        <button class="session-card active" id="cardPersonal" onclick="setMode('personal')" type="button">
-          <div class="card-icon">🔒</div>
-          <div class="card-label">Personal</div>
-          <div class="card-desc" id="personalDesc" style="color:var(--text);opacity:.72">Just you. Saved to your cloud history.</div>
-        </button>
-        <button class="session-card" id="cardShared" onclick="setMode('shared')" type="button">
-          <div class="card-icon">👥</div>
-          <div class="card-label">Shared</div>
-          <div class="card-desc" id="sharedDesc" style="color:var(--text);opacity:.72">Create a live session with your team.</div>
-        </button>
-        <button class="session-card" id="cardJoin" onclick="setMode('join')" type="button">
-          <div class="card-icon" style="color:var(--green);font-size:22px;font-weight:700">↗</div>
-          <div class="card-label">Join</div>
-          <div class="card-desc" style="color:var(--text);opacity:.72">Enter a code to join an active session.</div>
-        </button>
-      </div>
+      <div class="label" style="margin-bottom:var(--sp-3)">How would you like to work?</div>
 
-      <!-- Join panel — always visible for all users -->
-      <div class="shared-panel" id="joinPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Join Session</div>
+      <!-- Session mode toggle -->
+      <div class="s1-mode-toggle">
+        <button class="s1-mode-btn active" id="cardPersonal" onclick="setMode('personal')" type="button">Personal</button>
+        <button class="s1-mode-btn" id="cardShared" onclick="setMode('shared')" type="button">Team Session</button>
+      </div>
+      <div class="s1-mode-desc" id="modeDesc">Generate and track test cases saved to your cloud history.</div>
+
+      <!-- Session metadata — optional fields, always visible -->
+      <div class="s1-meta-grid" id="sessionMeta">
         <div class="field">
-          <label class="field-label">Your Name</label>
-          <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-          <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
+          <label class="field-label">Checklist Name</label>
+          <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
         </div>
         <div class="field">
-          <label class="field-label">Session Code</label>
-          <div class="join-row">
-            <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em;font-family:var(--font-mono)" maxlength="6">
-            <button class="btn btn-primary" onclick="joinSharedSession()" type="button">Join →</button>
-          </div>
+          <label class="field-label">Ticket ID</label>
+          <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
+        </div>
+        <div class="field">
+          <label class="field-label">Environment / Branch</label>
+          <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
         </div>
       </div>
 
-      <!-- Shared panel — signed-in users only -->
+      <!-- Shared panel (signed-in: email invite · anon: signup prompt) -->
       <div class="shared-panel" id="sharedPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-        <!-- Email invite for signed-in users -->
-        <div id="sharedAuthView" style="display:none">
-          <div class="field" style="margin-bottom:var(--sp-3)">
-            <label class="field-label">Invite teammates by email</label>
-            <div id="shareEmailTags" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;min-height:48px;cursor:text" onclick="document.getElementById('shareEmailInput').focus()">
-              <input type="email" id="shareEmailInput" placeholder="teammate@company.com" autocomplete="off"
-                style="flex:1;min-width:160px;background:none;border:none;outline:none;font-size:clamp(13px,.88vw,15px);color:var(--text);font-family:var(--font-body);padding:2px 0"
-                onkeydown="handleShareEmailKey(event)" onblur="addShareEmail()">
-            </div>
-            <div class="field-hint" style="margin-top:6px">Press Enter after each email. They'll get an invite link.</div>
-          </div>
-          <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
-            <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
-            <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-          </div>
-        </div>
-        <!-- Guest: prompt to sign up -->
         <div id="sharedAnonView" style="display:none">
           <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);margin-bottom:var(--sp-3);line-height:1.6">
             Shared sessions require a free account to invite teammates.
@@ -120,34 +87,6 @@
             <a href="/login.html" class="btn btn-ghost btn-sm">Sign in</a>
           </div>
         </div>
-      </div>
-
-
-
-      <div class="shared-panel" id="sharedPanel">
-        <div class="section-title" style="margin-bottom:var(--sp-3)">Shared Session</div>
-
-        <!-- Anonymous: show code-based join (no account needed) -->
-        <div id="sharedAnonView">
-          <div class="shared-sub-opts">
-            <button class="sub-btn active" id="subStart" onclick="setSharedSub('start')" type="button">✦ Start New</button>
-            <button class="sub-btn"        id="subJoin"  onclick="setSharedSub('join')"  type="button">↗ Join by Code</button>
-          </div>
-          <div class="field">
-            <label class="field-label">Your Name</label>
-            <input type="text" id="userName" placeholder="e.g. Caleb" autocomplete="off">
-            <div class="field-hint" style="color:var(--soft)">Shown next to your outcomes.</div>
-          </div>
-          <div class="join-section" id="joinSection">
-            <label class="field-label" style="margin-bottom:7px">Session Code</label>
-            <div class="join-row">
-              <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em" maxlength="6">
-              <button class="btn btn-outline" onclick="joinSharedSession()" type="button">Join →</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Signed-in: email invite flow -->
         <div id="sharedAuthView" style="display:none">
           <div class="field" style="margin-bottom:var(--sp-3)">
             <label class="field-label">Invite teammates by email</label>
@@ -158,10 +97,22 @@
             </div>
             <div class="field-hint" style="margin-top:6px">Press Enter or comma after each email. Teammates will get an invite link.</div>
           </div>
-          <!-- Also show team members as quick-add chips -->
           <div id="teamMemberChips" style="display:none;margin-bottom:var(--sp-3)">
             <div class="field-label" style="margin-bottom:var(--sp-2)">Quick add from your team</div>
             <div id="teamChipList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+          <!-- Temporary join-by-code fallback until 2.3 active sessions list ships -->
+          <button class="s1-join-instead-btn" onclick="setMode('join')" type="button">Have a code? Join an existing session instead →</button>
+        </div>
+      </div>
+
+      <!-- Join panel: code (signed-in only) — name comes from account -->
+      <div class="shared-panel" id="joinPanel">
+        <div class="field">
+          <label class="field-label">Session Code</label>
+          <div class="join-row">
+            <input type="text" id="joinCode" placeholder="6-CHAR CODE" style="text-transform:uppercase;letter-spacing:.15em;font-family:var(--font-mono)" maxlength="6">
+            <button class="btn btn-primary" onclick="joinSharedSession()" type="button">Join →</button>
           </div>
         </div>
       </div>
@@ -178,124 +129,150 @@
         <div class="history-list" id="historyList"></div>
       </div>
 
-      <div class="flex justify-end mt-4">
+      <div class="s1-cta-row">
         <button class="btn btn-primary" id="startBtn" onclick="startSession()" type="button">Start Session →</button>
       </div>
 
-    <div class="status" id="status1" style="margin-top:var(--sp-3)"></div>
+      <div class="status" id="status1" style="margin-top:var(--sp-3)"></div>
     </div><!-- end screen1 -->
 
 
     <!-- ═══════════ SCREEN 2 — Setup ═══════════ -->
     <div class="screen" id="screen2">
-      <div class="flex items-center justify-between mb-5">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5)">
         <button class="back-link" onclick="goTo(1)" type="button">← Back</button>
-        <span class="eyebrow" style="margin-bottom:0">✦ Ticket / AC &amp; Options</span>
+        <span class="eyebrow" style="margin-bottom:0">✦ Checklist Setup</span>
       </div>
 
-      <div class="setup-grid" style="display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-4);margin-bottom:var(--sp-4);align-items:stretch">
-        <div class="panel" style="display:flex;flex-direction:column">
-          <div class="section-title">Ticket / AC</div>
-          <div class="field" style="flex:1;display:flex;flex-direction:column">
-            <textarea id="ticketText" style="flex:1;min-height:220px" placeholder="Paste your ticket, acceptance criteria, or user story here…
+      <!-- Ticket / User Story -->
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="s2-field-label" style="margin-bottom:var(--sp-2)"><span>Ticket / User Story</span><span class="s2-badge s2-badge-required">Required</span></div>
+        <textarea id="ticketText" class="s2-ticket-area" placeholder="Paste your ticket, user story, or feature description here…
 
 Example:
-As a manager, I can approve or reject expense reports submitted by my team.
-AC: Only managers see approve/reject buttons. Approved reports trigger a notification. Rejected reports require a reason."></textarea>
-            <div class="field-hint" style="color:var(--soft)">Full AC works best. Short feature notes work too.</div>
+As a manager, I can approve or reject expense reports submitted by my team."></textarea>
+        <div class="field-hint" style="margin-top:4px">The AI builds your test cases from this — required to generate anything.</div>
+      </div>
+
+      <!-- Acceptance Criteria -->
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="s2-field-label" style="margin-bottom:var(--sp-2)"><span>Acceptance Criteria</span><span class="s2-badge s2-badge-optional">Optional</span></div>
+        <textarea id="acText" class="s2-ac-area" placeholder="Paste your AC clauses, one per line.
+
+Example:
+Only managers can see approve/reject buttons
+Approved reports trigger an email notification
+Rejected reports require a reason to be entered"></textarea>
+        <div class="field-hint" style="margin-top:4px">Don't have AC yet? No problem — paste it when you do for clause-by-clause coverage.</div>
+      </div>
+
+      <!-- Test Strategy + Output Format + Testing Areas -->
+      <div class="panel" style="margin-bottom:var(--sp-3)">
+        <div class="s2-options-row" style="margin-bottom:var(--sp-5)">
+          <div class="field">
+            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+              <span>Test Strategy</span>
+              <span class="s2-badge s2-badge-required">Required</span>
+              <span class="info-icon">i<span class="info-tooltip"><strong>Full Coverage</strong> — balanced across all areas, happy paths &amp; edge cases<br><br><strong>Smoke Test</strong> — core happy paths only, minimal scope<br><br><strong>Deep Dive</strong> — edge cases, errors &amp; boundary conditions first</span></span>
+            </div>
+            <select id="focusStyle" onchange="applyStrategyPreset()">
+              <option value="balanced" selected>Full Coverage</option>
+              <option value="smoke">Smoke Test</option>
+              <option value="edge">Deep Dive</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
+              <span>Output Format</span>
+              <span class="s2-badge s2-badge-required">Required</span>
+              <span class="info-icon">i<span class="info-tooltip"><strong>Detailed</strong> — action + expected outcome on every item ("Do X → Y should happen")<br><br><strong>Quick Checklist</strong> — action only, no expected result. Short reminders for testers who know the system</span></span>
+            </div>
+            <select id="detailLevel">
+              <option value="expanded" selected>Detailed</option>
+              <option value="concise">Quick Checklist</option>
+            </select>
           </div>
         </div>
+        <div class="s2-field-label" style="margin-bottom:var(--sp-3)"><span>Testing Areas</span><span class="s2-badge s2-badge-required">Required</span></div>
+        <div class="area-grid">
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"         checked> Functional</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"         checked> Validation</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"        checked> Permissions</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI / Layout"        checked> UI / Layout</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data / Persistence" checked> Data / Persistence</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations"       checked> Integrations</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Error Handling & Feedback" checked> Error Handling &amp; Feedback</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"         checked> Edge Cases</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="WCAG"               checked> WCAG</label>
+          <label class="pill-check"><input type="checkbox" class="areaCheck" value="Performance"        checked> Performance</label>
+        </div>
+      </div>
 
-        <div class="panel">
-          <div class="section-title">Options</div>
-          <div class="grid-2">
-            <div class="field">
-              <label class="field-label">Ticket ID</label>
-              <input type="text" id="ticketId" placeholder="e.g. PROJ-1234">
-            </div>
-            <div class="field">
-              <label class="field-label">Environment / Branch</label>
-              <input type="text" id="envBranch" placeholder="e.g. staging / feat/exp">
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label class="field-label">Checklist Name</label>
-              <input type="text" id="checklistName" placeholder="e.g. Expense Approvals">
-            </div>
-            <div class="field">
-              <label class="field-label">Detail Level</label>
-              <select id="detailLevel">
-                <option value="expanded" selected>Expanded</option>
-                <option value="concise">Concise</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="field">
-              <label class="field-label">Focus Style</label>
-              <select id="focusStyle">
-                <option value="balanced" selected>Balanced</option>
-                <option value="smoke">Smoke-heavy</option>
-                <option value="edge">Edge-heavy</option>
-              </select>
-            </div>
-            <div class="field">
-              <label class="field-label">CSV Export Filter</label>
-              <select id="exportCsvMode">
-                <option value="all" selected>All items</option>
-                <option value="open">No outcome yet</option>
-                <option value="done">Has outcome</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label">Testing Areas</label>
-            <div class="area-grid">
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Functional"   checked> Functional</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Validation"   checked> Validation</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Permissions"  checked> Permissions</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="UI"           checked> UI / Layout</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Data"         checked> Data / Persistence</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Integrations" checked> Integrations</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Errors"       checked> Error Handling</label>
-              <label class="pill-check"><input type="checkbox" class="areaCheck" value="Edge Cases"   checked> Edge Cases</label>
-            </div>
-          </div>
-          <div class="field">
-            <label class="field-label">Additions</label>
-            <div class="area-grid">
-              <label class="pill-check"><input type="checkbox" id="includeBreak"     checked> Break-it tests</label>
-              <label class="pill-check"><input type="checkbox" id="includeDataHints" checked> Suggested test data</label>
-            </div>
+      <!-- Add-ons accordion -->
+      <div class="s2-accordion" style="margin-bottom:var(--sp-4)">
+        <button class="s2-accordion-trigger" type="button" onclick="toggleAccordion('addons')">
+          <span class="s2-accordion-name">Add-ons</span>
+          <span class="s2-accordion-desc">Break-it scenarios, test data tables</span>
+          <span class="s2-accordion-chevron" id="addonsChevron">›</span>
+        </button>
+        <div class="s2-accordion-body" id="addonsBody">
+          <div class="area-grid s2-addon-grid">
+            <label class="pill-check s2-addon-check"><input type="checkbox" id="addonBreak"> Break-it</label>
+            <label class="pill-check s2-addon-check"><input type="checkbox" id="addonTestData"> Test Data</label>
           </div>
         </div>
       </div>
 
       <div class="summary-bar">
         <div class="summary-text">
-          <strong id="summaryWords">0</strong> words of input ·
-          <strong id="summaryAreas">8</strong> area(s) selected
+          <strong id="summaryWords">0</strong> words ·
+          <strong id="summaryAreas">10</strong> area<span id="summaryAreasPlural">s</span> selected<span id="summaryAddons"></span>
         </div>
-        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Checklist</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateChecklist()">Generate Test Cases →</button>
       </div>
       <div class="status" id="status2"></div>
     </div><!-- end screen2 -->
+    <div class="s2-preset-toast" id="presetToast">Areas updated to match strategy · adjust as needed</div>
 
 
     <!-- ═══════════ SCREEN 2.5 — Generating ═══════════ -->
     <div class="screen" id="screen25">
       <div class="generating-screen">
-        <div class="gen-orrery">
-          <div class="gen-ring-outer"></div>
-          <div class="gen-ring-mid"></div>
-          <div class="gen-ring-inner"></div>
-          <div class="gen-dot gen-dot-green"></div>
-          <div class="gen-dot gen-dot-pass" style="animation-duration:1.8s"></div>
-          <div class="gen-center"><span class="gen-star">✦</span></div>
+        <div class="gen-checklist" id="genChecklist">
+          <div class="gen-checklist-header">
+            <span class="gen-dot-r"></span>
+            <span class="gen-dot-y"></span>
+            <span class="gen-dot-g"></span>
+            <span class="gen-checklist-title">checklist · generating</span>
+          </div>
+          <div class="gen-progress-track"><div class="gen-progress-fill" id="genProgressFill"></div></div>
+          <div class="gen-checklist-body" id="genChecklistBody"></div>
         </div>
-        <div class="gen-label">Generating Checklist</div>
-        <div class="gen-sublabel" id="genSubLabel">Reading your ticket</div>
+        <div class="gen-stats-panel">
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">strategy</span>
+            <span class="gen-stat-value" id="genStatStrategy">—</span>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">format</span>
+            <span class="gen-stat-value" id="genStatFormat">—</span>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">areas</span>
+            <div class="gen-stat-bar-wrap">
+              <div class="gen-stat-bar"><div class="gen-stat-fill" id="genAreasFill"></div></div>
+              <span class="gen-stat-num" id="genAreasNum">0</span>
+            </div>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">est. tests</span>
+            <div class="gen-stat-bar-wrap">
+              <div class="gen-stat-bar"><div class="gen-stat-fill" id="genTestsFill"></div></div>
+              <span class="gen-stat-num" id="genTestsNum">--</span>
+            </div>
+          </div>
+        </div>
+        <div class="gen-observation" id="genObservation"><span class="gen-obs-prefix">[ claude ]</span>&nbsp;<span id="genObsText"></span></div>
       </div>
     </div><!-- end screen25 -->
 
@@ -303,11 +280,11 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
     <!-- ═══════════ SCREEN 3 — Checklist ═══════════ -->
     <div class="screen" id="screen3">
       <div class="checklist-nav">
-        <button class="back-link" onclick="backToSetup()" type="button">← Edit AC &amp; Options</button>
+        <button class="back-link" onclick="newSession()" type="button">＋ New Session</button>
         <div class="flex gap-3 items-center flex-wrap">
           <span id="liveIndicator" style="display:none" class="live-badge"><span class="live-dot"></span>Live</span>
           <span class="share-code-badge" id="shareCodeBadge" style="display:none" onclick="copyShareCode()" title="Click to copy share code"></span>
-          <button class="end-session-btn" onclick="endSession()" type="button">✕ End Session</button>
+          <button class="end-session-btn" onclick="endSession()" type="button">↓ Save &amp; Close</button>
         </div>
       </div>
 
@@ -346,16 +323,16 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
       <div class="status" id="status3"></div>
     </div><!-- end screen3 -->
 
+  <footer class="app-footer" aria-label="App footer">
+    <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
+      <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
+      <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
+  </footer>
+
   </main>
 </div><!-- end app-shell -->
-
-<footer aria-label="App footer" style="text-align:center;padding:var(--sp-6) 0 var(--sp-8);margin-left:280px">
-  <div style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-2)">
-    <a href="/terms.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Terms of Service</a>
-    <a href="/privacy.html" style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);letter-spacing:.08em;color:var(--muted);text-decoration:none">Privacy Policy</a>
-  </div>
-  <span style="font-family:var(--font-mono);font-size:clamp(10px,.68vw,12px);color:var(--muted)">© 2026 <a href="https://calebthede.com" style="color:var(--green);text-decoration:none">Caleb Thede</a></span>
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase.js"></script>
@@ -385,24 +362,43 @@ AC: Only managers see approve/reject buttons. Approved reports trigger a notific
     <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.4rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-2);text-align:center">Leave active session?</h2>
     <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.6;text-align:center;margin:0 0 var(--sp-6)">You have a checklist in progress. End the session first to save your progress, or leave without saving.</p>
     <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalEndAndGo()">End Session &amp; Leave →</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalEndAndGo()">Save &amp; Leave →</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="leaveSessionModalLeave()">Leave Without Saving</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="leaveSessionModalCancel()">Cancel — Stay Here</button>
     </div>
   </div>
 </div>
 
-<!-- Back to setup confirmation modal -->
-<div id="backToSetupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:400px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6)">
-    <div style="font-size:28px;text-align:center;margin-bottom:var(--sp-4)">⚠</div>
-    <h2 style="font-family:var(--font-display);font-size:clamp(1rem,1.3vw,1.2rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-2);text-align:center">Go back and regenerate?</h2>
-    <p style="font-size:clamp(13px,.88vw,15px);color:var(--dim);line-height:1.6;text-align:center;margin:0 0 var(--sp-6)"><span id="backToSetupCount"></span> will be replaced if you go back and regenerate.</p>
+<!-- Checklist complete modal -->
+<div id="checklistCompleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:440px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6)">
+    <div style="text-align:center;margin-bottom:var(--sp-5)">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--pass-dim);border:1px solid rgba(52,211,153,.3);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);font-size:22px">✓</div>
+      <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.35rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-2)">Checklist Complete</h2>
+      <p id="completeModalName" style="font-size:clamp(12px,.82vw,13px);color:var(--dim);margin:0"></p>
+    </div>
+    <div id="completeModalStats" style="display:flex;justify-content:center;gap:var(--sp-5);margin-bottom:var(--sp-6);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div style="text-align:center">
+        <div id="completeStatPass" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--pass)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Passed</div>
+      </div>
+      <div style="text-align:center">
+        <div id="completeStatFail" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--fail)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Failed</div>
+      </div>
+      <div style="text-align:center">
+        <div id="completeStatBlocked" style="font-family:var(--font-mono);font-size:clamp(1.1rem,1.3vw,1.4rem);font-weight:600;color:var(--blocked)">0</div>
+        <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Blocked</div>
+      </div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="backToSetupConfirm()">Yes, go back &amp; regenerate</button>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-2);opacity:.6" onclick="backToSetupCancel()">Cancel — keep testing</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="completeAndEndSession()">✓ Mark Complete</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="downloadCsv();closeCompleteModal()">Export Results</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="closeCompleteModal()">Keep Reviewing</button>
     </div>
   </div>
 </div>
+
+<div class="app-toast" id="appToast"></div>
 </body>
 </html>

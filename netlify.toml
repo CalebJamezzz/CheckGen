@@ -1,9 +1,4 @@
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
   from = "/app"
   to = "/app/"
   status = 301
@@ -13,6 +8,10 @@
 
 [functions."ask"]
   timeout = 26
+
+[[edge_functions]]
+  path = "/api/ask"
+  function = "ask"
 
 [[redirects]]
   from = "/*"
