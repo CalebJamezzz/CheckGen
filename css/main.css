@@ -981,8 +981,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .gen-stats-panel { width: min(460px, 90vw); background: rgba(255,255,255,.02); border: 1px solid var(--border); border-radius: var(--r-md); padding: 10px var(--sp-4); display: flex; align-items: center; gap: 0; }
 .gen-stat-row { display: flex; align-items: center; gap: 8px; flex: 1; padding: 0 var(--sp-3); }
 .gen-stat-row:not(:last-child) { border-right: 1px solid var(--border); }
-.gen-stat-row:first-child { padding-left: 0; }
-.gen-stat-row:last-child { padding-right: 0; }
 .gen-stat-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
 .gen-stat-value { font-family: var(--font-mono); font-size: 11px; color: var(--dim); white-space: nowrap; }
 .gen-stat-bar-wrap { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
@@ -1229,7 +1227,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 }
 .app-footer {
   margin-top: auto;
-  padding: var(--sp-3) 0 var(--sp-3);
+  padding: var(--sp-8) 0 var(--sp-4);
   text-align: center;
   border-top: 1px solid var(--border);
 }
