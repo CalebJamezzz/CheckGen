@@ -571,8 +571,8 @@ async function generateChecklist() {
       : 'Provide full coverage — balance happy-path, validation, edge cases, and error handling across all areas.';
 
   const detailNote = detail === 'concise'
-    ? 'Write each item as a short, scannable one-liner (under 15 words).'
-    : 'Write each item as a clear action + expected outcome: "Do X → Y should happen."';
+    ? 'Write each item as a SHORT ACTION ONLY — maximum 8 words, no expected result, no "→" separator, no outcome sentence. Just the test action itself. Example: "Submit form with empty required fields".'
+    : 'Write each item as a clear action + expected outcome using this format: "Do X → Y should happen."';
 
   // Areas the user selected — these are the ONLY sections allowed
   const selectedAreas = [...areas];
@@ -1044,9 +1044,12 @@ function startGenAnimation() {
   if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
 
   // Populate stats panel
-  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive' };
-  const stratEl = $('genStatStrategy');
-  if (stratEl) stratEl.textContent = strategyMap[$('focusStyle')?.value] || '—';
+  const strategyMap = { balanced: 'full cov', smoke: 'smoke', edge: 'deep dive' };
+  const formatMap   = { expanded: 'detailed', concise: 'quick' };
+  const stratEl  = $('genStatStrategy');
+  const formatEl = $('genStatFormat');
+  if (stratEl)  stratEl.textContent  = strategyMap[$('focusStyle')?.value]   || '—';
+  if (formatEl) formatEl.textContent = formatMap[$('detailLevel')?.value]     || '—';
 
   const areaCount = document.querySelectorAll('.areaCheck:checked').length;
   const areasFill = $('genAreasFill');
@@ -1396,8 +1399,8 @@ function renderChecklist() {
         <div class="add-item-row">
           <button class="add-item-trigger" onclick="toggleAddForm(this)">+ Add item</button>
           <div class="add-item-form" style="display:none">
-            <input class="add-item-field add-item-step" placeholder="Test step — describe what the tester does…" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
-            <input class="add-item-field add-item-expected" placeholder="Expected result — what should happen (optional)" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
+            <input class="add-item-field add-item-step" placeholder="${$('detailLevel')?.value === 'concise' ? 'Test action — short and direct…' : 'Test step — describe what the tester does…'}" onkeydown="if(event.key==='Escape')toggleAddForm(this)">
+            ${$('detailLevel')?.value !== 'concise' ? '<input class="add-item-field add-item-expected" placeholder="Expected result — what should happen (optional)" onkeydown="if(event.key===\'Escape\')toggleAddForm(this)">' : '<input class="add-item-field add-item-expected" type="hidden" value="">'}
             <div class="add-item-controls">
               <select class="add-item-select">
                 <option value="Highest">Highest</option>

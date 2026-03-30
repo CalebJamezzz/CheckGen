@@ -185,7 +185,7 @@ Rejected reports require a reason to be entered"></textarea>
             <div class="s2-field-label" style="margin-bottom:var(--sp-2)">
               <span>Output Format</span>
               <span class="s2-badge s2-badge-required">Required</span>
-              <span class="info-icon">i<span class="info-tooltip">Detailed: each item written as action + expected outcome · Quick Checklist: short scannable one-liners</span></span>
+              <span class="info-icon">i<span class="info-tooltip">Detailed: every item written as action + expected outcome ("Do X → Y should happen") · Quick Checklist: action only, no expected result — short reminders for testers who know the system</span></span>
             </div>
             <select id="detailLevel">
               <option value="expanded" selected>Detailed</option>
@@ -253,6 +253,10 @@ Rejected reports require a reason to be entered"></textarea>
           <div class="gen-stat-row">
             <span class="gen-stat-label">strategy</span>
             <span class="gen-stat-value" id="genStatStrategy">—</span>
+          </div>
+          <div class="gen-stat-row">
+            <span class="gen-stat-label">format</span>
+            <span class="gen-stat-value" id="genStatFormat">—</span>
           </div>
           <div class="gen-stat-row">
             <span class="gen-stat-label">areas</span>
