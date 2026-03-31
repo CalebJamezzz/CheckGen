@@ -101,8 +101,8 @@
           <li><strong>Upgraded to Claude Sonnet 4.6</strong> — Significantly smarter model with better comprehension of complex tickets and more specific, executable test cases.</li>
           <li><strong>Streaming generation</strong> — Switched to Netlify Edge Functions with SSE streaming. No more 504 timeouts on large or complex checklists.</li>
           <li><strong>Step → expected result format</strong> — Every item now explicitly states the action and the expected outcome. No more vague observations.</li>
-          <li><strong>Detailed guidance for all 10 testing areas</strong> — Each section now has specific sub-area instructions so the AI knows exactly what to cover rather than guessing.</li>
-          <li><strong>Realistic time estimates per area</strong> — Time is no longer defaulted to 2m across the board. WCAG items reflect screen reader and audit effort; Permissions reflects login/logout cycles; Integrations reflects API round-trips.</li>
+          <li><strong>Detailed guidance per testing area</strong> — Each section now has specific sub-area instructions so the AI knows exactly what to cover rather than guessing.</li>
+          <li><strong>Realistic time estimates per area</strong> — Time is no longer defaulted to 2m across the board. Permissions reflects login/logout cycles; Integrations reflects API round-trips; Edge Cases reflects exploratory depth.</li>
           <li><strong>Balanced priority distribution</strong> — Priority rules now produce a realistic spread of High, Medium, and Low rather than weighting everything High.</li>
           <li><strong>Quality rules enforced</strong> — No near-duplicates, no rephrasing the same check, no generic filler. Every item must be traceable to the specific ticket.</li>
           <li><strong>Test Data is now a modifier</strong> — When selected, specific data values (boundary inputs, realistic strings, edge-case numbers) are woven into items throughout the checklist rather than generating a separate section.</li>
