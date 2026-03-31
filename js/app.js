@@ -12,6 +12,19 @@ let _pendingBackToSetup = false; // kept for legacy safety
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
+/* ── Pro preview bypass ─────────────────────────────────── */
+const PRO_PREVIEW_EMAILS = ['calebthede@gmail.com'];
+function unlockProPreview() {
+  document.querySelectorAll('.pill-check-locked').forEach(label => {
+    label.classList.remove('pill-check-locked');
+    label.removeAttribute('onclick');
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (cb) { cb.disabled = false; cb.checked = true; }
+    const badge = label.querySelector('.pro-badge');
+    if (badge) badge.remove();
+  });
+}
+
 /* ── Helpers ────────────────────────────────────────────── */
 function $(id) { return document.getElementById(id); }
 function esc(s)  { return String(s).replace(/'/g, "\\'"); }
@@ -2104,6 +2117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _currentUserName = resolvedName;
       const nameField = $('userName');
       if (nameField && !nameField.value && resolvedName) nameField.value = resolvedName;
+      if (PRO_PREVIEW_EMAILS.includes(s.user.email)) unlockProPreview();
     } catch(e) {}
   })();
 });

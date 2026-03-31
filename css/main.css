@@ -1029,9 +1029,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 @media (max-width: 768px) {
   .app-toast { left: 50%; }
 }
-.app-toast--error { border-color: var(--fail); color: var(--fail); }
-.app-toast--warn  { border-color: #fbbf24; color: #fbbf24; }
+.app-toast--error   { border-color: var(--fail); color: var(--fail); }
+.app-toast--warn    { border-color: #fbbf24; color: #fbbf24; }
 .app-toast--success { border-color: var(--green); color: var(--green); }
+.app-toast--info    { border-color: rgba(139,92,246,.5); color: #a78bfa; background: rgba(20,15,35,.97); }
 
 /* ── Checklist nav ── */
 .checklist-nav {
