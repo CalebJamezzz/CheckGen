@@ -510,6 +510,14 @@ async function callClaude(prompt, maxT, systemPrompt) {
   try { return await attempt(); }
   catch(e) {
     if (e.message === 'timeout' || e.message === 'max_tokens') return await attempt();
+    if (/overload/i.test(e.message)) {
+      const obsEl  = document.getElementById('genObsText');
+      const obsWrap = document.getElementById('genObservation');
+      if (obsEl)  obsEl.textContent   = 'high demand — retrying in a moment…';
+      if (obsWrap) obsWrap.style.opacity = '1';
+      await new Promise(r => setTimeout(r, 4000));
+      return await attempt();
+    }
     throw e;
   }
 }
@@ -819,6 +827,7 @@ async function generateChecklist() {
     const toastMsg = isVague
       ? 'Add more detail to your ticket — describe what the feature does, list specific fields, user flows, or acceptance criteria.'
       : err.message === 'max_tokens' ? 'Response was too long. Try selecting fewer testing areas.'
+      : /overload/i.test(err.message) ? 'Claude is busy right now — wait a moment and try again.'
       : 'Generation failed — please try again.';
     showAppToast(toastMsg, 'error');
   } finally {
@@ -1116,25 +1125,6 @@ function startGenAnimation() {
   const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
   let globalIdx = 0;
 
-  // Status line cycles independently
-  const statusMessages = [
-    'scanning your ticket…',
-    'mapping test surfaces…',
-    'writing test cases…',
-    'checking edge cases…',
-    'reviewing coverage…',
-    'almost ready…',
-  ];
-  let statusMsgIdx = 0;
-  _genStatusTimer = setInterval(() => {
-    if (!statusEl) return;
-    statusEl.style.opacity = '0';
-    setTimeout(() => {
-      statusMsgIdx = (statusMsgIdx + 1) % statusMessages.length;
-      statusEl.textContent = statusMessages[statusMsgIdx];
-      statusEl.style.opacity = '1';
-    }, 300);
-  }, 2800);
 
   function updateProgress(done) {
     if (!fill) return;
