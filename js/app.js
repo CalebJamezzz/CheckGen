@@ -172,7 +172,7 @@ async function startSession() {
   ['ticketText','acText'].forEach(id => { const el = $(id); if (el) el.value = ''; });
   const dl = $('detailLevel'); if (dl) dl.value = 'expanded';
   const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
-  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  document.querySelectorAll('.areaCheck').forEach(el => { if (!el.disabled) el.checked = true; });
   ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   _completionModalShown = false;
   updateSummary();
@@ -353,7 +353,7 @@ function endSession() {
   });
   $('detailLevel').value = 'expanded';
   $('focusStyle').value  = 'balanced';
-  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  document.querySelectorAll('.areaCheck').forEach(el => { if (!el.disabled) el.checked = true; });
   ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   localStorage.removeItem(SK);
   setMode('personal');
@@ -1026,6 +1026,12 @@ function setOutcome(id, outcome) {
   debouncedCloudSave(); // debounced cloud save
   refreshGroupStates();
   checkAllComplete();
+}
+
+/* ── Pro coming soon ── */
+function showProComingSoon(e) {
+  e.preventDefault();
+  showAppToast('WCAG and Performance testing will be available with CheckGen Pro — coming soon.', 'info', 4000);
 }
 
 /* ── App toast ── */
@@ -1881,7 +1887,7 @@ function applyStrategyPreset() {
   };
   const selected = presets[strategy] || presets.balanced;
   document.querySelectorAll('.areaCheck').forEach(cb => {
-    cb.checked = selected.includes(cb.value);
+    if (!cb.disabled) cb.checked = selected.includes(cb.value);
   });
   updateSummary();
   // Show soft toast so user knows areas changed
