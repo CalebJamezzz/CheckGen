@@ -511,6 +511,10 @@ async function callClaude(prompt, maxT, systemPrompt) {
   catch(e) {
     if (e.message === 'timeout' || e.message === 'max_tokens') return await attempt();
     if (/overload/i.test(e.message)) {
+      const obsEl  = document.getElementById('genObsText');
+      const obsWrap = document.getElementById('genObservation');
+      if (obsEl)  obsEl.textContent   = 'high demand — retrying in a moment…';
+      if (obsWrap) obsWrap.style.opacity = '1';
       await new Promise(r => setTimeout(r, 4000));
       return await attempt();
     }

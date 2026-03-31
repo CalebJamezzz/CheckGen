@@ -1000,7 +1000,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .app-toast {
   position: fixed;
   top: var(--sp-5);
-  left: 50%;
+  left: calc(140px + 50vw);
   transform: translateX(-50%) translateY(-140%);
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -1022,6 +1022,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   transform: translateX(-50%) translateY(0);
   opacity: 1;
   pointer-events: auto;
+}
+@media (max-width: 768px) {
+  .app-toast { left: 50%; }
 }
 .app-toast--error { border-color: var(--fail); color: var(--fail); }
 .app-toast--warn  { border-color: #fbbf24; color: #fbbf24; }
