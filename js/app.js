@@ -1116,25 +1116,6 @@ function startGenAnimation() {
   const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
   let globalIdx = 0;
 
-  // Status line cycles independently
-  const statusMessages = [
-    'scanning your ticket…',
-    'mapping test surfaces…',
-    'writing test cases…',
-    'checking edge cases…',
-    'reviewing coverage…',
-    'almost ready…',
-  ];
-  let statusMsgIdx = 0;
-  _genStatusTimer = setInterval(() => {
-    if (!statusEl) return;
-    statusEl.style.opacity = '0';
-    setTimeout(() => {
-      statusMsgIdx = (statusMsgIdx + 1) % statusMessages.length;
-      statusEl.textContent = statusMessages[statusMsgIdx];
-      statusEl.style.opacity = '1';
-    }, 300);
-  }, 2800);
 
   function updateProgress(done) {
     if (!fill) return;
