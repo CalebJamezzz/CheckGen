@@ -12,6 +12,19 @@ let _pendingBackToSetup = false; // kept for legacy safety
 const SK  = 'cg_v1';     // localStorage key for active session
 const HSK = 'cg_history'; // localStorage key for history
 
+/* ── Pro preview bypass ─────────────────────────────────── */
+const PRO_PREVIEW_EMAILS = ['calebthede@gmail.com'];
+function unlockProPreview() {
+  document.querySelectorAll('.pill-check-locked').forEach(label => {
+    label.classList.remove('pill-check-locked');
+    label.removeAttribute('onclick');
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (cb) { cb.disabled = false; cb.checked = true; }
+    const badge = label.querySelector('.pro-badge');
+    if (badge) badge.remove();
+  });
+}
+
 /* ── Helpers ────────────────────────────────────────────── */
 function $(id) { return document.getElementById(id); }
 function esc(s)  { return String(s).replace(/'/g, "\\'"); }
@@ -172,7 +185,7 @@ async function startSession() {
   ['ticketText','acText'].forEach(id => { const el = $(id); if (el) el.value = ''; });
   const dl = $('detailLevel'); if (dl) dl.value = 'expanded';
   const fs = $('focusStyle');  if (fs) { fs.value = 'balanced'; applyStrategyPreset(); }
-  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  document.querySelectorAll('.areaCheck').forEach(el => { if (!el.disabled) el.checked = true; });
   ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   _completionModalShown = false;
   updateSummary();
@@ -353,7 +366,7 @@ function endSession() {
   });
   $('detailLevel').value = 'expanded';
   $('focusStyle').value  = 'balanced';
-  document.querySelectorAll('.areaCheck').forEach(el => el.checked = true);
+  document.querySelectorAll('.areaCheck').forEach(el => { if (!el.disabled) el.checked = true; });
   ['addonBreak','addonTestData'].forEach(id => { const el = $(id); if (el) el.checked = false; });
   localStorage.removeItem(SK);
   setMode('personal');
@@ -1026,6 +1039,12 @@ function setOutcome(id, outcome) {
   debouncedCloudSave(); // debounced cloud save
   refreshGroupStates();
   checkAllComplete();
+}
+
+/* ── Pro coming soon ── */
+function showProComingSoon(e) {
+  e.preventDefault();
+  showAppToast('WCAG and Performance testing will be available with CheckGen Pro — coming soon.', 'info', 4000);
 }
 
 /* ── App toast ── */
@@ -1881,7 +1900,7 @@ function applyStrategyPreset() {
   };
   const selected = presets[strategy] || presets.balanced;
   document.querySelectorAll('.areaCheck').forEach(cb => {
-    cb.checked = selected.includes(cb.value);
+    if (!cb.disabled) cb.checked = selected.includes(cb.value);
   });
   updateSummary();
   // Show soft toast so user knows areas changed
@@ -2098,6 +2117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _currentUserName = resolvedName;
       const nameField = $('userName');
       if (nameField && !nameField.value && resolvedName) nameField.value = resolvedName;
+      if (PRO_PREVIEW_EMAILS.includes(s.user.email)) unlockProPreview();
     } catch(e) {}
   })();
 });
