@@ -1597,16 +1597,23 @@ function downloadXlsx(rows, meta, stats, options) {
 
   // ── Sheet 1: Summary ──────────────────────────────────────
   const s1 = [];
+  // Title row (will be merged A1:B1)
   s1.push(['CheckGen Export', '']);
   s1.push(['']);
-  if (meta.name)     s1.push(['Checklist',    meta.name]);
-  if (meta.ticketId) s1.push(['Ticket ID',    meta.ticketId]);
-  if (meta.env)      s1.push(['Environment',  meta.env]);
+
+  // Session info block
+  if (meta.name)     s1.push(['Checklist Name', meta.name]);
+  if (meta.ticketId) s1.push(['Ticket ID',      meta.ticketId]);
+  if (meta.env)      s1.push(['Environment',    meta.env]);
   s1.push(['Date', meta.date]);
   if (options.meta && meta.strategy)     s1.push(['Strategy',      meta.strategy]);
   if (options.meta && meta.outputFormat) s1.push(['Output Format', meta.outputFormat]);
   if (options.ac && meta.ac)             s1.push(['Acceptance Criteria', meta.ac]);
+
   s1.push(['']);
+
+  // Results block — track row index of "Results" header for merge
+  const resultsHeaderRow = s1.length;
   s1.push(['Results', '']);
 
   if (stats.filter === 'uncompleted') {
@@ -1617,20 +1624,30 @@ function downloadXlsx(rows, meta, stats, options) {
     s1.push(['Failed',           stats.failed]);
     s1.push(['Blocked',          stats.blocked]);
     if (stats.filter === 'all') s1.push(['Not Run', stats.notRun]);
-    s1.push(['Pass Rate', stats.passRate]);
+    s1.push(['Pass Rate',        stats.passRate]);
   }
 
   const ws1 = XLSX.utils.aoa_to_sheet(s1);
   ws1['!cols'] = [{ wch: 22 }, { wch: 65 }];
+  // Taller title row + results header row for visual separation
+  ws1['!rows'] = Array(s1.length).fill({ hpt: 15 });
+  ws1['!rows'][0] = { hpt: 24 };
+  ws1['!rows'][resultsHeaderRow] = { hpt: 20 };
+  // Merge title (A1:B1) and Results header across both columns
+  ws1['!merges'] = [
+    { s: { r: 0,                c: 0 }, e: { r: 0,                c: 1 } },
+    { s: { r: resultsHeaderRow, c: 0 }, e: { r: resultsHeaderRow, c: 1 } },
+  ];
   XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
 
   // ── Sheet 2: Test Cases ───────────────────────────────────
   const hasNotes = rows.some(i => i.note);
-  const headers  = ['ID'];
+  // Column order: ID → Status first (most scanned column) → Area → Test Case → Expected → Priority → Time → Notes
+  const headers = ['ID', 'Status'];
   if (options.areas) headers.push('Testing Area');
   headers.push('Test Case');
   if (meta.isDetailed) headers.push('Expected Result');
-  headers.push('Priority', 'Est. Time', 'Status');
+  headers.push('Priority', 'Est. Time');
   if (hasNotes) headers.push('Notes');
 
   const s2 = [headers];
@@ -1639,25 +1656,38 @@ function downloadXlsx(rows, meta, stats, options) {
     const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
     const step     = (parts[0] || item.text || '').trim();
     const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
-    const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : '';
+    const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : 'Not Run';
     const time     = item.time ? `${item.time}m` : '';
-    const row = [id];
+    const row = [id, status];
     if (options.areas) row.push(item.section || '');
     row.push(step);
     if (meta.isDetailed) row.push(expected || '');
-    row.push(item.priority || '', time, status);
+    row.push(item.priority || '', time);
     if (hasNotes) row.push(item.note || '');
     s2.push(row);
   });
 
   const ws2 = XLSX.utils.aoa_to_sheet(s2);
-  const cols = [{ wch: 8 }];
-  if (options.areas) cols.push({ wch: 18 });
+
+  // Column widths: ID, Status, [Area], Test Case, [Expected], Priority, Est. Time, [Notes]
+  const cols = [{ wch: 8 }, { wch: 12 }];
+  if (options.areas) cols.push({ wch: 20 });
   cols.push({ wch: 52 });
-  if (meta.isDetailed) cols.push({ wch: 48 });
-  cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 });
-  if (hasNotes) cols.push({ wch: 30 });
+  if (meta.isDetailed) cols.push({ wch: 44 });
+  cols.push({ wch: 10 }, { wch: 10 });
+  if (hasNotes) cols.push({ wch: 32 });
   ws2['!cols'] = cols;
+
+  // Taller header row
+  ws2['!rows'] = [{ hpt: 18 }];
+
+  // Freeze the header row so it stays visible when scrolling
+  ws2['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  // Auto-filter on all header columns — lets users filter by Status, Area, Priority in Excel/Sheets
+  const lastCol = XLSX.utils.encode_col(headers.length - 1);
+  ws2['!autofilter'] = { ref: `A1:${lastCol}1` };
+
   XLSX.utils.book_append_sheet(wb, ws2, 'Test Cases');
 
   const fname = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -1668,6 +1698,8 @@ function downloadXlsx(rows, meta, stats, options) {
 /* ── Markdown export ────────────────────────────────────── */
 function _buildMarkdown() {
   const filter = $('exportFilterMd')?.value || 'all';
+  const sort   = $('exportSortMd')?.value   || 'area';
+  const fresh  = $('exportFresh')?.checked  || false;
 
   let rows = currentChecklist.slice();
   if (filter === 'uncompleted') rows = rows.filter(i => !i.outcome);
@@ -1677,6 +1709,12 @@ function _buildMarkdown() {
 
   if (!rows.length) return '';
 
+  // Sort
+  const pri = { High: 1, Medium: 2, Low: 3 };
+  if (sort === 'area')     rows.sort((a, b) => (a.section || '').localeCompare(b.section || ''));
+  if (sort === 'priority') rows.sort((a, b) => (pri[a.priority] || 9) - (pri[b.priority] || 9));
+  if (sort === 'duration') rows.sort((a, b) => (parseFloat(a.time) || 0) - (parseFloat(b.time) || 0));
+
   const isDetailed  = $('detailLevel')?.value !== 'concise';
   const name        = $('checklistName')?.value.trim() || 'Checklist';
   const ticketId    = $('ticketId')?.value.trim() || '';
@@ -1684,7 +1722,7 @@ function _buildMarkdown() {
   const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive' };
   const strategy    = strategyMap[$('focusStyle')?.value] || '';
 
-  // Group into sections, preserving order
+  // Group into sections, preserving sort order
   const sectionOrder = [];
   const sections = {};
   rows.forEach(item => {
@@ -1698,6 +1736,7 @@ function _buildMarkdown() {
   if (ticketId) metaParts.push(`**Ticket:** ${ticketId}`);
   metaParts.push(`**Date:** ${date}`);
   if (strategy) metaParts.push(`**Strategy:** ${strategy}`);
+  if (fresh) metaParts.push('**Fresh export**');
   md += metaParts.join(' · ') + '\n\n---\n\n';
 
   let tcCounter = 1;
@@ -1705,7 +1744,7 @@ function _buildMarkdown() {
     md += `## ${sec}\n\n`;
     sections[sec].forEach(item => {
       const id      = `TC-${String(tcCounter++).padStart(3, '0')}`;
-      const checked = item.outcome === 'pass' ? 'x' : ' ';
+      const checked = (!fresh && item.outcome === 'pass') ? 'x' : ' ';
       const parts   = isDetailed ? item.text.split(' → ') : [item.text];
       const step    = (parts[0] || item.text || '').trim();
       const expect  = isDetailed && parts.length > 1 ? parts.slice(1).join(' → ').trim() : null;

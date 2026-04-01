@@ -470,16 +470,37 @@ Rejected reports require a reason to be entered"></textarea>
     <!-- ── Markdown panel ────────────────────────────── -->
     <div id="exportMarkdownPanel" style="display:none">
 
-      <!-- Filter -->
-      <div style="margin-bottom:var(--sp-5)">
-        <div class="export-modal-label">Filter</div>
-        <select id="exportFilterMd" style="width:100%">
-          <option value="all">All items</option>
-          <option value="uncompleted">Uncompleted only</option>
-          <option value="pass">Passed only</option>
-          <option value="fail">Failed only</option>
-          <option value="blocked">Blocked only</option>
-        </select>
+      <!-- Filter + Sort (2-col) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-4)">
+        <div>
+          <div class="export-modal-label">Filter</div>
+          <select id="exportFilterMd" style="width:100%">
+            <option value="all">All items</option>
+            <option value="uncompleted">Uncompleted only</option>
+            <option value="pass">Passed only</option>
+            <option value="fail">Failed only</option>
+            <option value="blocked">Blocked only</option>
+          </select>
+        </div>
+        <div>
+          <div class="export-modal-label">Sort By</div>
+          <select id="exportSortMd" style="width:100%">
+            <option value="area">Testing Area</option>
+            <option value="priority">Priority</option>
+            <option value="duration">Duration</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Export as fresh -->
+      <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
+        <label style="display:flex;align-items:flex-start;gap:var(--sp-3);cursor:pointer">
+          <input type="checkbox" id="exportFresh" style="accent-color:var(--green);width:14px;height:14px;flex-shrink:0;margin-top:2px">
+          <div>
+            <div style="font-size:clamp(13px,.88vw,14px);color:var(--text);font-weight:500;margin-bottom:2px">Export as fresh checklist</div>
+            <div style="font-size:clamp(11px,.75vw,12px);color:var(--muted);line-height:1.5">Resets all checkboxes to unchecked — useful for handing off to another tester to run from scratch.</div>
+          </div>
+        </label>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
