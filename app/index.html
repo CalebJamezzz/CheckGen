@@ -399,7 +399,7 @@ Rejected reports require a reason to be entered"></textarea>
 
 <!-- Export modal v2.2 -->
 <div id="exportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:600px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+  <div style="background:var(--bg);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:700px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto">
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6)">
@@ -407,18 +407,13 @@ Rejected reports require a reason to be entered"></textarea>
       <button onclick="closeExportModal()" type="button" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:var(--r-sm);transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
     </div>
 
-    <!-- Export type tiles -->
-    <div class="export-type-row" style="margin-bottom:var(--sp-5)">
-      <button class="export-type-btn active" id="typeWorkbook" onclick="setExportType('workbook')" type="button">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="11" height="14" rx="2" stroke="currentColor" stroke-width="1.35"/><line x1="5" y1="7" x2="11" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="5" y1="10" x2="11" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="5" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M14 10v7.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M11.5 15l2.5 2.5 2.5-2.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div class="export-type-name">Export to Workbook</div>
-        <div class="export-type-sub">Download as XLSX or CSV</div>
-      </button>
-      <button class="export-type-btn" id="typeMarkdown" onclick="setExportType('markdown')" type="button">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="1.5" y="5" width="17" height="11" rx="2" stroke="currentColor" stroke-width="1.35"/><path d="M4.5 13V8l2.5 3 2.5-3v5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 13V8M13.5 13l-2-3M13.5 13l2-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div class="export-type-name">Copy as Markdown</div>
-        <div class="export-type-sub">Notion, Confluence, GitHub</div>
-      </button>
+    <!-- Export type dropdown -->
+    <div style="margin-bottom:var(--sp-5)">
+      <div class="export-modal-label">Export As</div>
+      <select id="exportTypeSelect" style="width:100%" onchange="setExportType(this.value)">
+        <option value="workbook">Workbook — Download as XLSX or CSV</option>
+        <option value="markdown">Markdown — Copy or download as .md</option>
+      </select>
     </div>
 
     <!-- ── Workbook panel ─────────────────────────────── -->
@@ -433,31 +428,31 @@ Rejected reports require a reason to be entered"></textarea>
         </div>
       </div>
 
-      <!-- Filter -->
-      <div style="margin-bottom:var(--sp-3)">
-        <div class="export-modal-label">Filter</div>
-        <select id="exportFilter" style="width:100%">
-          <option value="all">All items</option>
-          <option value="completed">Completed only</option>
-          <option value="uncompleted">Uncompleted only</option>
-          <option value="pass">Passed only</option>
-          <option value="fail">Failed only</option>
-          <option value="blocked">Blocked only</option>
-        </select>
-      </div>
-
-      <!-- Sort -->
-      <div style="margin-bottom:var(--sp-4)">
-        <div class="export-modal-label">Sort by</div>
-        <select id="exportSort" style="width:100%">
-          <option value="area">Testing Area</option>
-          <option value="priority">Priority</option>
-          <option value="duration">Duration</option>
-        </select>
+      <!-- Filter + Sort in a row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+        <div>
+          <div class="export-modal-label">Filter</div>
+          <select id="exportFilter" style="width:100%">
+            <option value="all">All items</option>
+            <option value="completed">Completed only</option>
+            <option value="uncompleted">Uncompleted only</option>
+            <option value="pass">Passed only</option>
+            <option value="fail">Failed only</option>
+            <option value="blocked">Blocked only</option>
+          </select>
+        </div>
+        <div>
+          <div class="export-modal-label">Sort By</div>
+          <select id="exportSort" style="width:100%">
+            <option value="area">Testing Area</option>
+            <option value="priority">Priority</option>
+            <option value="duration">Duration</option>
+          </select>
+        </div>
       </div>
 
       <!-- Include options -->
-      <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg2);border-radius:var(--r-md);border:1px solid var(--border)">
         <div class="export-modal-label" style="margin-bottom:var(--sp-3)">Include in export</div>
         <div class="export-opt-row">
           <label><input type="checkbox" id="optAreas" checked> Testing area labels</label>
@@ -473,7 +468,7 @@ Rejected reports require a reason to be entered"></textarea>
     <div id="exportMarkdownPanel" style="display:none">
 
       <!-- Filter -->
-      <div style="margin-bottom:var(--sp-4)">
+      <div style="margin-bottom:var(--sp-5)">
         <div class="export-modal-label">Filter</div>
         <select id="exportFilterMd" style="width:100%">
           <option value="all">All items</option>
@@ -484,12 +479,7 @@ Rejected reports require a reason to be entered"></textarea>
         </select>
       </div>
 
-      <div class="export-md-preview">## Testing Area
-- [ ] TC-001 — Test case step
-- [ ] TC-002 — Step → Expected result
-- [x] TC-003 — Completed step → Expected</div>
-
-      <div style="display:flex;gap:var(--sp-3);margin-bottom:var(--sp-2)">
+      <div style="display:flex;gap:var(--sp-3)">
         <button class="btn btn-primary" style="flex:1;justify-content:center;padding:var(--sp-3)" onclick="copyMarkdown()" type="button">⎘ Copy to Clipboard</button>
         <button class="btn btn-outline" style="flex:1;justify-content:center;padding:var(--sp-3)" onclick="downloadMarkdown()" type="button">↓ Download .md</button>
       </div>
