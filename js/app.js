@@ -789,7 +789,7 @@ async function generateChecklist() {
     const items = await callClaude(prompt, 16000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     stopGenAnimation();
-    currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '' }));
+    currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '', text: normalizeArrow(item.text || '') }));
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession();
     $('exportBar').style.display = '';
@@ -1298,11 +1298,23 @@ function groupChecklist(items) {
   return Object.entries(g);
 }
 
+// Normalise AI-generated arrow variants to the canonical ' → '
+// Handles: ->, =>, →, and any of these with wrong/missing surrounding spaces
+function normalizeArrow(text) {
+  if (!text) return text;
+  return text
+    .replace(/\s*->\s*/g,  ' → ')
+    .replace(/\s*=>\s*/g,  ' → ')
+    .replace(/\s*→\s*/g,   ' → ')
+    .trim();
+}
+
 function renderItemText(text) {
-  const idx = text.indexOf(' → ');
+  const norm = normalizeArrow(text);
+  const idx  = norm.indexOf(' → ');
   if (idx !== -1) {
-    const step = text.slice(0, idx);
-    const exp  = text.slice(idx + 3);
+    const step   = norm.slice(0, idx);
+    const exp    = norm.slice(idx + 3);
     const expCap = exp.charAt(0).toUpperCase() + exp.slice(1);
     return `<div class="item-step">${esc2(step)}</div><div class="item-expected"><span class="item-expected-arrow">↳</span>${esc2(expCap)}</div>`;
   }
@@ -1571,8 +1583,9 @@ function downloadCsv(rows, meta, stats, options) {
   // Data rows
   rows.forEach((item, idx) => {
     const id       = `TC-${String(idx + 1).padStart(3, '0')}`;
-    const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
-    const step     = (parts[0] || item.text || '').trim();
+    const normText = normalizeArrow(item.text || '');
+    const parts    = meta.isDetailed ? normText.split(' → ') : [normText];
+    const step     = (parts[0] || normText || '').trim();
     const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
     const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : '';
     const time     = item.time ? `${item.time}m` : '';
@@ -1624,6 +1637,7 @@ async function downloadXlsx(rows, meta, stats, options) {
     muted:      'FF9CA3AF', // Not Run, very secondary
     border:     'FFE5E7EB', // subtle light separator between rows
     white:      'FFFFFFFF',
+    rowAlt:     'FFF7F8FA', // very subtle zebra stripe for even data rows
     passBg:     'FFF0FDF4', passFg:  'FF166534',
     failBg:     'FFFEF2F2', failFg:  'FF991B1B',
     blockedBg:  'FFFEFCE8', blockedFg: 'FF713F12',
@@ -1758,7 +1772,8 @@ async function downloadXlsx(rows, meta, stats, options) {
 
   // Section heading tracker (only when sorted by area)
   const isSortedByArea = ($('exportSort')?.value || 'area') === 'area';
-  let lastSection = null;
+  let lastSection  = null;
+  let dataRowIdx   = 0; // tracks data rows only (not section headings) for zebra striping
 
   // Data rows
   rows.forEach((item, idx) => {
@@ -1770,20 +1785,25 @@ async function downloadXlsx(rows, meta, stats, options) {
         const secRow = ws2.addRow([sec]);
         ws2.mergeCells(`A${secRow.number}:${String.fromCharCode(64 + headers.length)}${secRow.number}`);
         secRow.height = 18;
-        secRow.getCell(1).value = sec;
-        secRow.getCell(1).font  = font({ bold: true, size: 10, color: { argb: C.sectionFg } });
-        secRow.getCell(1).fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+        // Apply section fill to every cell in the merged range so all apps render it correctly
+        for (let ci = 1; ci <= headers.length; ci++) {
+          const sc = secRow.getCell(ci);
+          sc.fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+          sc.border = { bottom: { style: 'thin', color: { argb: C.border } } };
+        }
+        secRow.getCell(1).value     = sec;
+        secRow.getCell(1).font      = font({ bold: true, size: 10, color: { argb: C.sectionFg } });
         secRow.getCell(1).alignment = { vertical: 'middle', indent: 1 };
-        secRow.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
       }
     }
 
-    const id       = `TC-${String(idx + 1).padStart(3, '0')}`;
-    const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
-    const step     = (parts[0] || item.text || '').trim();
-    const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
-    const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : 'Not Run';
-    const time     = item.time ? `${item.time}m` : '';
+    const id        = `TC-${String(idx + 1).padStart(3, '0')}`;
+    const normText2 = normalizeArrow(item.text || '');
+    const parts     = meta.isDetailed ? normText2.split(' → ') : [normText2];
+    const step      = (parts[0] || normText2 || '').trim();
+    const expected  = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
+    const status    = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : 'Not Run';
+    const time      = item.time ? `${item.time}m` : '';
 
     const rowData = [id, status];
     if (options.areas) rowData.push(item.section || '');
@@ -1792,7 +1812,9 @@ async function downloadXlsx(rows, meta, stats, options) {
     rowData.push(item.priority || '', time);
     if (hasNotes) rowData.push(item.note || '');
 
-    const dataRow = ws2.addRow(rowData);
+    const dataRow   = ws2.addRow(rowData);
+    const rowBg     = dataRowIdx % 2 === 0 ? C.white : C.rowAlt;
+    dataRowIdx++;
 
     // Row height: estimate from the longest wrapped text
     const longestText = Math.max(step.length, expected?.length || 0);
@@ -1800,12 +1822,13 @@ async function downloadXlsx(rows, meta, stats, options) {
 
     dataRow.eachCell({ includeEmpty: true }, (cell, colIdx) => {
       const isWrap = colIdx === stepColIdx || colIdx === expectedColIdx;
+      cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
       cell.font      = font({ color: { argb: C.dim } });
       cell.alignment = { vertical: 'top', wrapText: isWrap };
       cell.border    = { bottom: { style: 'thin', color: { argb: C.border } } };
     });
 
-    // Color-code the Status cell
+    // Color-code the Status cell (overrides zebra fill when a status is set)
     const sc = dataRow.getCell(2);
     const sm = statusMap[status];
     if (sm) {
@@ -1878,8 +1901,9 @@ function _buildMarkdown() {
     sections[sec].forEach(item => {
       const id      = `TC-${String(tcCounter++).padStart(3, '0')}`;
       const checked = (!fresh && item.outcome === 'pass') ? 'x' : ' ';
-      const parts   = isDetailed ? item.text.split(' → ') : [item.text];
-      const step    = (parts[0] || item.text || '').trim();
+      const normTextMd = normalizeArrow(item.text || '');
+      const parts   = isDetailed ? normTextMd.split(' → ') : [normTextMd];
+      const step    = (parts[0] || normTextMd || '').trim();
       const expect  = isDetailed && parts.length > 1 ? parts.slice(1).join(' → ').trim() : null;
       const line    = expect ? `${step} → ${expect}` : step;
       md += `- [${checked}] ${id} — ${line}\n`;
