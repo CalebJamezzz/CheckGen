@@ -11,7 +11,7 @@ function renderNav(user, profile) {
 
   el.innerHTML = `
     <div class="nav-logo-wrap">
-      <a href="/" class="nav-brand">Check<span>Gen</span></a>
+      <a href="/" class="nav-brand"><svg width="22" height="22" viewBox="0 0 32 32" fill="none" style="flex-shrink:0"><rect x="5" y="4" width="15" height="19" rx="2.5" fill="none" stroke="#f2f0fc" stroke-width="1.2" opacity="0.65"/><line x1="8.5" y1="9" x2="16.5" y2="9" stroke="#f2f0fc" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/><line x1="8.5" y1="12.5" x2="16.5" y2="12.5" stroke="#f2f0fc" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/><line x1="8.5" y1="16" x2="13.5" y2="16" stroke="#f2f0fc" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/><circle cx="22" cy="22" r="9" fill="#080b12"/><circle cx="22" cy="22" r="8" fill="#10b981"/><polyline points="18,22 21,25 26,17" stroke="#080b12" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>Check<span>Gen</span></a>
       <span class="tier-badge free">${isAnon ? 'guest' : 'free'}</span>
     </div>
 

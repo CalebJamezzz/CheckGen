@@ -1157,7 +1157,10 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
   color: var(--text);
   text-decoration: none;
   letter-spacing: -.02em;
+  display: inline-flex;
+  align-items: center;
 }
+.nav-logo svg { margin-right: 8px; }
 .nav-logo span { color: var(--green); }
 
 /* ── Loading dots ── */
@@ -1248,12 +1251,15 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 }
 .nav-brand {
   font-family: var(--font-display);
-  font-size: clamp(16px,1.3vw,21px);
+  font-size: clamp(18px,1.4vw,22px);
   font-weight: 600;
   color: var(--text);
   text-decoration: none;
   letter-spacing: -.02em;
+  display: inline-flex;
+  align-items: center;
 }
+.nav-brand svg { margin-right: 8px; }
 .nav-brand span { color: var(--green); }
 .tier-badge {
   font-family: var(--font-mono);
