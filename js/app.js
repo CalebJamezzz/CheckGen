@@ -1517,13 +1517,13 @@ function _buildExportPayload() {
   return { rows, meta, stats, options };
 }
 
-function triggerExport() {
+async function triggerExport() {
   const { rows, meta, stats, options } = _buildExportPayload();
   if (!rows.length) { showStatus('status3', 'No items match the selected filter.', 'error'); return; }
-  const fmt = $('exportFormat')?.value || _exportFormat;
-  if (fmt === 'xlsx') downloadXlsx(rows, meta, stats, options);
-  else downloadCsv(rows, meta, stats, options);
   closeExportModal();
+  const fmt = $('exportFormat')?.value || _exportFormat;
+  if (fmt === 'xlsx') await downloadXlsx(rows, meta, stats, options);
+  else downloadCsv(rows, meta, stats, options);
 }
 
 function downloadCsv(rows, meta, stats, options) {
@@ -1591,58 +1591,113 @@ function downloadCsv(rows, meta, stats, options) {
   showStatus('status3', '✓ CSV exported.', 'success');
 }
 
-function downloadXlsx(rows, meta, stats, options) {
-  if (typeof XLSX === 'undefined') { showStatus('status3', 'Export library not loaded — try refreshing.', 'error'); return; }
-  const wb = XLSX.utils.book_new();
-
-  // ── Sheet 1: Summary ──────────────────────────────────────
-  const s1 = [];
-  // Title row (will be merged A1:B1)
-  s1.push(['CheckGen Export', '']);
-  s1.push(['']);
-
-  // Session info block
-  if (meta.name)     s1.push(['Checklist Name', meta.name]);
-  if (meta.ticketId) s1.push(['Ticket ID',      meta.ticketId]);
-  if (meta.env)      s1.push(['Environment',    meta.env]);
-  s1.push(['Date', meta.date]);
-  if (options.meta && meta.strategy)     s1.push(['Strategy',      meta.strategy]);
-  if (options.meta && meta.outputFormat) s1.push(['Output Format', meta.outputFormat]);
-  if (options.ac && meta.ac)             s1.push(['Acceptance Criteria', meta.ac]);
-
-  s1.push(['']);
-
-  // Results block — track row index of "Results" header for merge
-  const resultsHeaderRow = s1.length;
-  s1.push(['Results', '']);
-
-  if (stats.filter === 'uncompleted') {
-    s1.push(['Total Remaining', stats.total]);
-  } else {
-    s1.push(['Total Test Cases', stats.total]);
-    s1.push(['Passed',           stats.passed]);
-    s1.push(['Failed',           stats.failed]);
-    s1.push(['Blocked',          stats.blocked]);
-    if (stats.filter === 'all') s1.push(['Not Run', stats.notRun]);
-    s1.push(['Pass Rate',        stats.passRate]);
+async function downloadXlsx(rows, meta, stats, options) {
+  // Lazy-load ExcelJS on first use
+  if (typeof ExcelJS === 'undefined') {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Could not load ExcelJS'));
+      document.head.appendChild(s);
+    }).catch(() => { showStatus('status3', 'Export library failed to load — check your connection.', 'error'); return null; });
+    if (typeof ExcelJS === 'undefined') return;
   }
 
-  const ws1 = XLSX.utils.aoa_to_sheet(s1);
-  ws1['!cols'] = [{ wch: 22 }, { wch: 65 }];
-  // Taller title row + results header row for visual separation
-  ws1['!rows'] = Array(s1.length).fill({ hpt: 15 });
-  ws1['!rows'][0] = { hpt: 24 };
-  ws1['!rows'][resultsHeaderRow] = { hpt: 20 };
-  // Merge title (A1:B1) and Results header across both columns
-  ws1['!merges'] = [
-    { s: { r: 0,                c: 0 }, e: { r: 0,                c: 1 } },
-    { s: { r: resultsHeaderRow, c: 0 }, e: { r: resultsHeaderRow, c: 1 } },
-  ];
-  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'CheckGen';
+  wb.created = new Date();
 
-  // ── Sheet 2: Test Cases ───────────────────────────────────
+  // Design tokens (ARGB hex — ExcelJS format)
+  const C = {
+    bg:         'FF080B12',
+    bg2:        'FF0E1320',
+    green:      'FF10B981',
+    white:      'FFFFFFFF',
+    text:       'FFF1F5F9',
+    dim:        'FF94A3B8',
+    muted:      'FF64748B',
+    border:     'FF1E2D3D',
+    passBg:     'FFD1FAE5', passFg:     'FF065F46',
+    failBg:     'FFFEE2E2', failFg:     'FF991B1B',
+    blockedBg:  'FFFEF3C7', blockedFg:  'FF92400E',
+  };
+  const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
+
+  // ── Sheet 1: Summary ────────────────────────────────────────
+
+  // ── Sheet 1: Summary ────────────────────────────────────────
+  const ws1 = wb.addWorksheet('Summary');
+  ws1.columns = [{ width: 24 }, { width: 60 }];
+
+  // Title row
+  ws1.addRow(['CheckGen Export', '']);
+  ws1.mergeCells('A1:B1');
+  ws1.getRow(1).height = 28;
+  const titleCell = ws1.getCell('A1');
+  titleCell.value     = 'CheckGen Export';
+  titleCell.font      = font({ bold: true, size: 14, color: { argb: C.green } });
+  titleCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.bg } };
+  titleCell.alignment = { vertical: 'middle' };
+
+  // Spacer
+  ws1.addRow([]); ws1.lastRow.height = 6;
+
+  // Helper: metadata row
+  const addMeta = (label, value) => {
+    const r = ws1.addRow([label, String(value ?? '')]);
+    r.height = 16;
+    r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
+    r.getCell(2).font = font({ color: { argb: C.text } });
+  };
+
+  if (meta.name)     addMeta('Checklist Name', meta.name);
+  if (meta.ticketId) addMeta('Ticket ID',      meta.ticketId);
+  if (meta.env)      addMeta('Environment',    meta.env);
+  addMeta('Date', meta.date);
+  if (options.meta && meta.strategy)     addMeta('Strategy',      meta.strategy);
+  if (options.meta && meta.outputFormat) addMeta('Output Format', meta.outputFormat);
+  if (options.ac && meta.ac)             addMeta('Acceptance Criteria', meta.ac);
+
+  // Spacer
+  ws1.addRow([]); ws1.lastRow.height = 10;
+
+  // Results section header
+  const rIdx = ws1.rowCount + 1;
+  ws1.addRow(['Results', '']);
+  ws1.mergeCells(`A${rIdx}:B${rIdx}`);
+  ws1.getRow(rIdx).height = 22;
+  const rCell = ws1.getCell(`A${rIdx}`);
+  rCell.value     = 'Results';
+  rCell.font      = font({ bold: true, size: 11, color: { argb: C.white } });
+  rCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.bg2 } };
+  rCell.alignment = { vertical: 'middle' };
+  rCell.border    = { bottom: { style: 'medium', color: { argb: C.green } } };
+
+  // Helper: stat row with optional colored value
+  const addStat = (label, value, valColor) => {
+    const r = ws1.addRow([label, value]);
+    r.height = 16;
+    r.getCell(1).font = font({ color: { argb: C.dim } });
+    r.getCell(2).font = font({ bold: true, color: { argb: valColor || C.text } });
+  };
+
+  if (stats.filter === 'uncompleted') {
+    addStat('Total Remaining', stats.total);
+  } else {
+    addStat('Total Test Cases', stats.total);
+    addStat('Passed',           stats.passed,  C.passFg);
+    addStat('Failed',           stats.failed,  C.failFg);
+    addStat('Blocked',          stats.blocked, C.blockedFg);
+    if (stats.filter === 'all') addStat('Not Run', stats.notRun);
+    addStat('Pass Rate', stats.passRate, C.green);
+  }
+
+  // ── Sheet 2: Test Cases ─────────────────────────────────────
+  const ws2 = wb.addWorksheet('Test Cases');
   const hasNotes = rows.some(i => i.note);
-  // Column order: ID → Status first (most scanned column) → Area → Test Case → Expected → Priority → Time → Notes
+
+  // Columns: ID, Status first for fast scanning, then the rest
   const headers = ['ID', 'Status'];
   if (options.areas) headers.push('Testing Area');
   headers.push('Test Case');
@@ -1650,7 +1705,36 @@ function downloadXlsx(rows, meta, stats, options) {
   headers.push('Priority', 'Est. Time');
   if (hasNotes) headers.push('Notes');
 
-  const s2 = [headers];
+  const colWidths = [{ width: 8 }, { width: 12 }];
+  if (options.areas) colWidths.push({ width: 20 });
+  colWidths.push({ width: 54 });
+  if (meta.isDetailed) colWidths.push({ width: 44 });
+  colWidths.push({ width: 10 }, { width: 10 });
+  if (hasNotes) colWidths.push({ width: 32 });
+  ws2.columns = colWidths;
+
+  // Header row
+  const hdrRow = ws2.addRow(headers);
+  hdrRow.height = 20;
+  hdrRow.eachCell(cell => {
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.bg } };
+    cell.font      = font({ bold: true, color: { argb: C.white } });
+    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+    cell.border    = { bottom: { style: 'medium', color: { argb: C.green } } };
+  });
+
+  // Freeze header + auto-filter
+  ws2.views = [{ state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'A2' }];
+  ws2.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+
+  // Status color map (Excel light-mode pastels for readability)
+  const statusMap = {
+    'Pass':    { bg: C.passBg,    fg: C.passFg },
+    'Fail':    { bg: C.failBg,    fg: C.failFg },
+    'Blocked': { bg: C.blockedBg, fg: C.blockedFg },
+  };
+
+  // Data rows
   rows.forEach((item, idx) => {
     const id       = `TC-${String(idx + 1).padStart(3, '0')}`;
     const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
@@ -1658,40 +1742,42 @@ function downloadXlsx(rows, meta, stats, options) {
     const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
     const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : 'Not Run';
     const time     = item.time ? `${item.time}m` : '';
-    const row = [id, status];
-    if (options.areas) row.push(item.section || '');
-    row.push(step);
-    if (meta.isDetailed) row.push(expected || '');
-    row.push(item.priority || '', time);
-    if (hasNotes) row.push(item.note || '');
-    s2.push(row);
+
+    const rowData = [id, status];
+    if (options.areas) rowData.push(item.section || '');
+    rowData.push(step);
+    if (meta.isDetailed) rowData.push(expected || '');
+    rowData.push(item.priority || '', time);
+    if (hasNotes) rowData.push(item.note || '');
+
+    const dataRow = ws2.addRow(rowData);
+    dataRow.height = 15;
+    dataRow.eachCell({ includeEmpty: true }, cell => {
+      cell.font      = font({ color: { argb: C.muted } });
+      cell.alignment = { vertical: 'middle', wrapText: false };
+      cell.border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+    });
+
+    // Color-code the Status cell
+    const sc = dataRow.getCell(2);
+    const sm = statusMap[status];
+    if (sm) {
+      sc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: sm.bg } };
+      sc.font = font({ bold: true, color: { argb: sm.fg } });
+    } else {
+      sc.font = font({ color: { argb: C.muted } }); // Not Run — just dimmed
+    }
+    sc.alignment = { vertical: 'middle', horizontal: 'center' };
   });
 
-  const ws2 = XLSX.utils.aoa_to_sheet(s2);
-
-  // Column widths: ID, Status, [Area], Test Case, [Expected], Priority, Est. Time, [Notes]
-  const cols = [{ wch: 8 }, { wch: 12 }];
-  if (options.areas) cols.push({ wch: 20 });
-  cols.push({ wch: 52 });
-  if (meta.isDetailed) cols.push({ wch: 44 });
-  cols.push({ wch: 10 }, { wch: 10 });
-  if (hasNotes) cols.push({ wch: 32 });
-  ws2['!cols'] = cols;
-
-  // Taller header row
-  ws2['!rows'] = [{ hpt: 18 }];
-
-  // Freeze the header row so it stays visible when scrolling
-  ws2['!freeze'] = { xSplit: 0, ySplit: 1 };
-
-  // Auto-filter on all header columns — lets users filter by Status, Area, Priority in Excel/Sheets
-  const lastCol = XLSX.utils.encode_col(headers.length - 1);
-  ws2['!autofilter'] = { ref: `A1:${lastCol}1` };
-
-  XLSX.utils.book_append_sheet(wb, ws2, 'Test Cases');
-
-  const fname = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  XLSX.writeFile(wb, fname + '.xlsx');
+  // Write + download
+  const fname  = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob   = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url    = URL.createObjectURL(blob);
+  const a      = Object.assign(document.createElement('a'), { href: url, download: fname + '.xlsx' });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
   showStatus('status3', '✓ XLSX exported.', 'success');
 }
 
