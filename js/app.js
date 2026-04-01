@@ -1442,14 +1442,24 @@ function renderChecklist() {
 /* ── Export CSV ─────────────────────────────────────────── */
 /* ── Export modal ───────────────────────────────────────── */
 let _exportFormat = 'xlsx';
+let _exportType   = 'workbook';
 
 function openExportModal() {
   if (!currentChecklist.length) { showStatus('status3', 'Generate a checklist first.', 'error'); return; }
+  setExportType('workbook');
   $('exportModal').style.display = 'flex';
 }
 
 function closeExportModal() {
   $('exportModal').style.display = 'none';
+}
+
+function setExportType(type) {
+  _exportType = type;
+  $('typeWorkbook').classList.toggle('active', type === 'workbook');
+  $('typeMarkdown').classList.toggle('active', type === 'markdown');
+  $('exportWorkbookPanel').style.display = type === 'workbook' ? '' : 'none';
+  $('exportMarkdownPanel').style.display = type === 'markdown' ? '' : 'none';
 }
 
 function setExportFormat(fmt) {
@@ -1654,6 +1664,84 @@ function downloadXlsx(rows, meta, stats, options) {
   const fname = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   XLSX.writeFile(wb, fname + '.xlsx');
   showStatus('status3', '✓ XLSX exported.', 'success');
+}
+
+/* ── Markdown export ────────────────────────────────────── */
+function _buildMarkdown() {
+  const filter = $('exportFilterMd')?.value || 'all';
+
+  let rows = currentChecklist.slice();
+  if (filter === 'uncompleted') rows = rows.filter(i => !i.outcome);
+  if (filter === 'pass')        rows = rows.filter(i => i.outcome === 'pass');
+  if (filter === 'fail')        rows = rows.filter(i => i.outcome === 'fail');
+  if (filter === 'blocked')     rows = rows.filter(i => i.outcome === 'blocked');
+
+  if (!rows.length) return '';
+
+  const isDetailed  = $('detailLevel')?.value !== 'concise';
+  const name        = $('checklistName')?.value.trim() || 'Checklist';
+  const ticketId    = $('ticketId')?.value.trim() || '';
+  const date        = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive' };
+  const strategy    = strategyMap[$('focusStyle')?.value] || '';
+
+  // Group into sections, preserving order
+  const sectionOrder = [];
+  const sections = {};
+  rows.forEach(item => {
+    const sec = item.section || 'General';
+    if (!sections[sec]) { sections[sec] = []; sectionOrder.push(sec); }
+    sections[sec].push(item);
+  });
+
+  let md = `# ${name}\n`;
+  const metaParts = [];
+  if (ticketId) metaParts.push(`**Ticket:** ${ticketId}`);
+  metaParts.push(`**Date:** ${date}`);
+  if (strategy) metaParts.push(`**Strategy:** ${strategy}`);
+  md += metaParts.join(' · ') + '\n\n---\n\n';
+
+  let tcCounter = 1;
+  sectionOrder.forEach(sec => {
+    md += `## ${sec}\n\n`;
+    sections[sec].forEach(item => {
+      const id      = `TC-${String(tcCounter++).padStart(3, '0')}`;
+      const checked = item.outcome === 'pass' ? 'x' : ' ';
+      const parts   = isDetailed ? item.text.split(' → ') : [item.text];
+      const step    = (parts[0] || item.text || '').trim();
+      const expect  = isDetailed && parts.length > 1 ? parts.slice(1).join(' → ').trim() : null;
+      const line    = expect ? `${step} → ${expect}` : step;
+      md += `- [${checked}] ${id} — ${line}\n`;
+    });
+    md += '\n';
+  });
+
+  return md.trim();
+}
+
+function copyMarkdown() {
+  const md = _buildMarkdown();
+  if (!md) { showStatus('status3', 'No items to export.', 'error'); return; }
+  navigator.clipboard?.writeText(md).then(() => {
+    closeExportModal();
+    showStatus('status3', '✓ Copied to clipboard.', 'success');
+  }).catch(() => {
+    showStatus('status3', 'Could not access clipboard — try downloading instead.', 'error');
+  });
+}
+
+function downloadMarkdown() {
+  const md = _buildMarkdown();
+  if (!md) { showStatus('status3', 'No items to export.', 'error'); return; }
+  const name  = $('checklistName')?.value.trim() || 'checkgen';
+  const fname = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([md], { type: 'text/markdown' })),
+    download: fname + '.md',
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  closeExportModal();
+  showStatus('status3', '✓ Markdown downloaded.', 'success');
 }
 
 /* ── Shared sessions ────────────────────────────────────── */
