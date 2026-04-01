@@ -1151,7 +1151,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .export-modal-label { font-size: clamp(11px,.78vw,12px); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin-bottom: var(--sp-2); display: flex; align-items: center; gap: var(--sp-1); }
 .export-opt-row { display: flex; flex-direction: column; gap: var(--sp-2); }
 .export-opt-row label { display: flex; align-items: center; gap: var(--sp-2); font-size: clamp(13px,.88vw,14px); color: var(--dim); cursor: pointer; }
-.export-opt-row input[type=checkbox] { accent-color: var(--green); width: 14px; height: 14px; flex-shrink: 0; }
+.export-opt-item { display: flex; align-items: center; gap: var(--sp-2); font-size: clamp(12px,.82vw,13px); color: var(--dim); cursor: pointer; }
+.export-opt-row input[type=checkbox],
+.export-opt-item input[type=checkbox] { accent-color: var(--green); width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ── Feature tiles on landing ── */
 .feature-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--sp-4); margin-top: var(--sp-8); }

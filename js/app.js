@@ -1456,8 +1456,8 @@ function closeExportModal() {
 
 function setExportType(type) {
   _exportType = type;
-  const sel = $('exportTypeSelect');
-  if (sel && sel.value !== type) sel.value = type;
+  $('typeWorkbook').classList.toggle('active', type === 'workbook');
+  $('typeMarkdown').classList.toggle('active', type === 'markdown');
   $('exportWorkbookPanel').style.display = type === 'workbook' ? '' : 'none';
   $('exportMarkdownPanel').style.display = type === 'markdown' ? '' : 'none';
 }

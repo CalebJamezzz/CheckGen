@@ -399,37 +399,39 @@ Rejected reports require a reason to be entered"></textarea>
 
 <!-- Export modal v2.2 -->
 <div id="exportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--bg);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:700px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto">
+  <div style="background:var(--bg);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:800px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-6)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5)">
       <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.35rem);font-weight:600;color:var(--text);margin:0">Export Checklist</h2>
       <button onclick="closeExportModal()" type="button" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:var(--r-sm);transition:color .15s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">✕</button>
     </div>
 
-    <!-- Export type dropdown -->
-    <div style="margin-bottom:var(--sp-5)">
-      <div class="export-modal-label">Export As</div>
-      <select id="exportTypeSelect" style="width:100%" onchange="setExportType(this.value)">
-        <option value="workbook">Workbook — Download as XLSX or CSV</option>
-        <option value="markdown">Markdown — Copy or download as .md</option>
-      </select>
+    <!-- Export type — s1-mode-btn pill toggle -->
+    <div class="s1-mode-toggle" style="margin-bottom:var(--sp-6)">
+      <button class="s1-mode-btn active" id="typeWorkbook" onclick="setExportType('workbook')" type="button">Workbook</button>
+      <button class="s1-mode-btn"        id="typeMarkdown" onclick="setExportType('markdown')" type="button">Markdown</button>
     </div>
 
     <!-- ── Workbook panel ─────────────────────────────── -->
     <div id="exportWorkbookPanel">
 
-      <!-- Format: XLSX / CSV pill toggle -->
-      <div style="margin-bottom:var(--sp-4)">
-        <div class="export-modal-label">Format</div>
-        <div class="export-fmt-row">
-          <button id="fmtXlsx" class="export-fmt-btn active" onclick="setExportFormat('xlsx')" type="button">XLSX<span class="fmt-sub">Recommended · 2 sheets</span></button>
-          <button id="fmtCsv"  class="export-fmt-btn"        onclick="setExportFormat('csv')"  type="button">CSV<span  class="fmt-sub">Flat file · single sheet</span></button>
-        </div>
-      </div>
+      <!-- Format + Filter + Sort in one row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-4)">
 
-      <!-- Filter + Sort in a row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+        <!-- Format with info tooltip -->
+        <div>
+          <div class="export-modal-label">
+            Format
+            <span class="info-icon">i<span class="info-tooltip" style="min-width:220px"><strong>XLSX</strong> — Two sheets: a stats summary + all test cases. Best for sharing and reporting.<br><br><strong>CSV</strong> — Single flat file. Good for importing into other tools.</span></span>
+          </div>
+          <div class="export-fmt-row">
+            <button id="fmtXlsx" class="export-fmt-btn active" onclick="setExportFormat('xlsx')" type="button">XLSX<span class="fmt-sub">Recommended</span></button>
+            <button id="fmtCsv"  class="export-fmt-btn"        onclick="setExportFormat('csv')"  type="button">CSV<span  class="fmt-sub">Flat file</span></button>
+          </div>
+        </div>
+
+        <!-- Filter -->
         <div>
           <div class="export-modal-label">Filter</div>
           <select id="exportFilter" style="width:100%">
@@ -441,6 +443,8 @@ Rejected reports require a reason to be entered"></textarea>
             <option value="blocked">Blocked only</option>
           </select>
         </div>
+
+        <!-- Sort -->
         <div>
           <div class="export-modal-label">Sort By</div>
           <select id="exportSort" style="width:100%">
@@ -449,19 +453,23 @@ Rejected reports require a reason to be entered"></textarea>
             <option value="duration">Duration</option>
           </select>
         </div>
+
       </div>
 
       <!-- Include options -->
       <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg2);border-radius:var(--r-md);border:1px solid var(--border)">
         <div class="export-modal-label" style="margin-bottom:var(--sp-3)">Include in export</div>
-        <div class="export-opt-row">
-          <label><input type="checkbox" id="optAreas" checked> Testing area labels</label>
-          <label><input type="checkbox" id="optMeta"  checked> Strategy &amp; output format</label>
-          <label><input type="checkbox" id="optAc"> AC / User Story</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2)">
+          <label class="export-opt-item"><input type="checkbox" id="optAreas" checked> Testing area labels</label>
+          <label class="export-opt-item"><input type="checkbox" id="optMeta"  checked> Strategy &amp; output format</label>
+          <label class="export-opt-item"><input type="checkbox" id="optAc"> AC / User Story</label>
         </div>
       </div>
 
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="triggerExport()" type="button">↓ Download</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;gap:var(--sp-2);padding:var(--sp-3)" onclick="triggerExport()" type="button">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M8 10l-3-3M8 10l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 13h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Download
+      </button>
     </div>
 
     <!-- ── Markdown panel ────────────────────────────── -->
@@ -479,14 +487,20 @@ Rejected reports require a reason to be entered"></textarea>
         </select>
       </div>
 
-      <div style="display:flex;gap:var(--sp-3)">
-        <button class="btn btn-primary" style="flex:1;justify-content:center;padding:var(--sp-3)" onclick="copyMarkdown()" type="button">⎘ Copy to Clipboard</button>
-        <button class="btn btn-outline" style="flex:1;justify-content:center;padding:var(--sp-3)" onclick="downloadMarkdown()" type="button">↓ Download .md</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)">
+        <button class="btn btn-primary" style="justify-content:center;gap:10px;padding:var(--sp-4)" onclick="copyMarkdown()" type="button">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="5" y="2" width="10" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M3 5H2.5A1.5 1.5 0 001 6.5v9A1.5 1.5 0 002.5 17h8A1.5 1.5 0 0012 15.5V15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Copy to Clipboard
+        </button>
+        <button class="btn btn-outline" style="justify-content:center;gap:10px;padding:var(--sp-4)" onclick="downloadMarkdown()" type="button">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v10M9 12l-3.5-3.5M9 12l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Download .md
+        </button>
       </div>
     </div>
 
     <!-- Cancel -->
-    <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6;margin-top:var(--sp-3)" onclick="closeExportModal()" type="button">Cancel</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.5;margin-top:var(--sp-3)" onclick="closeExportModal()" type="button">Cancel</button>
 
   </div>
 </div>
