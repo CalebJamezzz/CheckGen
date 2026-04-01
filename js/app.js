@@ -1645,31 +1645,47 @@ async function downloadXlsx(rows, meta, stats, options) {
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
 
   // ── Sheet 1: Summary ────────────────────────────────────────
-
-  // ── Sheet 1: Summary ────────────────────────────────────────
   const ws1 = wb.addWorksheet('Summary');
-  ws1.columns = [{ width: 24 }, { width: 60 }];
+  // Set column widths explicitly — avoids ExcelJS's columns setter creating phantom column entries
+  ws1.getColumn(1).width = 24;
+  ws1.getColumn(2).width = 60;
 
-  // Title row
+  // Title row — dark header to match Test Cases sheet
   ws1.addRow(['CheckGen Export', '']);
   ws1.mergeCells('A1:B1');
-  ws1.getRow(1).height = 26;
+  ws1.getRow(1).height = 28;
   const titleCell = ws1.getCell('A1');
   titleCell.value     = 'CheckGen Export';
-  titleCell.font      = font({ bold: true, size: 13, color: { argb: C.sectionFg } });
-  titleCell.alignment = { vertical: 'middle' };
+  titleCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+  titleCell.font      = font({ bold: true, size: 13, color: { argb: C.headerFg } });
+  titleCell.alignment = { vertical: 'middle', indent: 1 };
   titleCell.border    = { bottom: { style: 'medium', color: { argb: C.accent } } };
+  // Apply fill to B1 too so the merged cell looks solid across the full width
+  ws1.getCell('B1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
 
   // Spacer
   ws1.addRow([]); ws1.lastRow.height = 6;
 
+  // Zebra counter for Summary rows (shared across meta + stat rows)
+  let s1RowIdx = 0;
+  const s1Fill = () => {
+    const bg = s1RowIdx % 2 === 0 ? C.white : C.rowAlt;
+    s1RowIdx++;
+    return { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+  };
+
   // Helper: metadata row
   const addMeta = (label, value) => {
-    const r = ws1.addRow([label, String(value ?? '')]);
-    r.height = 16;
+    const r   = ws1.addRow([label, String(value ?? '')]);
+    const f   = s1Fill();
+    r.height  = 16;
+    r.getCell(1).fill = f;
     r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
+    r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(2).fill = f;
     r.getCell(2).font = font();
     r.getCell(2).alignment = { wrapText: true };
+    r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
   };
 
   if (meta.name)     addMeta('Checklist Name', meta.name);
@@ -1681,10 +1697,15 @@ async function downloadXlsx(rows, meta, stats, options) {
   if (options.ac) {
     const addLongMeta = (label, value) => {
       if (!value) return;
-      const r = ws1.addRow([label, value]);
+      const r  = ws1.addRow([label, value]);
+      const f  = s1Fill();
+      r.getCell(1).fill = f;
       r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
+      r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+      r.getCell(2).fill = f;
       r.getCell(2).font = font();
       r.getCell(2).alignment = { wrapText: true };
+      r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
       r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 80) * 15));
     };
     addLongMeta('Ticket / User Story', meta.ticket);
@@ -1705,13 +1726,20 @@ async function downloadXlsx(rows, meta, stats, options) {
   rCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
   rCell.alignment = { vertical: 'middle' };
   rCell.border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+  ws1.getCell(`B${rIdx}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+  s1RowIdx = 0; // reset stripe counter for stats section
 
   // Helper: stat row with optional colored value
   const addStat = (label, value, valColor) => {
-    const r = ws1.addRow([label, value]);
+    const r  = ws1.addRow([label, value]);
+    const f  = s1Fill();
     r.height = 16;
-    r.getCell(1).font = font({ color: { argb: C.dim } });
-    r.getCell(2).font = font({ bold: true, color: { argb: valColor || C.text } });
+    r.getCell(1).fill   = f;
+    r.getCell(1).font   = font({ color: { argb: C.dim } });
+    r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(2).fill   = f;
+    r.getCell(2).font   = font({ bold: true, color: { argb: valColor || C.text } });
+    r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
   };
 
   if (stats.filter === 'uncompleted') {
@@ -1737,13 +1765,14 @@ async function downloadXlsx(rows, meta, stats, options) {
   headers.push('Priority', 'Est. Time');
   if (hasNotes) headers.push('Notes');
 
-  const colWidths = [{ width: 8 }, { width: 12 }];
-  if (options.areas) colWidths.push({ width: 20 });
-  colWidths.push({ width: 54 });
-  if (meta.isDetailed) colWidths.push({ width: 44 });
-  colWidths.push({ width: 10 }, { width: 10 });
-  if (hasNotes) colWidths.push({ width: 32 });
-  ws2.columns = colWidths;
+  // Set column widths explicitly to avoid phantom column entries
+  const colWidthVals = [8, 12];
+  if (options.areas) colWidthVals.push(20);
+  colWidthVals.push(54);
+  if (meta.isDetailed) colWidthVals.push(44);
+  colWidthVals.push(10, 10);
+  if (hasNotes) colWidthVals.push(32);
+  colWidthVals.forEach((w, i) => { ws2.getColumn(i + 1).width = w; });
 
   // Header row
   const hdrRow = ws2.addRow(headers);
