@@ -399,7 +399,7 @@ Rejected reports require a reason to be entered"></textarea>
 
 <!-- Export modal v2.2 -->
 <div id="exportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--bg);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:800px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.8);max-height:90vh;overflow-y:auto">
+  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:680px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-5)">
@@ -416,35 +416,18 @@ Rejected reports require a reason to be entered"></textarea>
     <!-- ── Workbook panel ─────────────────────────────── -->
     <div id="exportWorkbookPanel">
 
-      <!-- Format + Filter + Sort in one row -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-4)">
-
-        <!-- Format with info tooltip -->
+      <!-- Format + Sort (2-col) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-3)">
         <div>
           <div class="export-modal-label">
             Format
-            <span class="info-icon">i<span class="info-tooltip" style="min-width:220px"><strong>XLSX</strong> — Two sheets: a stats summary + all test cases. Best for sharing and reporting.<br><br><strong>CSV</strong> — Single flat file. Good for importing into other tools.</span></span>
+            <span class="info-icon tooltip-below">i<span class="info-tooltip" style="min-width:240px"><strong>XLSX</strong> — Two sheets: a results summary and your full test case list. Best for sharing and reporting.<br><br><strong>CSV</strong> — Single flat file. Good for importing into other tools or scripts.</span></span>
           </div>
-          <div class="export-fmt-row">
-            <button id="fmtXlsx" class="export-fmt-btn active" onclick="setExportFormat('xlsx')" type="button">XLSX<span class="fmt-sub">Recommended</span></button>
-            <button id="fmtCsv"  class="export-fmt-btn"        onclick="setExportFormat('csv')"  type="button">CSV<span  class="fmt-sub">Flat file</span></button>
-          </div>
-        </div>
-
-        <!-- Filter -->
-        <div>
-          <div class="export-modal-label">Filter</div>
-          <select id="exportFilter" style="width:100%">
-            <option value="all">All items</option>
-            <option value="completed">Completed only</option>
-            <option value="uncompleted">Uncompleted only</option>
-            <option value="pass">Passed only</option>
-            <option value="fail">Failed only</option>
-            <option value="blocked">Blocked only</option>
+          <select id="exportFormat" style="width:100%" onchange="setExportFormat(this.value)">
+            <option value="xlsx">XLSX — Summary + test cases</option>
+            <option value="csv">CSV — Flat file, import-friendly</option>
           </select>
         </div>
-
-        <!-- Sort -->
         <div>
           <div class="export-modal-label">Sort By</div>
           <select id="exportSort" style="width:100%">
@@ -453,11 +436,23 @@ Rejected reports require a reason to be entered"></textarea>
             <option value="duration">Duration</option>
           </select>
         </div>
+      </div>
 
+      <!-- Filter (full-width) -->
+      <div style="margin-bottom:var(--sp-4)">
+        <div class="export-modal-label">Filter</div>
+        <select id="exportFilter" style="width:100%">
+          <option value="all">All items</option>
+          <option value="completed">Completed only</option>
+          <option value="uncompleted">Uncompleted only</option>
+          <option value="pass">Passed only</option>
+          <option value="fail">Failed only</option>
+          <option value="blocked">Blocked only</option>
+        </select>
       </div>
 
       <!-- Include options -->
-      <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg2);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div style="margin-bottom:var(--sp-5);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
         <div class="export-modal-label" style="margin-bottom:var(--sp-3)">Include in export</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2)">
           <label class="export-opt-item"><input type="checkbox" id="optAreas" checked> Testing area labels</label>
@@ -500,7 +495,7 @@ Rejected reports require a reason to be entered"></textarea>
     </div>
 
     <!-- Cancel -->
-    <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.5;margin-top:var(--sp-3)" onclick="closeExportModal()" type="button">Cancel</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);margin-top:var(--sp-3)" onclick="closeExportModal()" type="button">Cancel</button>
 
   </div>
 </div>

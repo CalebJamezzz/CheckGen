@@ -1464,8 +1464,6 @@ function setExportType(type) {
 
 function setExportFormat(fmt) {
   _exportFormat = fmt;
-  $('fmtXlsx').classList.toggle('active', fmt === 'xlsx');
-  $('fmtCsv').classList.toggle('active', fmt === 'csv');
 }
 
 function _buildExportPayload() {
@@ -1522,7 +1520,8 @@ function _buildExportPayload() {
 function triggerExport() {
   const { rows, meta, stats, options } = _buildExportPayload();
   if (!rows.length) { showStatus('status3', 'No items match the selected filter.', 'error'); return; }
-  if (_exportFormat === 'xlsx') downloadXlsx(rows, meta, stats, options);
+  const fmt = $('exportFormat')?.value || _exportFormat;
+  if (fmt === 'xlsx') downloadXlsx(rows, meta, stats, options);
   else downloadCsv(rows, meta, stats, options);
   closeExportModal();
 }
@@ -2070,8 +2069,15 @@ function initLeaveGuard() {
     // Only intercept internal nav links (not buttons in the checklist itself)
     const isNavLink = link.closest('#appNav') !== null || link.closest('.nav-link') !== null;
     if (!isNavLink) return;
-    // Allow /app/ links — they're inside the tool
-    if (href === '/app/' || href === '/app/index.html') return;
+    // For /app/ links: if an active session exists, end it in-place rather than
+    // doing a full page reload (which would restore the session from localStorage).
+    if (href === '/app/' || href === '/app/index.html') {
+      if (hasActiveSession()) {
+        e.preventDefault();
+        endSession();
+      }
+      return;
+    }
     e.preventDefault();
     showLeaveModal(href);
   });
@@ -2207,6 +2213,7 @@ function resumeLastSession() {
   goTo(3);
   renderChecklist(); updateProgress(); updateTimeSummary();
   $('exportBar').style.display = '';
+  saveSession(); // persist to localStorage so a page refresh restores correctly
 }
 
 

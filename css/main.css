@@ -428,6 +428,13 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 .info-icon:hover { background: rgba(255,255,255,.16); color: rgba(255,255,255,.8); }
 .info-icon .info-tooltip { display: none; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); min-width: 240px; max-width: 320px; background: #1a2238; border: 1px solid rgba(255,255,255,.12); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3); font-size: clamp(11px,.7vw,12px); color: rgba(255,255,255,.7); font-family: var(--font-body, inherit); font-weight: 400; line-height: 1.5; letter-spacing: 0; text-transform: none; white-space: normal; z-index: 200; box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: none; }
 .info-icon:hover .info-tooltip { display: block; }
+/* Variant: opens downward + left-anchored — use inside scrollable modals */
+.info-icon.tooltip-below .info-tooltip {
+  bottom: auto;
+  top: calc(100% + 8px);
+  left: 0;
+  transform: none;
+}
 
 /* Add-ons and Optional accordions */
 .s2-accordion { border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; background: linear-gradient(160deg, rgba(14,19,32,.98) 0%, rgba(11,16,28,.99) 100%); }
@@ -1115,38 +1122,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); }
 /* ── Export modal ── */
 /* Export modal — v2.2 */
 
-.export-fmt-row {
-  display: flex;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 4px;
-  gap: 4px;
-}
-.export-fmt-btn {
-  flex: 1;
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: calc(var(--r-lg) - 4px);
-  border: 1px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: clamp(11px,.78vw,12px);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  transition: all .18s ease;
-  text-align: center;
-}
-.export-fmt-btn:hover { color: var(--dim); }
-.export-fmt-btn.active {
-  background: rgba(16,185,129,.08);
-  border-color: rgba(16,185,129,.3);
-  color: var(--green);
-  box-shadow: var(--glow-green);
-}
-.export-fmt-btn .fmt-sub { font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 1px; text-transform: none; letter-spacing: .02em; }
-.export-fmt-btn.active .fmt-sub { color: rgba(16,185,129,.55); }
 
 .export-modal-label { font-size: clamp(11px,.78vw,12px); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin-bottom: var(--sp-2); display: flex; align-items: center; gap: var(--sp-1); }
 .export-opt-row { display: flex; flex-direction: column; gap: var(--sp-2); }
