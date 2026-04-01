@@ -312,12 +312,7 @@ Rejected reports require a reason to be entered"></textarea>
         <div id="checklistWrap" class="empty">Generate a checklist to see grouped, AI-generated test steps here.</div>
 
         <div class="export-bar" id="exportBar" style="display:none">
-          <select id="exportCsvMode2" style="width:auto;padding:8px 12px">
-            <option value="all" selected>Export all items</option>
-            <option value="open">Export unchecked only</option>
-            <option value="done">Export actioned only</option>
-          </select>
-          <button class="btn btn-outline" onclick="downloadCsv()">↓ Export CSV</button>
+          <button class="btn btn-outline" onclick="openExportModal()">↓ Export</button>
         </div>
       </div>
       <div class="status" id="status3"></div>
@@ -334,6 +329,7 @@ Rejected reports require a reason to be entered"></textarea>
   </main>
 </div><!-- end app-shell -->
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/js/supabase.js"></script>
 <script src="/js/auth.js"></script>
@@ -393,12 +389,72 @@ Rejected reports require a reason to be entered"></textarea>
     </div>
     <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="completeAndEndSession()">✓ Mark Complete</button>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="downloadCsv();closeCompleteModal()">Export Results</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="closeCompleteModal();openExportModal()">Export Results</button>
       <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="closeCompleteModal()">Keep Reviewing</button>
     </div>
   </div>
 </div>
 
 <div class="app-toast" id="appToast"></div>
+
+<!-- Export modal -->
+<div id="exportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border-md);border-radius:16px;padding:var(--sp-8);max-width:460px;width:calc(100% - 32px);box-shadow:0 32px 80px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+
+    <h2 style="font-family:var(--font-display);font-size:clamp(1.1rem,1.4vw,1.35rem);font-weight:600;color:var(--text);margin:0 0 var(--sp-6);text-align:center">Export Checklist</h2>
+
+    <!-- Format -->
+    <div style="margin-bottom:var(--sp-5)">
+      <div class="export-modal-label">
+        Format
+        <span class="info-icon">i<span class="info-tooltip" style="left:0;right:auto;min-width:240px"><strong>XLSX</strong> — Two sheets: a summary with stats, and your test cases. Best for sharing and reporting.<br><br><strong>CSV</strong> — Single flat file. Better for importing into other tools.</span></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)">
+        <button id="fmtXlsx" class="export-fmt-btn active" onclick="setExportFormat('xlsx')">XLSX<span class="fmt-sub">Recommended</span></button>
+        <button id="fmtCsv" class="export-fmt-btn" onclick="setExportFormat('csv')">CSV<span class="fmt-sub">Flat file</span></button>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div style="margin-bottom:var(--sp-4)">
+      <div class="export-modal-label">Filter</div>
+      <select id="exportFilter" style="width:100%">
+        <option value="all">All items</option>
+        <option value="completed">Completed only</option>
+        <option value="uncompleted">Uncompleted only</option>
+        <option value="pass">Passed only</option>
+        <option value="fail">Failed only</option>
+        <option value="blocked">Blocked only</option>
+      </select>
+    </div>
+
+    <!-- Sort -->
+    <div style="margin-bottom:var(--sp-5)">
+      <div class="export-modal-label">Sort by</div>
+      <select id="exportSort" style="width:100%">
+        <option value="area">Testing Area</option>
+        <option value="priority">Priority</option>
+        <option value="duration">Duration</option>
+      </select>
+    </div>
+
+    <!-- Options -->
+    <div style="margin-bottom:var(--sp-6);padding:var(--sp-4);background:var(--bg3);border-radius:var(--r-md);border:1px solid var(--border)">
+      <div class="export-modal-label" style="margin-bottom:var(--sp-3)">Include in export</div>
+      <div class="export-opt-row">
+        <label><input type="checkbox" id="optAreas" checked> Testing area labels</label>
+        <label><input type="checkbox" id="optMeta" checked> Strategy &amp; output format</label>
+        <label><input type="checkbox" id="optAc"> AC / User Story</label>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;flex-direction:column;gap:var(--sp-3)">
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:var(--sp-3)" onclick="triggerExport()">↓ Export</button>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:var(--sp-3);opacity:.6" onclick="closeExportModal()">Cancel</button>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>

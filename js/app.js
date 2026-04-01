@@ -1440,32 +1440,220 @@ function renderChecklist() {
 }
 
 /* ── Export CSV ─────────────────────────────────────────── */
-function downloadCsv() {
+/* ── Export modal ───────────────────────────────────────── */
+let _exportFormat = 'xlsx';
+
+function openExportModal() {
   if (!currentChecklist.length) { showStatus('status3', 'Generate a checklist first.', 'error'); return; }
-  const mode    = $('exportCsvMode2').value;
-  const tid     = $('ticketId').value.trim();
-  const env     = $('envBranch').value.trim();
-  const name    = $('checklistName').value.trim();
+  $('exportModal').style.display = 'flex';
+}
+
+function closeExportModal() {
+  $('exportModal').style.display = 'none';
+}
+
+function setExportFormat(fmt) {
+  _exportFormat = fmt;
+  $('fmtXlsx').classList.toggle('active', fmt === 'xlsx');
+  $('fmtCsv').classList.toggle('active', fmt === 'csv');
+}
+
+function _buildExportPayload() {
+  const filter = $('exportFilter').value;
+  const sort   = $('exportSort').value;
+
+  // Filter rows
   let rows = currentChecklist.slice();
-  if (mode === 'open') rows = rows.filter(i => !i.outcome);
-  if (mode === 'done') rows = rows.filter(i => i.outcome);
-  const e   = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : `${s}`; };
-  const meta = [
-    ...(tid  ? [`# Ticket: ${tid}`]      : []),
-    ...(name ? [`# Checklist: ${name}`]  : []),
-    ...(env  ? [`# Environment: ${env}`] : []),
-    ...(tid || name || env ? [''] : []),
-  ].join('\n');
-  const hdr = ['outcome','section','priority','type','time','item','note'];
-  const csv = meta + [hdr, ...rows.map(i => [i.outcome || '', i.section, i.priority, i.type, i.time, i.text, i.note || ''])]
-    .map(r => r.map(e).join(',')).join('\n');
-  const fname = (name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (filter === 'completed')   rows = rows.filter(i => i.outcome);
+  if (filter === 'uncompleted') rows = rows.filter(i => !i.outcome);
+  if (filter === 'pass')        rows = rows.filter(i => i.outcome === 'pass');
+  if (filter === 'fail')        rows = rows.filter(i => i.outcome === 'fail');
+  if (filter === 'blocked')     rows = rows.filter(i => i.outcome === 'blocked');
+
+  // Sort rows
+  const pri = { High: 1, Medium: 2, Low: 3 };
+  if (sort === 'area')     rows.sort((a, b) => (a.section || '').localeCompare(b.section || ''));
+  if (sort === 'priority') rows.sort((a, b) => (pri[a.priority] || 9) - (pri[b.priority] || 9));
+  if (sort === 'duration') rows.sort((a, b) => (parseFloat(a.time) || 0) - (parseFloat(b.time) || 0));
+
+  // Metadata
+  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive' };
+  const formatMap   = { expanded: 'Detailed', concise: 'Quick Checklist' };
+  const isDetailed  = $('detailLevel')?.value !== 'concise';
+  const meta = {
+    name:         $('checklistName')?.value.trim() || '',
+    ticketId:     $('ticketId')?.value.trim() || '',
+    env:          $('envBranch')?.value.trim() || '',
+    strategy:     strategyMap[$('focusStyle')?.value] || '',
+    outputFormat: formatMap[$('detailLevel')?.value] || '',
+    ac:           $('acText')?.value.trim() || '',
+    date:         new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    isDetailed,
+  };
+
+  // Stats
+  const passed   = rows.filter(i => i.outcome === 'pass').length;
+  const failed   = rows.filter(i => i.outcome === 'fail').length;
+  const blocked  = rows.filter(i => i.outcome === 'blocked').length;
+  const completed = rows.filter(i => i.outcome).length;
+  const notRun   = rows.filter(i => !i.outcome).length;
+  const passRate = completed > 0 ? Math.round((passed / completed) * 100) + '%' : '—';
+  const stats = { total: rows.length, passed, failed, blocked, notRun, passRate, filter };
+
+  const options = {
+    areas: $('optAreas').checked,
+    meta:  $('optMeta').checked,
+    ac:    $('optAc').checked,
+  };
+
+  return { rows, meta, stats, options };
+}
+
+function triggerExport() {
+  const { rows, meta, stats, options } = _buildExportPayload();
+  if (!rows.length) { showStatus('status3', 'No items match the selected filter.', 'error'); return; }
+  if (_exportFormat === 'xlsx') downloadXlsx(rows, meta, stats, options);
+  else downloadCsv(rows, meta, stats, options);
+  closeExportModal();
+}
+
+function downloadCsv(rows, meta, stats, options) {
+  const e = v => { const s = String(v ?? ''); return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = [];
+
+  // Header block
+  lines.push('CheckGen Export');
+  if (meta.name)     lines.push(`Checklist,${e(meta.name)}`);
+  if (meta.ticketId) lines.push(`Ticket ID,${e(meta.ticketId)}`);
+  if (meta.env)      lines.push(`Environment,${e(meta.env)}`);
+  lines.push(`Date,${e(meta.date)}`);
+  if (options.meta && meta.strategy)     lines.push(`Strategy,${e(meta.strategy)}`);
+  if (options.meta && meta.outputFormat) lines.push(`Output Format,${e(meta.outputFormat)}`);
+  if (options.ac && meta.ac)             lines.push(`Acceptance Criteria,${e(meta.ac)}`);
+  lines.push('');
+
+  // Stats block
+  if (stats.filter === 'uncompleted') {
+    lines.push(`Total Remaining,${stats.total}`);
+  } else {
+    lines.push(`Total Test Cases,${stats.total}`);
+    lines.push(`Passed,${stats.passed}`);
+    lines.push(`Failed,${stats.failed}`);
+    lines.push(`Blocked,${stats.blocked}`);
+    if (stats.filter === 'all') lines.push(`Not Run,${stats.notRun}`);
+    lines.push(`Pass Rate,${stats.passRate}`);
+  }
+  lines.push('');
+
+  // Column headers
+  const hasNotes = rows.some(i => i.note);
+  const headers  = ['ID'];
+  if (options.areas) headers.push('Testing Area');
+  headers.push('Test Case');
+  if (meta.isDetailed) headers.push('Expected Result');
+  headers.push('Priority', 'Est. Time', 'Status');
+  if (hasNotes) headers.push('Notes');
+  lines.push(headers.map(e).join(','));
+
+  // Data rows
+  rows.forEach((item, idx) => {
+    const id       = `TC-${String(idx + 1).padStart(3, '0')}`;
+    const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
+    const step     = (parts[0] || item.text || '').trim();
+    const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
+    const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : '';
+    const time     = item.time ? `${item.time}m` : '';
+    const row = [id];
+    if (options.areas) row.push(item.section || '');
+    row.push(step);
+    if (meta.isDetailed) row.push(expected || '');
+    row.push(item.priority || '', time, status);
+    if (hasNotes) row.push(item.note || '');
+    lines.push(row.map(e).join(','));
+  });
+
+  const csv   = lines.join('\n');
+  const fname = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })),
     download: fname + '.csv',
   });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  showStatus('status3', '✓ CSV downloaded.', 'success');
+  showStatus('status3', '✓ CSV exported.', 'success');
+}
+
+function downloadXlsx(rows, meta, stats, options) {
+  if (typeof XLSX === 'undefined') { showStatus('status3', 'Export library not loaded — try refreshing.', 'error'); return; }
+  const wb = XLSX.utils.book_new();
+
+  // ── Sheet 1: Summary ──────────────────────────────────────
+  const s1 = [];
+  s1.push(['CheckGen Export', '']);
+  s1.push(['']);
+  if (meta.name)     s1.push(['Checklist',    meta.name]);
+  if (meta.ticketId) s1.push(['Ticket ID',    meta.ticketId]);
+  if (meta.env)      s1.push(['Environment',  meta.env]);
+  s1.push(['Date', meta.date]);
+  if (options.meta && meta.strategy)     s1.push(['Strategy',      meta.strategy]);
+  if (options.meta && meta.outputFormat) s1.push(['Output Format', meta.outputFormat]);
+  if (options.ac && meta.ac)             s1.push(['Acceptance Criteria', meta.ac]);
+  s1.push(['']);
+  s1.push(['Results', '']);
+
+  if (stats.filter === 'uncompleted') {
+    s1.push(['Total Remaining', stats.total]);
+  } else {
+    s1.push(['Total Test Cases', stats.total]);
+    s1.push(['Passed',           stats.passed]);
+    s1.push(['Failed',           stats.failed]);
+    s1.push(['Blocked',          stats.blocked]);
+    if (stats.filter === 'all') s1.push(['Not Run', stats.notRun]);
+    s1.push(['Pass Rate', stats.passRate]);
+  }
+
+  const ws1 = XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols'] = [{ wch: 22 }, { wch: 65 }];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
+
+  // ── Sheet 2: Test Cases ───────────────────────────────────
+  const hasNotes = rows.some(i => i.note);
+  const headers  = ['ID'];
+  if (options.areas) headers.push('Testing Area');
+  headers.push('Test Case');
+  if (meta.isDetailed) headers.push('Expected Result');
+  headers.push('Priority', 'Est. Time', 'Status');
+  if (hasNotes) headers.push('Notes');
+
+  const s2 = [headers];
+  rows.forEach((item, idx) => {
+    const id       = `TC-${String(idx + 1).padStart(3, '0')}`;
+    const parts    = meta.isDetailed ? item.text.split(' → ') : [item.text];
+    const step     = (parts[0] || item.text || '').trim();
+    const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
+    const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : '';
+    const time     = item.time ? `${item.time}m` : '';
+    const row = [id];
+    if (options.areas) row.push(item.section || '');
+    row.push(step);
+    if (meta.isDetailed) row.push(expected || '');
+    row.push(item.priority || '', time, status);
+    if (hasNotes) row.push(item.note || '');
+    s2.push(row);
+  });
+
+  const ws2 = XLSX.utils.aoa_to_sheet(s2);
+  const cols = [{ wch: 8 }];
+  if (options.areas) cols.push({ wch: 18 });
+  cols.push({ wch: 52 });
+  if (meta.isDetailed) cols.push({ wch: 48 });
+  cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 });
+  if (hasNotes) cols.push({ wch: 30 });
+  ws2['!cols'] = cols;
+  XLSX.utils.book_append_sheet(wb, ws2, 'Test Cases');
+
+  const fname = (meta.name || 'checkgen').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  XLSX.writeFile(wb, fname + '.xlsx');
+  showStatus('status3', '✓ XLSX exported.', 'success');
 }
 
 /* ── Shared sessions ────────────────────────────────────── */
