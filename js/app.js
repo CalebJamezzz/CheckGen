@@ -1663,9 +1663,6 @@ async function downloadXlsx(rows, meta, stats, options) {
   // Apply fill to B1 too so the merged cell looks solid across the full width
   ws1.getCell('B1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
 
-  // Spacer
-  ws1.addRow([]); ws1.lastRow.height = 6;
-
   // Zebra counter for Summary rows (shared across meta + stat rows)
   let s1RowIdx = 0;
   const s1Fill = () => {
@@ -1712,9 +1709,6 @@ async function downloadXlsx(rows, meta, stats, options) {
     addLongMeta('Acceptance Criteria', meta.ac);
   }
 
-  // Spacer
-  ws1.addRow([]); ws1.lastRow.height = 10;
-
   // Results section header
   const rIdx = ws1.rowCount + 1;
   ws1.addRow(['Results', '']);
@@ -1734,12 +1728,13 @@ async function downloadXlsx(rows, meta, stats, options) {
     const r  = ws1.addRow([label, value]);
     const f  = s1Fill();
     r.height = 16;
-    r.getCell(1).fill   = f;
-    r.getCell(1).font   = font({ color: { argb: C.dim } });
-    r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
-    r.getCell(2).fill   = f;
-    r.getCell(2).font   = font({ bold: true, color: { argb: valColor || C.text } });
-    r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(1).fill      = f;
+    r.getCell(1).font      = font({ color: { argb: C.dim } });
+    r.getCell(1).border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(2).fill      = f;
+    r.getCell(2).font      = font({ bold: true, color: { argb: valColor || C.text } });
+    r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; // prevent right-align on numbers
+    r.getCell(2).border    = { bottom: { style: 'thin', color: { argb: C.border } } };
   };
 
   if (stats.filter === 'uncompleted') {
