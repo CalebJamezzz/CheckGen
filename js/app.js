@@ -1489,6 +1489,13 @@ function setExportFormat(fmt) {
 }
 
 function _buildExportPayload() {
+  // Flush any open note textareas that haven't triggered onblur yet
+  document.querySelectorAll('.note-wrap.open textarea').forEach(ta => {
+    const id = parseInt(ta.closest('.item')?.dataset.id);
+    const item = currentChecklist.find(i => i.id === id);
+    if (item) item.note = ta.value.trim();
+  });
+
   const filter = $('exportFilter').value;
   const sort   = $('exportSort').value;
 
@@ -1663,24 +1670,30 @@ async function downloadXlsx(rows, meta, stats, options) {
 
   // ── Sheet 1: Summary ────────────────────────────────────────
   const ws1 = wb.addWorksheet('Summary');
-  // Set column widths explicitly — avoids ExcelJS's columns setter creating phantom column entries
-  ws1.getColumn(1).width = 24;
-  ws1.getColumn(2).width = 60;
+  // 4 columns: A-B = Results/meta, C-D = Results by Area
+  ws1.getColumn(1).width = 22;
+  ws1.getColumn(2).width = 30;
+  ws1.getColumn(3).width = 28;
+  ws1.getColumn(4).width = 36;
 
-  // Title row — dark header to match Test Cases sheet
-  ws1.addRow(['CheckGen Export', '']);
-  ws1.mergeCells('A1:B1');
+  // Title row — use checklist name · ticket ID · env if available, else "CheckGen Export"
+  const titleParts = [meta.name, meta.ticketId, meta.env].filter(Boolean);
+  const titleText  = titleParts.length ? titleParts.join(' · ') : 'CheckGen Export';
+  ws1.addRow([titleText, '', '', '']);
+  ws1.mergeCells('A1:D1');
   ws1.getRow(1).height = 28;
   const titleCell = ws1.getCell('A1');
-  titleCell.value     = 'CheckGen Export';
+  titleCell.value     = titleText;
   titleCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
   titleCell.font      = font({ bold: true, size: 13, color: { argb: C.headerFg } });
   titleCell.alignment = { vertical: 'middle', indent: 1 };
   titleCell.border    = bdr('medium', C.accent);
-  // Apply fill to B1 too so the merged cell looks solid across the full width
-  ws1.getCell('B1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+  ['B1','C1','D1'].forEach(ref => {
+    ws1.getCell(ref).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+    ws1.getCell(ref).border = bdr('medium', C.accent);
+  });
 
-  // Zebra counter for Summary rows (shared across meta + stat rows)
+  // Zebra counter
   let s1RowIdx = 0;
   const s1Fill = () => {
     const bg = s1RowIdx % 2 === 0 ? C.white : C.rowAlt;
@@ -1688,20 +1701,156 @@ async function downloadXlsx(rows, meta, stats, options) {
     return { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
   };
 
-  // Helper: metadata row
+  // Helper: metadata row (A-B, C-D filled but empty)
   const addMeta = (label, value) => {
-    const r   = ws1.addRow([label, String(value ?? '')]);
+    const r   = ws1.addRow([label, String(value ?? ''), '', '']);
     const f   = s1Fill();
     r.height  = 16;
-    r.getCell(1).fill = f;
-    r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
-    r.getCell(1).border = bdr();
-    r.getCell(2).fill = f;
-    r.getCell(2).font = font();
-    r.getCell(2).alignment = { wrapText: true };
-    r.getCell(2).border = bdr();
+    r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
+    r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
+    r.getCell(3).fill = f; r.getCell(3).border = bdr();
+    r.getCell(4).fill = f; r.getCell(4).border = bdr();
+  };
+  const addLongMeta = (label, value) => {
+    if (!value) return;
+    const r  = ws1.addRow([label, value, '', '']);
+    const f  = s1Fill();
+    r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
+    r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
+    r.getCell(3).fill = f; r.getCell(3).border = bdr();
+    r.getCell(4).fill = f; r.getCell(4).border = bdr();
+    r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 80) * 15));
   };
 
+  // ── Results + Results by Area (side by side) ─────────────────
+  // Pre-build stats data
+  const statsData = [];
+  if (stats.filter === 'uncompleted') {
+    statsData.push({ label: 'Total Remaining', value: stats.total, color: null });
+  } else {
+    statsData.push({ label: 'Total Test Cases', value: stats.total,         color: null });
+    statsData.push({ label: 'Passed',           value: stats.passed,        color: C.passFg });
+    statsData.push({ label: 'Failed',           value: stats.failed,        color: C.failFg });
+    statsData.push({ label: 'Blocked',          value: stats.blocked,       color: C.blockedFg });
+    if (stats.filter === 'all') statsData.push({ label: 'Not Run', value: stats.notRun, color: null });
+    statsData.push({ label: 'Pass Rate',        value: stats.passRate,      color: C.accent });
+    statsData.push({ label: 'Total Duration',   value: stats.totalDuration, color: null });
+  }
+
+  // Pre-build area data
+  const areaNames  = [...new Set(rows.map(i => i.section || 'General'))];
+  const showAreas  = areaNames.length > 1;
+  const areaData   = showAreas ? areaNames.map(area => {
+    const aItems   = rows.filter(i => (i.section || 'General') === area);
+    const aPassed  = aItems.filter(i => i.outcome === 'pass').length;
+    const aFailed  = aItems.filter(i => i.outcome === 'fail').length;
+    const aBlocked = aItems.filter(i => i.outcome === 'blocked').length;
+    const aNotRun  = aItems.filter(i => !i.outcome).length;
+    const parts = [];
+    if (aPassed)  parts.push(`${aPassed} passed`);
+    if (aFailed)  parts.push(`${aFailed} failed`);
+    if (aBlocked) parts.push(`${aBlocked} blocked`);
+    if (aNotRun)  parts.push(`${aNotRun} not run`);
+    return { area, summary: parts.join(' · '), hasIssue: aFailed > 0 || aBlocked > 0 };
+  }) : [];
+
+  // Section header row (Results in A-B, Results by Area in C-D)
+  const rIdx = ws1.rowCount + 1;
+  ws1.addRow(['Results', '', showAreas ? 'Results by Area' : '', '']);
+  ws1.mergeCells(`A${rIdx}:B${rIdx}`);
+  if (showAreas) ws1.mergeCells(`C${rIdx}:D${rIdx}`);
+  ws1.getRow(rIdx).height = 20;
+  const sectionHdrStyle = (cell) => {
+    cell.font      = font({ bold: true, size: 11, color: { argb: C.sectionFg } });
+    cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+    cell.alignment = { vertical: 'middle' };
+    cell.border    = bdr();
+  };
+  sectionHdrStyle(ws1.getCell(`A${rIdx}`));
+  ws1.getCell(`A${rIdx}`).value = 'Results';
+  ws1.getCell(`B${rIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+  ws1.getCell(`B${rIdx}`).border = bdr();
+  if (showAreas) {
+    sectionHdrStyle(ws1.getCell(`C${rIdx}`));
+    ws1.getCell(`C${rIdx}`).value = 'Results by Area';
+    ws1.getCell(`D${rIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+    ws1.getCell(`D${rIdx}`).border = bdr();
+  }
+  s1RowIdx = 0;
+
+  // Parallel data rows
+  const maxDataRows = Math.max(statsData.length, areaData.length);
+  for (let i = 0; i < maxDataRows; i++) {
+    const sd = statsData[i];
+    const ad = areaData[i];
+    const f  = s1Fill();
+    const r  = ws1.addRow([sd?.label || '', sd?.value ?? '', ad?.area || '', ad?.summary || '']);
+    r.height = 16;
+    r.getCell(1).fill = f; r.getCell(1).font = font({ color: { argb: C.dim } }); r.getCell(1).border = bdr();
+    r.getCell(2).fill = f; r.getCell(2).font = font({ bold: !!sd, color: { argb: sd?.color || C.text } });
+    r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; r.getCell(2).border = bdr();
+    r.getCell(3).fill = f; r.getCell(3).font = font({ bold: ad?.hasIssue || false, color: { argb: ad?.hasIssue ? C.failFg : C.dim } }); r.getCell(3).border = bdr();
+    r.getCell(4).fill = f; r.getCell(4).font = font({ color: { argb: ad?.hasIssue ? C.failFg : C.text } });
+    r.getCell(4).alignment = { wrapText: false }; r.getCell(4).border = bdr();
+  }
+
+  // ── Failed & Blocked Items (spans all 4 columns) ─────────────
+  const issueRows = rows.filter(i => i.outcome === 'fail' || i.outcome === 'blocked');
+  if (issueRows.length > 0) {
+    const fbIdx = ws1.rowCount + 1;
+    ws1.addRow(['Failed & Blocked Items', '', '', '']);
+    ws1.mergeCells(`A${fbIdx}:D${fbIdx}`);
+    ws1.getRow(fbIdx).height = 20;
+    sectionHdrStyle(ws1.getCell(`A${fbIdx}`));
+    ws1.getCell(`A${fbIdx}`).value = 'Failed & Blocked Items';
+    ['B','C','D'].forEach(col => {
+      ws1.getCell(`${col}${fbIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+      ws1.getCell(`${col}${fbIdx}`).border = bdr();
+    });
+    s1RowIdx = 0;
+
+    issueRows.forEach(item => {
+      const colors = item.outcome === 'fail'
+        ? { bg: C.failBg,    fg: C.failFg }
+        : { bg: C.blockedBg, fg: C.blockedFg };
+      const label  = `TC-${String(rows.indexOf(item) + 1).padStart(3, '0')} · ${item.section || 'General'}`;
+      const detail = normalizeArrow(item.text || '').split(' → ')[0].trim();
+      const note   = item.note || '';
+      const r = ws1.addRow([label, detail, note ? '↳ ' + note : '', '']);
+      r.height = note ? 30 : 18;
+      // A: TC label
+      r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(1).font = font({ bold: true, color: { argb: colors.fg } });
+      r.getCell(1).alignment = { vertical: 'top' };
+      r.getCell(1).border = bdr();
+      // B: test case text
+      r.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(2).font = font({ color: { argb: colors.fg } });
+      r.getCell(2).alignment = { vertical: 'top', wrapText: true };
+      r.getCell(2).border = bdr();
+      // C: note
+      r.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(3).font = font({ italic: !!note, color: { argb: colors.fg } });
+      r.getCell(3).alignment = { vertical: 'top', wrapText: true };
+      r.getCell(3).border = bdr();
+      // D: empty filler
+      r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(4).border = bdr();
+    });
+  }
+
+  // ── Details (metadata at bottom) ────────────────────────────
+  const metaIdx = ws1.rowCount + 1;
+  ws1.addRow(['Details', '', '', '']);
+  ws1.mergeCells(`A${metaIdx}:D${metaIdx}`);
+  ws1.getRow(metaIdx).height = 20;
+  sectionHdrStyle(ws1.getCell(`A${metaIdx}`));
+  ws1.getCell(`A${metaIdx}`).value = 'Details';
+  ['B','C','D'].forEach(col => {
+    ws1.getCell(`${col}${metaIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
+    ws1.getCell(`${col}${metaIdx}`).border = bdr();
+  });
+  s1RowIdx = 0;
   if (meta.name)     addMeta('Checklist Name', meta.name);
   if (meta.ticketId) addMeta('Ticket ID',      meta.ticketId);
   if (meta.env)      addMeta('Environment',    meta.env);
@@ -1709,144 +1858,8 @@ async function downloadXlsx(rows, meta, stats, options) {
   if (options.meta && meta.strategy)     addMeta('Strategy',      meta.strategy);
   if (options.meta && meta.outputFormat) addMeta('Output Format', meta.outputFormat);
   if (options.ac) {
-    const addLongMeta = (label, value) => {
-      if (!value) return;
-      const r  = ws1.addRow([label, value]);
-      const f  = s1Fill();
-      r.getCell(1).fill = f;
-      r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
-      r.getCell(1).border = bdr();
-      r.getCell(2).fill = f;
-      r.getCell(2).font = font();
-      r.getCell(2).alignment = { wrapText: true };
-      r.getCell(2).border = bdr();
-      r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 80) * 15));
-    };
     addLongMeta('Ticket / User Story', meta.ticket);
     addLongMeta('Acceptance Criteria', meta.ac);
-  }
-
-  // Results section header
-  const rIdx = ws1.rowCount + 1;
-  ws1.addRow(['Results', '']);
-  ws1.mergeCells(`A${rIdx}:B${rIdx}`);
-  ws1.getRow(rIdx).height = 20;
-  const rCell = ws1.getCell(`A${rIdx}`);
-  rCell.value     = 'Results';
-  rCell.font      = font({ bold: true, size: 11, color: { argb: C.sectionFg } });
-  rCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-  rCell.alignment = { vertical: 'middle' };
-  rCell.border    = bdr();
-  ws1.getCell(`B${rIdx}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-  s1RowIdx = 0; // reset stripe counter for stats section
-
-  // Helper: stat row with optional colored value
-  const addStat = (label, value, valColor) => {
-    const r  = ws1.addRow([label, value]);
-    const f  = s1Fill();
-    r.height = 16;
-    r.getCell(1).fill      = f;
-    r.getCell(1).font      = font({ color: { argb: C.dim } });
-    r.getCell(1).border    = bdr();
-    r.getCell(2).fill      = f;
-    r.getCell(2).font      = font({ bold: true, color: { argb: valColor || C.text } });
-    r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; // prevent right-align on numbers
-    r.getCell(2).border    = bdr();
-  };
-
-  if (stats.filter === 'uncompleted') {
-    addStat('Total Remaining', stats.total);
-  } else {
-    addStat('Total Test Cases', stats.total);
-    addStat('Passed',           stats.passed,  C.passFg);
-    addStat('Failed',           stats.failed,  C.failFg);
-    addStat('Blocked',          stats.blocked, C.blockedFg);
-    if (stats.filter === 'all') addStat('Not Run', stats.notRun);
-    addStat('Pass Rate',        stats.passRate,      C.accent);
-    addStat('Total Duration',   stats.totalDuration);
-  }
-
-  // ── Results by Area ─────────────────────────────────────────
-  const areaNames = [...new Set(rows.map(i => i.section || 'General'))];
-  if (areaNames.length > 1) {
-    // Section header
-    const arIdx = ws1.rowCount + 1;
-    ws1.addRow(['Results by Area', '']);
-    ws1.mergeCells(`A${arIdx}:B${arIdx}`);
-    ws1.getRow(arIdx).height = 20;
-    const arCell = ws1.getCell(`A${arIdx}`);
-    arCell.value     = 'Results by Area';
-    arCell.font      = font({ bold: true, size: 11, color: { argb: C.sectionFg } });
-    arCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-    arCell.alignment = { vertical: 'middle' };
-    arCell.border    = bdr();
-    ws1.getCell(`B${arIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-    ws1.getCell(`B${arIdx}`).border = bdr();
-    s1RowIdx = 0;
-
-    areaNames.forEach(area => {
-      const aItems  = rows.filter(i => (i.section || 'General') === area);
-      const aPassed  = aItems.filter(i => i.outcome === 'pass').length;
-      const aFailed  = aItems.filter(i => i.outcome === 'fail').length;
-      const aBlocked = aItems.filter(i => i.outcome === 'blocked').length;
-      const aNotRun  = aItems.filter(i => !i.outcome).length;
-      const parts = [];
-      if (aPassed)  parts.push(`${aPassed} passed`);
-      if (aFailed)  parts.push(`${aFailed} failed`);
-      if (aBlocked) parts.push(`${aBlocked} blocked`);
-      if (aNotRun)  parts.push(`${aNotRun} not run`);
-      const summary = parts.join(' · ');
-      const hasIssue = aFailed > 0 || aBlocked > 0;
-      const f = s1Fill();
-      const r = ws1.addRow([area, summary]);
-      r.height = 16;
-      r.getCell(1).fill      = f;
-      r.getCell(1).font      = font({ bold: hasIssue, color: { argb: hasIssue ? C.failFg : C.dim } });
-      r.getCell(1).border    = bdr();
-      r.getCell(2).fill      = f;
-      r.getCell(2).font      = font({ color: { argb: hasIssue ? C.failFg : C.text } });
-      r.getCell(2).alignment = { wrapText: false };
-      r.getCell(2).border    = bdr();
-    });
-  }
-
-  // ── Failed & Blocked Items ───────────────────────────────────
-  const issueRows = rows.filter(i => i.outcome === 'fail' || i.outcome === 'blocked');
-  if (issueRows.length > 0) {
-    const fbIdx = ws1.rowCount + 1;
-    ws1.addRow(['Failed & Blocked Items', '']);
-    ws1.mergeCells(`A${fbIdx}:B${fbIdx}`);
-    ws1.getRow(fbIdx).height = 20;
-    const fbCell = ws1.getCell(`A${fbIdx}`);
-    fbCell.value     = 'Failed & Blocked Items';
-    fbCell.font      = font({ bold: true, size: 11, color: { argb: C.sectionFg } });
-    fbCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-    fbCell.alignment = { vertical: 'middle' };
-    fbCell.border    = bdr();
-    ws1.getCell(`B${fbIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-    ws1.getCell(`B${fbIdx}`).border = bdr();
-    s1RowIdx = 0;
-
-    issueRows.forEach((item, idx) => {
-      const status   = item.outcome === 'fail' ? 'Fail' : 'Blocked';
-      const colors   = item.outcome === 'fail'
-        ? { bg: C.failBg,    fg: C.failFg }
-        : { bg: C.blockedBg, fg: C.blockedFg };
-      const label    = `TC-${String(rows.indexOf(item) + 1).padStart(3, '0')} · ${item.section || 'General'}`;
-      const detail   = normalizeArrow(item.text || '').split(' → ')[0].trim()
-                     + (item.note ? `\n↳ ${item.note}` : '');
-      const f = s1Fill();
-      const r = ws1.addRow([label, detail]);
-      r.height = item.note ? 30 : 18;
-      r.getCell(1).fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
-      r.getCell(1).font      = font({ bold: true, color: { argb: colors.fg } });
-      r.getCell(1).alignment = { vertical: 'top' };
-      r.getCell(1).border    = bdr();
-      r.getCell(2).fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
-      r.getCell(2).font      = font({ color: { argb: colors.fg } });
-      r.getCell(2).alignment = { vertical: 'top', wrapText: true };
-      r.getCell(2).border    = bdr();
-    });
   }
 
   // ── Sheet 2: Test Cases ─────────────────────────────────────
