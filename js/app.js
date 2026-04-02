@@ -1714,22 +1714,24 @@ async function downloadXlsx(rows, meta, stats, options) {
 
   // Helper: metadata row (A-B, C-D filled but empty)
   const addMeta = (label, value) => {
-    const r   = ws1.addRow([label, String(value ?? ''), '', '']);
+    const r   = ws1.addRow([label, String(value ?? ''), '', '', '']);
     const f   = s1Fill();
     r.height  = 16;
     r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
     r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
     r.getCell(3).fill = f; r.getCell(3).border = bdr();
     r.getCell(4).fill = f; r.getCell(4).border = bdr();
+    r.getCell(5).fill = f; r.getCell(5).border = bdr();
   };
   const addLongMeta = (label, value) => {
     if (!value) return;
-    const r  = ws1.addRow([label, value, '', '']);
+    const r  = ws1.addRow([label, value, '', '', '']);
     const f  = s1Fill();
     r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
     r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
     r.getCell(3).fill = f; r.getCell(3).border = bdr();
     r.getCell(4).fill = f; r.getCell(4).border = bdr();
+    r.getCell(5).fill = f; r.getCell(5).border = bdr();
     r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 80) * 15));
   };
 
@@ -1820,12 +1822,12 @@ async function downloadXlsx(rows, meta, stats, options) {
   const issueRows = rows.filter(i => i.outcome === 'fail' || i.outcome === 'blocked');
   if (issueRows.length > 0) {
     const fbIdx = ws1.rowCount + 1;
-    ws1.addRow(['Failed & Blocked Items', '', '', '']);
-    ws1.mergeCells(`A${fbIdx}:D${fbIdx}`);
+    ws1.addRow(['Failed & Blocked Items', '', '', '', '']);
+    ws1.mergeCells(`A${fbIdx}:E${fbIdx}`);
     ws1.getRow(fbIdx).height = 20;
     sectionHdrStyle(ws1.getCell(`A${fbIdx}`));
     ws1.getCell(`A${fbIdx}`).value = 'Failed & Blocked Items';
-    ['B','C','D'].forEach(col => {
+    ['B','C','D','E'].forEach(col => {
       ws1.getCell(`${col}${fbIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
       ws1.getCell(`${col}${fbIdx}`).border = bdr();
     });
@@ -1839,37 +1841,36 @@ async function downloadXlsx(rows, meta, stats, options) {
       const detail = normalizeArrow(item.text || '').trim();
       const note   = item.note || '';
       const rowNum = ws1.rowCount + 1;
-      const r = ws1.addRow([label, detail, '', note ? '↳ ' + note : '']);
-      // B-C merged = ~58 chars wide, D = ~36 chars wide
-      r.height = Math.max(estHeight(detail, 58), note ? estHeight(note, 36) : 18);
-      // Merge B-C for test case text
-      ws1.mergeCells(`B${rowNum}:C${rowNum}`);
+      const r = ws1.addRow([label, detail, '', '', note ? '↳ ' + note : '']);
+      // B-D merged = ~94 chars wide, E = ~22 chars wide
+      r.height = Math.max(estHeight(detail, 94), note ? estHeight(note, 22) : 18);
+      ws1.mergeCells(`B${rowNum}:D${rowNum}`);
       // A: TC label
       r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
       r.getCell(1).font = font({ bold: true, color: { argb: colors.fg } });
       r.getCell(1).alignment = { vertical: 'top' };
       r.getCell(1).border = bdr();
-      // B-C: test case text (merged)
+      // B-D: test case text (merged)
       r.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
       r.getCell(2).font = font({ color: { argb: colors.fg } });
       r.getCell(2).alignment = { vertical: 'top', wrapText: true };
       r.getCell(2).border = bdr();
-      // D: note
-      r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
-      r.getCell(4).font = font({ italic: !!note, color: { argb: colors.fg } });
-      r.getCell(4).alignment = { vertical: 'top', wrapText: true };
-      r.getCell(4).border = bdr();
+      // E: note
+      r.getCell(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(5).font = font({ italic: !!note, color: { argb: colors.fg } });
+      r.getCell(5).alignment = { vertical: 'top', wrapText: true };
+      r.getCell(5).border = bdr();
     });
   }
 
   // ── Details (metadata at bottom) ────────────────────────────
   const metaIdx = ws1.rowCount + 1;
-  ws1.addRow(['Details', '', '', '']);
-  ws1.mergeCells(`A${metaIdx}:D${metaIdx}`);
+  ws1.addRow(['Details', '', '', '', '']);
+  ws1.mergeCells(`A${metaIdx}:E${metaIdx}`);
   ws1.getRow(metaIdx).height = 20;
   sectionHdrStyle(ws1.getCell(`A${metaIdx}`));
   ws1.getCell(`A${metaIdx}`).value = 'Details';
-  ['B','C','D'].forEach(col => {
+  ['B','C','D','E'].forEach(col => {
     ws1.getCell(`${col}${metaIdx}`).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
     ws1.getCell(`${col}${metaIdx}`).border = bdr();
   });
@@ -1878,19 +1879,20 @@ async function downloadXlsx(rows, meta, stats, options) {
   if (options.meta && meta.strategy)     addMeta('Strategy',      meta.strategy);
   if (options.meta && meta.outputFormat) addMeta('Output Format', meta.outputFormat);
   if (options.ac) {
-    // Ticket & AC span B-D for full width
+    // Ticket & AC span B-E for full width
     const addWideMeta = (label, value) => {
       if (!value) return;
       const rowNum = ws1.rowCount + 1;
-      const r = ws1.addRow([label, value, '', '']);
-      ws1.mergeCells(`B${rowNum}:D${rowNum}`);
+      const r = ws1.addRow([label, value, '', '', '']);
+      ws1.mergeCells(`B${rowNum}:E${rowNum}`);
       const f = s1Fill();
       r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
       r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
       r.getCell(3).fill = f; r.getCell(3).border = bdr();
       r.getCell(4).fill = f; r.getCell(4).border = bdr();
-      // B-D merged = ~94 chars wide (30+28+36)
-      r.height = estHeight(value, 94);
+      r.getCell(5).fill = f; r.getCell(5).border = bdr();
+      // B-E merged = ~116 chars wide (30+28+36+22)
+      r.height = estHeight(value, 116);
     };
     addWideMeta('Ticket / User Story', meta.ticket);
     addWideMeta('Acceptance Criteria', meta.ac);
