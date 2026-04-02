@@ -1643,6 +1643,12 @@ async function downloadXlsx(rows, meta, stats, options) {
     blockedBg:  'FFFEFCE8', blockedFg: 'FF713F12',
   };
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
+  const bdr  = (bottom = 'thin', bottomColor = C.border) => ({
+    top:    { style: 'thin',   color: { argb: C.border } },
+    bottom: { style: bottom,   color: { argb: bottomColor } },
+    left:   { style: 'thin',   color: { argb: C.border } },
+    right:  { style: 'thin',   color: { argb: C.border } },
+  });
 
   // ── Sheet 1: Summary ────────────────────────────────────────
   const ws1 = wb.addWorksheet('Summary');
@@ -1659,7 +1665,7 @@ async function downloadXlsx(rows, meta, stats, options) {
   titleCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
   titleCell.font      = font({ bold: true, size: 13, color: { argb: C.headerFg } });
   titleCell.alignment = { vertical: 'middle', indent: 1 };
-  titleCell.border    = { bottom: { style: 'medium', color: { argb: C.accent } } };
+  titleCell.border    = bdr('medium', C.accent);
   // Apply fill to B1 too so the merged cell looks solid across the full width
   ws1.getCell('B1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
 
@@ -1678,11 +1684,11 @@ async function downloadXlsx(rows, meta, stats, options) {
     r.height  = 16;
     r.getCell(1).fill = f;
     r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
-    r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(1).border = bdr();
     r.getCell(2).fill = f;
     r.getCell(2).font = font();
     r.getCell(2).alignment = { wrapText: true };
-    r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(2).border = bdr();
   };
 
   if (meta.name)     addMeta('Checklist Name', meta.name);
@@ -1698,11 +1704,11 @@ async function downloadXlsx(rows, meta, stats, options) {
       const f  = s1Fill();
       r.getCell(1).fill = f;
       r.getCell(1).font = font({ bold: true, color: { argb: C.dim } });
-      r.getCell(1).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+      r.getCell(1).border = bdr();
       r.getCell(2).fill = f;
       r.getCell(2).font = font();
       r.getCell(2).alignment = { wrapText: true };
-      r.getCell(2).border = { bottom: { style: 'thin', color: { argb: C.border } } };
+      r.getCell(2).border = bdr();
       r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 80) * 15));
     };
     addLongMeta('Ticket / User Story', meta.ticket);
@@ -1719,7 +1725,7 @@ async function downloadXlsx(rows, meta, stats, options) {
   rCell.font      = font({ bold: true, size: 11, color: { argb: C.sectionFg } });
   rCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
   rCell.alignment = { vertical: 'middle' };
-  rCell.border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+  rCell.border    = bdr();
   ws1.getCell(`B${rIdx}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
   s1RowIdx = 0; // reset stripe counter for stats section
 
@@ -1730,11 +1736,11 @@ async function downloadXlsx(rows, meta, stats, options) {
     r.height = 16;
     r.getCell(1).fill      = f;
     r.getCell(1).font      = font({ color: { argb: C.dim } });
-    r.getCell(1).border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(1).border    = bdr();
     r.getCell(2).fill      = f;
     r.getCell(2).font      = font({ bold: true, color: { argb: valColor || C.text } });
     r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; // prevent right-align on numbers
-    r.getCell(2).border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+    r.getCell(2).border    = bdr();
   };
 
   if (stats.filter === 'uncompleted') {
@@ -1776,7 +1782,7 @@ async function downloadXlsx(rows, meta, stats, options) {
     cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
     cell.font      = font({ bold: true, color: { argb: C.headerFg } });
     cell.alignment = { vertical: 'middle', horizontal: 'left' };
-    cell.border    = { bottom: { style: 'medium', color: { argb: C.accent } } };
+    cell.border    = bdr('medium', C.accent);
   });
 
   // Freeze header + auto-filter
@@ -1813,7 +1819,7 @@ async function downloadXlsx(rows, meta, stats, options) {
         for (let ci = 1; ci <= headers.length; ci++) {
           const sc = secRow.getCell(ci);
           sc.fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.sectionBg } };
-          sc.border = { bottom: { style: 'thin', color: { argb: C.border } } };
+          sc.border = bdr();
         }
         secRow.getCell(1).value     = sec;
         secRow.getCell(1).font      = font({ bold: true, size: 10, color: { argb: C.sectionFg } });
@@ -1849,7 +1855,7 @@ async function downloadXlsx(rows, meta, stats, options) {
       cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
       cell.font      = font({ color: { argb: C.dim } });
       cell.alignment = { vertical: 'top', wrapText: isWrap };
-      cell.border    = { bottom: { style: 'thin', color: { argb: C.border } } };
+      cell.border    = bdr();
     });
 
     // Color-code the Status cell (overrides zebra fill when a status is set)
