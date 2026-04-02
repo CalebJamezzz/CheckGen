@@ -751,7 +751,8 @@ async function generateChecklist() {
     '2. The section field of every item must exactly match one of the testing area names given. No other sections. ' +
     '3. Generate as many items as genuinely needed for coverage — minimum ' + minItems + ', maximum ' + maxItems + '. Do not pad to reach the maximum. Stop when the ticket is covered. ' +
     '4. Every item must be directly traceable to the specific ticket — no generic filler, no near-duplicates. ' +
-    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    '5. Every item text MUST use the format "action step → expected result". The → separator is mandatory. Never bundle the action and the expected result into a single sentence without →. Example: "Submit the form with a valid email → success toast appears and user is redirected to the dashboard". This applies to every section including Integrations, WCAG, Performance, and Error Handling. ' +
+    '6. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
     'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
     'Functional = 2-5m (straightforward feature interaction); ' +
     'Validation = 2-4m (form input checks, error message verification); ' +
@@ -956,7 +957,8 @@ async function regenSection(section) {
     `2. Every item's section field must be exactly "${section}". ` +
     '3. Generate 4-7 items. ' +
     '4. Every item must be directly traceable to the specific ticket — no generic filler. ' +
-    '5. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
+    '5. Every item text MUST use the format "action step → expected result". The → separator is mandatory. Never bundle the action and the expected result into a single sentence without →. Example: "Submit the form with a valid email → success toast appears and user is redirected to the dashboard". ' +
+    '6. Each object must have: section, text, priority (Highest|High|Medium|Low|Lowest), type (Smoke|Happy Path|Edge|Data|Break), time (realistic estimate as Xm). ' +
     'TIME GUIDANCE — assign realistic per-task estimates based on actual QA effort: ' +
     'Functional = 2-5m; Validation = 2-4m; Permissions = 4-8m (role switching required); ' +
     'UI / Layout = 2-4m; Data / Persistence = 4-8m; Integrations = 5-15m; ' +

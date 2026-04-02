@@ -135,6 +135,7 @@
         <ul>
           <li><strong>Shared session invites not sending</strong> — Fixed a bug where invite emails were never sent when creating a shared session. The session row was missing the required user ID on insert, causing the creation to fail silently before the invite step was ever reached.</li>
           <li><strong>Live sync not working for session owner</strong> — Fixed a race condition where a duplicate database row was created before the shared session row, causing outcome updates from the owner to write to the wrong record. Joiners could never see the owner's changes.</li>
+          <li><strong>Integrations and other areas missing expected results</strong> — Fixed an AI prompt issue where certain testing areas (Integrations, WCAG, Performance, Error Handling) were generating items with the action and expected result bundled into a single sentence instead of using the required "action → expected result" format. The output rule is now explicitly enforced across all sections.</li>
         </ul>
       </div>
     </div>
