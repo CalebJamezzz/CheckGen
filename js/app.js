@@ -1085,12 +1085,12 @@ function startGenAnimation() {
   if (fill) { fill.style.width = '0%'; fill.classList.remove('gen-progress-fill--shimmer'); }
 
   // Populate stats panel
-  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive' };
+  const strategyMap = { balanced: 'full coverage', smoke: 'smoke test', edge: 'deep dive', custom: 'custom' };
   const formatMap   = { expanded: 'detailed', concise: 'quick' };
   const stratEl  = $('genStatStrategy');
   const formatEl = $('genStatFormat');
-  if (stratEl)  stratEl.textContent  = strategyMap[$('focusStyle')?.value]   || '—';
-  if (formatEl) formatEl.textContent = formatMap[$('detailLevel')?.value]     || '—';
+  if (stratEl)  stratEl.textContent  = strategyMap[getEffectiveStrategy()] || '—';
+  if (formatEl) formatEl.textContent = formatMap[$('detailLevel')?.value]   || '—';
 
   const areaCount = document.querySelectorAll('.areaCheck:checked').length;
   const areasFill = $('genAreasFill');
@@ -1517,15 +1517,19 @@ function _buildExportPayload() {
   if (sort === 'duration') rows.sort((a, b) => (parseFloat(a.time) || 0) - (parseFloat(b.time) || 0));
 
   // Metadata
-  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive' };
+  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive', custom: 'Custom' };
   const formatMap   = { expanded: 'Detailed', concise: 'Quick Checklist' };
   const isDetailed  = $('detailLevel')?.value !== 'concise';
+  const addonParts = [];
+  if ($('addonBreak')?.checked)    addonParts.push('Break-It');
+  if ($('addonTestData')?.checked) addonParts.push('Test Data');
   const meta = {
     name:         $('checklistName')?.value.trim() || '',
     ticketId:     $('ticketId')?.value.trim() || '',
     env:          $('envBranch')?.value.trim() || '',
-    strategy:     strategyMap[$('focusStyle')?.value] || '',
+    strategy:     strategyMap[getEffectiveStrategy()] || '',
     outputFormat: formatMap[$('detailLevel')?.value] || '',
+    addons:       addonParts.join(', '),
     ticket:       $('ticketText')?.value.trim() || '',
     ac:           $('acText')?.value.trim() || '',
     date:         new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -1576,6 +1580,7 @@ function downloadCsv(rows, meta, stats, options) {
   lines.push(`Date,${e(meta.date)}`);
   if (options.meta && meta.strategy)     lines.push(`Strategy,${e(meta.strategy)}`);
   if (options.meta && meta.outputFormat) lines.push(`Output Format,${e(meta.outputFormat)}`);
+  if (options.meta && meta.addons)       lines.push(`Add-ons,${e(meta.addons)}`);
   if (options.ac && meta.ticket) lines.push(`Ticket / User Story,${e(meta.ticket)}`);
   if (options.ac && meta.ac)     lines.push(`Acceptance Criteria,${e(meta.ac)}`);
   lines.push('');
@@ -1881,6 +1886,7 @@ async function downloadXlsx(rows, meta, stats, options) {
   addMeta('Date', meta.date);
   if (options.meta && meta.strategy)     addMeta('Strategy',      meta.strategy);
   if (options.meta && meta.outputFormat) addMeta('Output Format', meta.outputFormat);
+  if (options.meta && meta.addons)       addMeta('Add-ons',       meta.addons);
   if (options.ac) {
     // Ticket & AC span B-E for full width
     const addWideMeta = (label, value) => {
@@ -2080,8 +2086,12 @@ function _buildMarkdown() {
   const name        = $('checklistName')?.value.trim() || 'Checklist';
   const ticketId    = $('ticketId')?.value.trim() || '';
   const date        = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive' };
-  const strategy    = strategyMap[$('focusStyle')?.value] || '';
+  const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive', custom: 'Custom' };
+  const strategy    = strategyMap[getEffectiveStrategy()] || '';
+  const mdAddonParts = [];
+  if ($('addonBreak')?.checked)    mdAddonParts.push('Break-It');
+  if ($('addonTestData')?.checked) mdAddonParts.push('Test Data');
+  const mdAddons = mdAddonParts.join(', ');
 
   // Group into sections, preserving sort order
   const sectionOrder = [];
@@ -2097,6 +2107,7 @@ function _buildMarkdown() {
   if (ticketId) metaParts.push(`**Ticket:** ${ticketId}`);
   metaParts.push(`**Date:** ${date}`);
   if (strategy) metaParts.push(`**Strategy:** ${strategy}`);
+  if (mdAddons) metaParts.push(`**Add-ons:** ${mdAddons}`);
   if (fresh) metaParts.push('**Fresh export**');
   md += metaParts.join(' · ') + '\n\n---\n\n';
 
@@ -2575,6 +2586,20 @@ function toggleAccordion(id) {
   const opening = body.style.display === 'none' || body.style.display === '';
   body.style.display = opening ? 'block' : 'none';
   if (chevron) chevron.classList.toggle('open', opening);
+}
+
+function getEffectiveStrategy() {
+  const strategy = $('focusStyle')?.value || 'balanced';
+  const presets = {
+    balanced: ['Functional','Validation','Permissions','UI / Layout','Data / Persistence','Integrations','Error Handling & Feedback','Edge Cases','WCAG','Performance'],
+    smoke:    ['Functional','UI / Layout','Error Handling & Feedback'],
+    edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling & Feedback','Edge Cases','Integrations']
+  };
+  const preset = presets[strategy] || presets.balanced;
+  const current = Array.from(document.querySelectorAll('.areaCheck:checked')).map(e => e.value);
+  const matches = preset.length === current.length && preset.every(a => current.includes(a));
+  if (!matches) return 'custom';
+  return strategy;
 }
 
 function applyStrategyPreset() {
