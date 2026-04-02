@@ -352,9 +352,8 @@ function loadSession() {
     if (d.strategy)    _sessionStrategy = d.strategy;
     if (Array.isArray(d.checklist) && d.checklist.length) {
       currentChecklist = d.checklist;
-      goTo(3);
-      renderChecklist(); updateProgress(); updateTimeSummary();
-      $('exportBar').style.display = '';
+      // Don't auto-navigate to screen 3 on load — user starts at screen 1
+      // and can resume from the resume panel
     }
   } catch(e) { console.error('[CheckGen] loadSession error:', e.message, e); }
 }
@@ -2172,14 +2171,15 @@ function downloadMarkdown() {
 
 /* ── View link ──────────────────────────────────────────── */
 async function copyViewLink() {
-  if (!_cloudSaveId) {
-    showStatus('status3', '⚠ Save your session first before copying a view link.', 'warn');
-    return;
-  }
   const btn = $('copyViewLinkBtn');
   if (btn) { btn.textContent = '…'; btn.disabled = true; }
   try {
     const sb = getSB(); if (!sb) throw new Error('Not available');
+    // Auto-save first if not yet saved to cloud
+    if (!_cloudSaveId) {
+      await cloudSaveSession();
+    }
+    if (!_cloudSaveId) throw new Error('Sign in to generate a shareable link.');
     // Generate a token if not already set
     let token = _viewToken;
     if (!token) {
