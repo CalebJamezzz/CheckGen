@@ -814,7 +814,7 @@ async function generateChecklist() {
           const inviterName = s?.user?.user_metadata?.name || s?.user?.email?.split('@')[0] || 'A teammate';
           const origin = location.origin;
           for (const email of _shareEmails) {
-            fetch('/.netlify/functions/send-session-invite', {
+            fetch('/api/send-session-invite', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
