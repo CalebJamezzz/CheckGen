@@ -3,6 +3,7 @@
 /* ── State ─────────────────────────────────────────────── */
 let currentChecklist = [];
 let _sessionStrategy = '';  // strategy captured at generation time
+let _viewToken = null;      // public view token for read-only share link
 let sessionMode  = 'personal';
 let sharedSub    = 'start';
 let sharedSessionId = null;
@@ -73,6 +74,7 @@ function _doBackToSetup() {
   currentChecklist = [];
   _sessionStrategy = '';
   _cloudSaveId = null;
+  _viewToken = null;
   goTo(2);
 }
 
@@ -2168,6 +2170,36 @@ function downloadMarkdown() {
   showStatus('status3', '✓ Markdown downloaded.', 'success');
 }
 
+/* ── View link ──────────────────────────────────────────── */
+async function copyViewLink() {
+  if (!_cloudSaveId) {
+    showStatus('status3', '⚠ Save your session first before copying a view link.', 'warn');
+    return;
+  }
+  const btn = $('copyViewLinkBtn');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    const sb = getSB(); if (!sb) throw new Error('Not available');
+    // Generate a token if not already set
+    let token = _viewToken;
+    if (!token) {
+      token = Array.from(crypto.getRandomValues(new Uint8Array(18)))
+        .map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 24);
+      await sb.from('checklist_sessions')
+        .update({ view_token: token })
+        .eq('id', _cloudSaveId);
+      _viewToken = token;
+    }
+    const url = location.origin + '/view?t=' + token;
+    await navigator.clipboard.writeText(url);
+    if (btn) { btn.textContent = '✓ Copied!'; btn.disabled = false; }
+    setTimeout(() => { if (btn) btn.textContent = '⎘ Copy View Link'; }, 2500);
+  } catch(e) {
+    if (btn) { btn.textContent = '⎘ Copy View Link'; btn.disabled = false; }
+    showStatus('status3', '⚠ Could not copy link: ' + e.message, 'warn');
+  }
+}
+
 /* ── Shared sessions ────────────────────────────────────── */
 function copyShareCode() {
   if (!sharedCode) return;
@@ -2664,6 +2696,7 @@ function resumeLastSession() {
   if (sess.ticket_id)   { const el = $('ticketId');      if (el) el.value = sess.ticket_id; }
   if (sess.environment) { const el = $('envBranch');     if (el) el.value = sess.environment; }
   _cloudSaveId = sess.id; // updates this row on future saves
+  _viewToken = sess.view_token || null;
   goTo(3);
   renderChecklist(); updateProgress(); updateTimeSummary();
   $('exportBar').style.display = '';
@@ -2737,6 +2770,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (_r.ac)          $('acText')     && ($('acText').value     = _r.ac);
       // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
       if (_r.id) _cloudSaveId = _r.id;
+      if (_r.view_token) _viewToken = _r.view_token;
       if (_r.session_type === 'team') {
         sessionMode = 'shared';
         // Reconnect live-sync by looking up the session via its share code.
