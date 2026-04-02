@@ -1535,7 +1535,8 @@ function _buildExportPayload() {
   const blocked  = rows.filter(i => i.outcome === 'blocked').length;
   const completed = rows.filter(i => i.outcome).length;
   const notRun   = rows.filter(i => !i.outcome).length;
-  const passRate = completed > 0 ? Math.round((passed / completed) * 100) + '%' : '—';
+  const passRateNum = completed > 0 ? Math.round((passed / completed) * 100) : null;
+  const passRate = passRateNum !== null ? passRateNum + '%' : '—';
   const totalMins = rows.reduce((sum, i) => sum + (parseFloat(i.time) || 0), 0);
   const totalDuration = totalMins >= 60
     ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}min`
@@ -1669,7 +1670,7 @@ async function downloadXlsx(rows, meta, stats, options) {
   });
 
   // ── Sheet 1: Summary ────────────────────────────────────────
-  const ws1 = wb.addWorksheet('Summary');
+  const ws1 = wb.addWorksheet('Summary', { properties: { tabColor: { argb: 'FF10B981' } } });
   // 4 columns: A-B = Results/meta, C-D = Results by Area
   ws1.getColumn(1).width = 22;
   ws1.getColumn(2).width = 30;
@@ -1692,6 +1693,9 @@ async function downloadXlsx(rows, meta, stats, options) {
     ws1.getCell(ref).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
     ws1.getCell(ref).border = bdr('medium', C.accent);
   });
+
+  // Freeze title row
+  ws1.views = [{ state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'A2' }];
 
   // Zebra counter
   let s1RowIdx = 0;
@@ -1787,7 +1791,18 @@ async function downloadXlsx(rows, meta, stats, options) {
     const r  = ws1.addRow([sd?.label || '', sd?.value ?? '', ad?.area || '', ad?.summary || '']);
     r.height = 16;
     r.getCell(1).fill = f; r.getCell(1).font = font({ color: { argb: C.dim } }); r.getCell(1).border = bdr();
-    r.getCell(2).fill = f; r.getCell(2).font = font({ bold: !!sd, color: { argb: sd?.color || C.text } });
+    const isPassRate = sd?.label === 'Pass Rate';
+    const passRateBg = isPassRate && passRateNum !== null
+      ? (passRateNum >= 80 ? 'FFF0FDF4' : passRateNum >= 50 ? 'FFFEFCE8' : 'FFFEF2F2')
+      : null;
+    const passRateFg = isPassRate && passRateNum !== null
+      ? (passRateNum >= 80 ? C.passFg : passRateNum >= 50 ? C.blockedFg : C.failFg)
+      : null;
+    r.getCell(2).fill = passRateBg
+      ? { type: 'pattern', pattern: 'solid', fgColor: { argb: passRateBg } }
+      : f;
+    r.getCell(2).font = font({ bold: !!sd, color: { argb: passRateFg || sd?.color || C.text } });
+    if (isPassRate && passRateBg) r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: passRateBg } };
     r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; r.getCell(2).border = bdr();
     r.getCell(3).fill = f; r.getCell(3).font = font({ bold: ad?.hasIssue || false, color: { argb: ad?.hasIssue ? C.failFg : C.dim } }); r.getCell(3).border = bdr();
     r.getCell(4).fill = f; r.getCell(4).font = font({ color: { argb: ad?.hasIssue ? C.failFg : C.text } });
@@ -1814,27 +1829,27 @@ async function downloadXlsx(rows, meta, stats, options) {
         ? { bg: C.failBg,    fg: C.failFg }
         : { bg: C.blockedBg, fg: C.blockedFg };
       const label  = `TC-${String(rows.indexOf(item) + 1).padStart(3, '0')} · ${item.section || 'General'}`;
-      const detail = normalizeArrow(item.text || '').split(' → ')[0].trim();
+      const detail = normalizeArrow(item.text || '').trim();
       const note   = item.note || '';
-      const r = ws1.addRow([label, detail, note ? '↳ ' + note : '', '']);
+      const rowNum = ws1.rowCount + 1;
+      const r = ws1.addRow([label, detail, '', note ? '↳ ' + note : '']);
       r.height = note ? 30 : 18;
+      // Merge B-C for test case text
+      ws1.mergeCells(`B${rowNum}:C${rowNum}`);
       // A: TC label
       r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
       r.getCell(1).font = font({ bold: true, color: { argb: colors.fg } });
       r.getCell(1).alignment = { vertical: 'top' };
       r.getCell(1).border = bdr();
-      // B: test case text
+      // B-C: test case text (merged)
       r.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
       r.getCell(2).font = font({ color: { argb: colors.fg } });
       r.getCell(2).alignment = { vertical: 'top', wrapText: true };
       r.getCell(2).border = bdr();
-      // C: note
-      r.getCell(3).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
-      r.getCell(3).font = font({ italic: !!note, color: { argb: colors.fg } });
-      r.getCell(3).alignment = { vertical: 'top', wrapText: true };
-      r.getCell(3).border = bdr();
-      // D: empty filler
+      // D: note
       r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors.bg } };
+      r.getCell(4).font = font({ italic: !!note, color: { argb: colors.fg } });
+      r.getCell(4).alignment = { vertical: 'top', wrapText: true };
       r.getCell(4).border = bdr();
     });
   }
@@ -1851,19 +1866,29 @@ async function downloadXlsx(rows, meta, stats, options) {
     ws1.getCell(`${col}${metaIdx}`).border = bdr();
   });
   s1RowIdx = 0;
-  if (meta.name)     addMeta('Checklist Name', meta.name);
-  if (meta.ticketId) addMeta('Ticket ID',      meta.ticketId);
-  if (meta.env)      addMeta('Environment',    meta.env);
   addMeta('Date', meta.date);
   if (options.meta && meta.strategy)     addMeta('Strategy',      meta.strategy);
   if (options.meta && meta.outputFormat) addMeta('Output Format', meta.outputFormat);
   if (options.ac) {
-    addLongMeta('Ticket / User Story', meta.ticket);
-    addLongMeta('Acceptance Criteria', meta.ac);
+    // Ticket & AC span B-D for full width
+    const addWideMeta = (label, value) => {
+      if (!value) return;
+      const rowNum = ws1.rowCount + 1;
+      const r = ws1.addRow([label, value, '', '']);
+      ws1.mergeCells(`B${rowNum}:D${rowNum}`);
+      const f = s1Fill();
+      r.getCell(1).fill = f; r.getCell(1).font = font({ bold: true, color: { argb: C.dim } }); r.getCell(1).border = bdr();
+      r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
+      r.getCell(3).fill = f; r.getCell(3).border = bdr();
+      r.getCell(4).fill = f; r.getCell(4).border = bdr();
+      r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 100) * 15));
+    };
+    addWideMeta('Ticket / User Story', meta.ticket);
+    addWideMeta('Acceptance Criteria', meta.ac);
   }
 
   // ── Sheet 2: Test Cases ─────────────────────────────────────
-  const ws2 = wb.addWorksheet('Test Cases');
+  const ws2 = wb.addWorksheet('Test Cases', { properties: { tabColor: { argb: 'FF2D3748' } } });
   const hasNotes = rows.some(i => i.note);
 
   // Columns: ID, Status first for fast scanning, then the rest
@@ -1894,7 +1919,7 @@ async function downloadXlsx(rows, meta, stats, options) {
   });
 
   // Freeze header + auto-filter
-  ws2.views = [{ state: 'frozen', xSplit: 0, ySplit: 1, activeCell: 'A2' }];
+  ws2.views = [{ state: 'frozen', xSplit: 2, ySplit: 1, activeCell: 'C2' }];
   ws2.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
 
   // Status color map
