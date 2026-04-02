@@ -1630,8 +1630,8 @@ async function downloadXlsx(rows, meta, stats, options) {
     headerBg:   'FF2D3748', // dark slate — readable, not pitch black
     headerFg:   'FFFFFFFF',
     accent:     'FF10B981', // green underline on header
-    sectionBg:  'FFF1F5F9', // very light blue-gray for section headings
-    sectionFg:  'FF1E293B',
+    sectionBg:  'FFD1FAE5', // light green tint for section headings
+    sectionFg:  'FF065F46',
     text:       'FF1F2937', // near-black — standard Excel body text
     dim:        'FF6B7280', // labels, secondary info
     muted:      'FF9CA3AF', // Not Run, very secondary
