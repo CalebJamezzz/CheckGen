@@ -2,6 +2,7 @@
 
 /* ── State ─────────────────────────────────────────────── */
 let currentChecklist = [];
+let _sessionStrategy = '';  // strategy captured at generation time
 let sessionMode  = 'personal';
 let sharedSub    = 'start';
 let sharedSessionId = null;
@@ -70,6 +71,7 @@ function backToSetup() {
 function _doBackToSetup() {
   _pendingBackToSetup = false;
   currentChecklist = [];
+  _sessionStrategy = '';
   _cloudSaveId = null;
   goTo(2);
 }
@@ -275,6 +277,7 @@ function restoreFromHistory(idx) {
     const hist = JSON.parse(localStorage.getItem(HSK) || '[]');
     const h    = hist[idx]; if (!h) return;
     currentChecklist = h.checklist;
+    _sessionStrategy = h.strategy || '';
     if (h.ticket)   $('ticketText').value    = h.ticket;
     if (h.ticketId) $('ticketId').value      = h.ticketId;
     if (h.name)     $('checklistName').value = h.name;
@@ -324,6 +327,7 @@ function saveSession() {
       ticketId:    $('ticketId')?.value     || '',
       name:        $('checklistName')?.value || '',
       env:         $('envBranch')?.value    || '',
+      strategy:    _sessionStrategy || '',
       ts:          Date.now(),
       cloudSaveId: _cloudSaveId || null,
     };
@@ -343,6 +347,7 @@ function loadSession() {
     if (d.name)     $('checklistName').value = d.name;
     if (d.env)      $('envBranch').value     = d.env;
     if (d.cloudSaveId) _cloudSaveId = d.cloudSaveId;
+    if (d.strategy)    _sessionStrategy = d.strategy;
     if (Array.isArray(d.checklist) && d.checklist.length) {
       currentChecklist = d.checklist;
       goTo(3);
@@ -793,6 +798,7 @@ async function generateChecklist() {
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     stopGenAnimation();
     currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '', text: normalizeArrow(item.text || ''), time: String(item.time || '').replace(/m$/i, '') }));
+    _sessionStrategy = getEffectiveStrategy();
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession();
     $('exportBar').style.display = '';
@@ -802,6 +808,7 @@ async function generateChecklist() {
       ticketId:  $('ticketId').value,
       name:      $('checklistName').value,
       env:       $('envBranch').value,
+      strategy:  _sessionStrategy,
       ts:        Date.now(),
     });
     loadHistory();
@@ -1527,7 +1534,7 @@ function _buildExportPayload() {
     name:         $('checklistName')?.value.trim() || '',
     ticketId:     $('ticketId')?.value.trim() || '',
     env:          $('envBranch')?.value.trim() || '',
-    strategy:     strategyMap[getEffectiveStrategy()] || '',
+    strategy:     strategyMap[_sessionStrategy || getEffectiveStrategy()] || '',
     outputFormat: formatMap[$('detailLevel')?.value] || '',
     addons:       addonParts.join(', '),
     ticket:       $('ticketText')?.value.trim() || '',
@@ -2087,7 +2094,7 @@ function _buildMarkdown() {
   const ticketId    = $('ticketId')?.value.trim() || '';
   const date        = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const strategyMap = { balanced: 'Full Coverage', smoke: 'Smoke Test', edge: 'Deep Dive', custom: 'Custom' };
-  const strategy    = strategyMap[getEffectiveStrategy()] || '';
+  const strategy    = strategyMap[_sessionStrategy || getEffectiveStrategy()] || '';
   const mdAddonParts = [];
   if ($('addonBreak')?.checked)    mdAddonParts.push('Break-It');
   if ($('addonTestData')?.checked) mdAddonParts.push('Test Data');
@@ -2596,8 +2603,11 @@ function getEffectiveStrategy() {
     edge:     ['Functional','Validation','Permissions','Data / Persistence','Error Handling & Feedback','Edge Cases','Integrations']
   };
   const preset = presets[strategy] || presets.balanced;
+  // Only compare against enabled (non-pro-locked) checkboxes
+  const enabledAreas = Array.from(document.querySelectorAll('.areaCheck:not([disabled])')).map(e => e.value);
+  const effectivePreset = preset.filter(a => enabledAreas.includes(a));
   const current = Array.from(document.querySelectorAll('.areaCheck:checked')).map(e => e.value);
-  const matches = preset.length === current.length && preset.every(a => current.includes(a));
+  const matches = effectivePreset.length === current.length && effectivePreset.every(a => current.includes(a));
   if (!matches) return 'custom';
   return strategy;
 }
