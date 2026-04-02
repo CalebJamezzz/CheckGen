@@ -1664,12 +1664,10 @@ async function downloadXlsx(rows, meta, stats, options) {
   };
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
   // Estimate row height so wrapped text isn't clipped.
-  // charWidth = usable chars per line (conservative — accounts for cell padding + proportional font).
   const estHeight = (text, charWidth) => {
     if (!text) return 18;
-    const effectiveWidth = Math.max(charWidth * 0.85, 1); // ~15% reduction for padding/font variance
-    const lines = text.split('\n').reduce((sum, seg) => sum + Math.max(1, Math.ceil(seg.length / effectiveWidth)), 0);
-    return Math.max(18, lines * 15);
+    const lines = text.split('\n').reduce((sum, seg) => sum + Math.max(1, Math.ceil(seg.length / Math.max(charWidth, 1))), 0);
+    return Math.max(18, lines * 14);
   };
   const bdr  = (bottom = 'thin', bottomColor = C.border) => ({
     bottom: { style: bottom,   color: { argb: bottomColor } },
@@ -1679,11 +1677,12 @@ async function downloadXlsx(rows, meta, stats, options) {
 
   // ── Sheet 1: Summary ────────────────────────────────────────
   const ws1 = wb.addWorksheet('Summary', { properties: { tabColor: { argb: 'FF10B981' } } });
-  // 4 columns: A-B = Results/meta, C-D = Results by Area
+  // 5 columns: A-B = Results/meta, C-D = Results by Area, E = Status Legend
   ws1.getColumn(1).width = 22;
   ws1.getColumn(2).width = 30;
   ws1.getColumn(3).width = 28;
   ws1.getColumn(4).width = 36;
+  ws1.getColumn(5).width = 22;
 
   // Title row — use checklist name · ticket ID · env if available, else "CheckGen Export"
   const titleParts = [meta.name, meta.ticketId, meta.env].filter(Boolean);
@@ -1896,6 +1895,34 @@ async function downloadXlsx(rows, meta, stats, options) {
     addWideMeta('Ticket / User Story', meta.ticket);
     addWideMeta('Acceptance Criteria', meta.ac);
   }
+
+  // ── Status Legend (column E) ────────────────────────────────
+  const legend = [
+    { label: 'Pass',     bg: C.passBg,    fg: C.passFg },
+    { label: 'Fail',     bg: C.failBg,    fg: C.failFg },
+    { label: 'Blocked',  bg: C.blockedBg, fg: C.blockedFg },
+    { label: 'Not Run',  bg: C.white,     fg: C.muted },
+  ];
+  // Header in E1 (title row already written, set E1 directly)
+  const e1 = ws1.getCell('E1');
+  e1.value = 'Status Legend';
+  e1.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.headerBg } };
+  e1.font  = font({ bold: true, size: 11, color: { argb: C.headerFg } });
+  e1.alignment = { vertical: 'middle', indent: 1 };
+  e1.border = bdr('medium', C.accent);
+  legend.forEach((item, i) => {
+    const cell = ws1.getCell(`E${i + 2}`);
+    cell.value = item.label;
+    cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: item.bg } };
+    cell.font  = font({ bold: true, color: { argb: item.fg } });
+    cell.alignment = { vertical: 'middle', indent: 1 };
+    cell.border = bdr();
+    ws1.getRow(i + 2).height = ws1.getRow(i + 2).height || 16;
+  });
+
+  // Set print area so Numbers doesn't add expansion columns
+  const lastRow = ws1.rowCount;
+  ws1.pageSetup.printArea = `A1:E${lastRow}`;
 
   // ── Sheet 2: Test Cases ─────────────────────────────────────
   const ws2 = wb.addWorksheet('Test Cases', { properties: { tabColor: { argb: 'FF2D3748' } } });
