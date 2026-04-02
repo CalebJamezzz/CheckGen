@@ -1663,6 +1663,8 @@ async function downloadXlsx(rows, meta, stats, options) {
     blockedBg:  'FFFEFCE8', blockedFg: 'FF713F12',
   };
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
+  // Estimate row height so wrapped text isn't clipped. charWidth = usable chars per line.
+  const estHeight = (text, charWidth) => Math.max(18, Math.min(200, Math.ceil((text || '').length / Math.max(charWidth, 1)) * 14));
   const bdr  = (bottom = 'thin', bottomColor = C.border) => ({
     bottom: { style: bottom,   color: { argb: bottomColor } },
     left:   { style: 'thin',   color: { argb: C.border } },
@@ -1833,7 +1835,8 @@ async function downloadXlsx(rows, meta, stats, options) {
       const note   = item.note || '';
       const rowNum = ws1.rowCount + 1;
       const r = ws1.addRow([label, detail, '', note ? '↳ ' + note : '']);
-      r.height = note ? 30 : 18;
+      // B-C merged = ~58 chars wide, D = ~36 chars wide
+      r.height = Math.max(estHeight(detail, 58), note ? estHeight(note, 36) : 18);
       // Merge B-C for test case text
       ws1.mergeCells(`B${rowNum}:C${rowNum}`);
       // A: TC label
@@ -1881,7 +1884,8 @@ async function downloadXlsx(rows, meta, stats, options) {
       r.getCell(2).fill = f; r.getCell(2).font = font(); r.getCell(2).alignment = { wrapText: true }; r.getCell(2).border = bdr();
       r.getCell(3).fill = f; r.getCell(3).border = bdr();
       r.getCell(4).fill = f; r.getCell(4).border = bdr();
-      r.height = Math.max(16, Math.min(150, Math.ceil(value.length / 100) * 15));
+      // B-D merged = ~94 chars wide (30+28+36)
+      r.height = estHeight(value, 94);
     };
     addWideMeta('Ticket / User Story', meta.ticket);
     addWideMeta('Acceptance Criteria', meta.ac);
