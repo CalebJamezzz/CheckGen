@@ -1644,7 +1644,6 @@ async function downloadXlsx(rows, meta, stats, options) {
   };
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
   const bdr  = (bottom = 'thin', bottomColor = C.border) => ({
-    top:    { style: 'thin',   color: { argb: C.border } },
     bottom: { style: bottom,   color: { argb: bottomColor } },
     left:   { style: 'thin',   color: { argb: C.border } },
     right:  { style: 'thin',   color: { argb: C.border } },
