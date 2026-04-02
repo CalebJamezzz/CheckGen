@@ -812,10 +812,9 @@ async function generateChecklist() {
       ts:        Date.now(),
     });
     loadHistory();
-    // Save to cloud if signed in
-    cloudSaveSession();
     if (sessionMode === 'shared' && sharedSub === 'start') {
       try {
+        // createSharedSession creates the authoritative DB row and sets _cloudSaveId
         await createSharedSession();
         startPolling();
         // Email invited users
@@ -840,8 +839,13 @@ async function generateChecklist() {
           showStatus('status3', `✓ ${currentChecklist.length} items generated. Invites sent to ${_shareEmails.length} teammate${_shareEmails.length !== 1 ? 's' : ''}.`, 'success');
         }
       } catch(e) {
+        // Fall back to personal cloud save if shared session creation fails
+        cloudSaveSession();
         showStatus('status3', '⚠ Could not create shared session — running as personal. Check your connection.', 'warn');
       }
+    } else {
+      // Personal session — save to cloud
+      cloudSaveSession();
     }
     showStatus('status3', `✓ ${currentChecklist.length} items generated.`, 'success');
   } catch(err) {
@@ -2183,8 +2187,15 @@ function showShareBadge() {
 
 async function createSharedSession() {
   const code = genCode();
+  const s = await getSession().catch(() => null);
+  if (!s?.user) throw new Error('Must be signed in to create a shared session');
+  const sb = getSB();
+  const { data: prof } = await sb.from('profiles').select('workspace_id').eq('id', s.user.id).single();
   const data = await sbPost('checklist_sessions', {
     code,
+    user_id:     s.user.id,
+    session_type: 'team',
+    workspace_id: prof?.workspace_id || null,
     ticket_id:   $('ticketId').value.trim()      || null,
     name:        $('checklistName').value.trim() || null,
     environment: $('envBranch').value.trim()     || null,
@@ -2193,7 +2204,9 @@ async function createSharedSession() {
     items:       currentChecklist,
     created_by:  _currentUserName || 'anonymous',
   });
-  sharedSessionId = data.id; sharedCode = code;
+  sharedSessionId = data.id;
+  sharedCode = code;
+  _cloudSaveId = data.id; // future outcome saves update this row
   showShareBadge();
 }
 
