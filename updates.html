@@ -89,6 +89,52 @@
 
     <div class="changelog-entry">
       <div>
+        <div class="changelog-date">April 2026</div>
+        <span class="changelog-tag update">Update</span>
+        <div class="changelog-version">v2.3</div>
+      </div>
+      <div class="changelog-content">
+        <h2>New XLSX export, smarter strategy tracking &amp; quality fixes</h2>
+        <p>CheckGen now exports to XLSX — a full two-sheet workbook built to be handed to a stakeholder or filed alongside a ticket, not just a spreadsheet dump. CSV export remains available alongside it.</p>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">XLSX Export — Summary sheet</h3>
+        <ul>
+          <li><strong>Two-section summary layout</strong> — Results and Results by Area sit side by side so you can read overall pass rate and per-area breakdown at a glance without scrolling.</li>
+          <li><strong>Pass rate color coding</strong> — The pass rate value turns green at 80%+, amber between 50–79%, and red below 50%.</li>
+          <li><strong>Total duration</strong> — Estimated session time is included in the summary. Sessions over an hour display as "1h 30min".</li>
+          <li><strong>Failed &amp; Blocked section</strong> — Every failed or blocked item is pulled into a dedicated section below the summary with its test case, area, and note inline. No need to scan through Sheet 2 to find what went wrong.</li>
+          <li><strong>Details section</strong> — Date, strategy, output format, add-ons, and optionally the full ticket and acceptance criteria text sit at the bottom of the sheet for full context.</li>
+          <li><strong>Status legend</strong> — A compact Pass / Fail / Blocked / Not Run key sits in the top-right corner of the sheet.</li>
+          <li><strong>Full 5-column layout</strong> — Every section spans all five columns cleanly. No orphan column appearing in Numbers or Excel.</li>
+          <li><strong>Print area defined</strong> — The print area is set to the data range so the sheet prints cleanly without blank columns.</li>
+          <li><strong>Freeze pane on header row</strong> — The summary header stays in view when scrolling.</li>
+          <li><strong>Green tab</strong> — Summary tab is colored green; Test Cases tab is dark for easy visual distinction.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">XLSX Export — Test Cases sheet</h3>
+        <ul>
+          <li><strong>Notes column</strong> — Any note added to a test case during the session appears in a dedicated column on Sheet 2.</li>
+          <li><strong>Freeze panes</strong> — The header row and ID + Area columns stay fixed when scrolling through large checklists.</li>
+          <li><strong>Dynamic row heights</strong> — Rows containing long test case text or multi-line notes expand automatically rather than clipping content.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Strategy &amp; Session Metadata</h3>
+        <ul>
+          <li><strong>Strategy captured at generation time</strong> — The strategy label (Full Coverage, Smoke Test, Deep Dive) is stored when the checklist is generated and persists through history and page refreshes. Exports from history always reflect the original strategy.</li>
+          <li><strong>Custom strategy detection</strong> — Modifying the testing areas after selecting a strategy automatically updates the label to "Custom" so exports are always accurate.</li>
+          <li><strong>Add-ons in Details</strong> — When Break-It or Test Data were active, they now appear in the Details row of the export.</li>
+        </ul>
+
+        <h3 style="font-family:var(--font-display);font-size:clamp(.9rem,1.1vw,1.1rem);color:var(--text);margin:var(--sp-5) 0 var(--sp-2)">Checklist</h3>
+        <ul>
+          <li><strong>Note field surfaces on fail or blocked</strong> — Marking an item as Failed or Blocked automatically opens the note field and focuses it.</li>
+          <li><strong>Time display corrected</strong> — Item times now show as "5 min" everywhere — on the checklist, in the time pill, and across all export formats.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="changelog-entry">
+      <div>
         <div class="changelog-date">March 2026</div>
         <span class="changelog-tag update">Update</span>
         <div class="changelog-version">v2.2</div>
