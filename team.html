@@ -394,10 +394,10 @@ async function sendInvites() {
       const { data: invite } = await sb.from('workspace_invites').select('token').eq('workspace_id',_workspace.id).eq('email',email.toLowerCase()).single();
       const joinUrl = `${location.origin}/join.html?token=${invite?.token}`;
 
-      // Send via Netlify function (calls Resend)
+      // Send invite email via API (calls Resend)
       try {
         const inviterName = _profile?.name || _user.email?.split('@')[0] || 'A teammate';
-        const res = await fetch('/.netlify/functions/send-invite', {
+        const res = await fetch('/api/send-invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
