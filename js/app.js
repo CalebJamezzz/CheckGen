@@ -411,7 +411,10 @@ function updateTimeSummary() {
     const m = String(i.time || '').match(/(\d+)/);
     if (m) total += parseInt(m[1], 10);
   });
-  if (total > 0) { pill.textContent = '~' + total + ' min'; pill.style.display = ''; }
+  if (total > 0) {
+    const dur = total >= 60 ? `~${Math.floor(total / 60)}h ${total % 60}min` : `~${total} min`;
+    pill.textContent = dur; pill.style.display = '';
+  }
   else pill.style.display = 'none';
 }
 
@@ -789,7 +792,7 @@ async function generateChecklist() {
     const items = await callClaude(prompt, 16000, systemPrompt);
     if (!Array.isArray(items) || !items.length) throw new Error('No items returned');
     stopGenAnimation();
-    currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '', text: normalizeArrow(item.text || '') }));
+    currentChecklist = items.map((item, i) => ({ ...item, id: i + 1, outcome: null, note: '', text: normalizeArrow(item.text || ''), time: String(item.time || '').replace(/m$/i, '') }));
     goTo(3);
     renderChecklist(); updateProgress(); updateTimeSummary(); saveSession();
     $('exportBar').style.display = '';
@@ -1608,7 +1611,7 @@ function downloadCsv(rows, meta, stats, options) {
     const step     = (parts[0] || normText || '').trim();
     const expected = meta.isDetailed ? (parts.slice(1).join(' → ') || '').trim() : null;
     const status   = item.outcome ? item.outcome.charAt(0).toUpperCase() + item.outcome.slice(1) : '';
-    const time     = item.time ? `${item.time}m` : '';
+    const time     = item.time ? `${item.time} min` : '';
     const row = [id];
     if (options.areas) row.push(item.section || '');
     row.push(step);
