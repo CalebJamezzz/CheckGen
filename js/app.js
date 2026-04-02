@@ -1995,6 +1995,7 @@ async function createSharedSession() {
     name:        $('checklistName').value.trim() || null,
     environment: $('envBranch').value.trim()     || null,
     ticket_ac:   $('ticketText').value.trim()    || null,
+    ac:          $('acText').value.trim()        || null,
     items:       currentChecklist,
     created_by:  _currentUserName || 'anonymous',
   });
@@ -2198,6 +2199,8 @@ async function cloudSaveSession() {
       name:         $('checklistName')?.value || null,
       ticket_id:    $('ticketId')?.value || null,
       environment:  $('envBranch')?.value || null,
+      ticket_ac:    $('ticketText')?.value.trim() || null,
+      ac:           $('acText')?.value.trim() || null,
       items:        currentChecklist,
       status:       allMarked ? 'complete' : 'in_progress',
       updated_at:   new Date().toISOString(),
@@ -2502,9 +2505,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const _r = JSON.parse(_restoreRaw);
       currentChecklist = Array.isArray(_r.items) ? _r.items : [];
       if (_r.name)        $('checklistName') && ($('checklistName').value = _r.name);
-      if (_r.ticket_id)   $('ticketId') && ($('ticketId').value = _r.ticket_id);
+      if (_r.ticket_id)   $('ticketId')   && ($('ticketId').value   = _r.ticket_id);
       if (_r.environment) $('envBranch') && ($('envBranch').value = _r.environment);
-      if (_r.ac)          $('acText')    && ($('acText').value = _r.ac);
+      if (_r.ticket_ac)   $('ticketText') && ($('ticketText').value = _r.ticket_ac);
+      if (_r.ac)          $('acText')     && ($('acText').value     = _r.ac);
       // Set _cloudSaveId so outcome changes UPDATE the existing row, not create a new one
       if (_r.id) _cloudSaveId = _r.id;
       if (_r.session_type === 'team') {
