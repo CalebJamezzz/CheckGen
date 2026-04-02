@@ -1663,8 +1663,14 @@ async function downloadXlsx(rows, meta, stats, options) {
     blockedBg:  'FFFEFCE8', blockedFg: 'FF713F12',
   };
   const font = (overrides = {}) => ({ name: 'Calibri', size: 10, color: { argb: C.text }, ...overrides });
-  // Estimate row height so wrapped text isn't clipped. charWidth = usable chars per line.
-  const estHeight = (text, charWidth) => Math.max(18, Math.min(200, Math.ceil((text || '').length / Math.max(charWidth, 1)) * 14));
+  // Estimate row height so wrapped text isn't clipped.
+  // charWidth = usable chars per line (conservative — accounts for cell padding + proportional font).
+  const estHeight = (text, charWidth) => {
+    if (!text) return 18;
+    const effectiveWidth = Math.max(charWidth * 0.85, 1); // ~15% reduction for padding/font variance
+    const lines = text.split('\n').reduce((sum, seg) => sum + Math.max(1, Math.ceil(seg.length / effectiveWidth)), 0);
+    return Math.max(18, lines * 15);
+  };
   const bdr  = (bottom = 'thin', bottomColor = C.border) => ({
     bottom: { style: bottom,   color: { argb: bottomColor } },
     left:   { style: 'thin',   color: { argb: C.border } },
