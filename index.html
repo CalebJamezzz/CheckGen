@@ -220,6 +220,12 @@
 </div>
   </main>
 <script src="/js/supabase.js"></script>
+<script>
+  // If landing on homepage with an OAuth hash (e.g. after Google SSO redirect), forward to /app/
+  if (location.hash && location.hash.includes('access_token')) {
+    location.replace('/app/' + location.hash);
+  }
+</script>
 
 
 
