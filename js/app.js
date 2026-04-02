@@ -1541,7 +1541,7 @@ function _buildExportPayload() {
   const totalDuration = totalMins >= 60
     ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}min`
     : totalMins > 0 ? `${totalMins} min` : '—';
-  const stats = { total: rows.length, passed, failed, blocked, notRun, passRate, totalDuration, filter };
+  const stats = { total: rows.length, passed, failed, blocked, notRun, passRate, passRateNum, totalDuration, filter };
 
   const options = {
     areas: $('optAreas').checked,
@@ -1792,17 +1792,17 @@ async function downloadXlsx(rows, meta, stats, options) {
     r.height = 16;
     r.getCell(1).fill = f; r.getCell(1).font = font({ color: { argb: C.dim } }); r.getCell(1).border = bdr();
     const isPassRate = sd?.label === 'Pass Rate';
-    const passRateBg = isPassRate && passRateNum !== null
-      ? (passRateNum >= 80 ? 'FFF0FDF4' : passRateNum >= 50 ? 'FFFEFCE8' : 'FFFEF2F2')
+    const passRateBg = isPassRate && stats.passRateNum !== null
+      ? (stats.passRateNum >= 80 ? 'FFF0FDF4' : stats.passRateNum >= 50 ? 'FFFEFCE8' : 'FFFEF2F2')
       : null;
-    const passRateFg = isPassRate && passRateNum !== null
-      ? (passRateNum >= 80 ? C.passFg : passRateNum >= 50 ? C.blockedFg : C.failFg)
+    const passRateFg = isPassRate && stats.passRateNum !== null
+      ? (stats.passRateNum >= 80 ? C.passFg : stats.passRateNum >= 50 ? C.blockedFg : C.failFg)
       : null;
     r.getCell(2).fill = passRateBg
       ? { type: 'pattern', pattern: 'solid', fgColor: { argb: passRateBg } }
       : f;
     r.getCell(2).font = font({ bold: !!sd, color: { argb: passRateFg || sd?.color || C.text } });
-    if (isPassRate && passRateBg) r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: passRateBg } };
+    if (isPassRate && passRateBg) r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: passRateBg } };  // colour label cell too
     r.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' }; r.getCell(2).border = bdr();
     r.getCell(3).fill = f; r.getCell(3).font = font({ bold: ad?.hasIssue || false, color: { argb: ad?.hasIssue ? C.failFg : C.dim } }); r.getCell(3).border = bdr();
     r.getCell(4).fill = f; r.getCell(4).font = font({ color: { argb: ad?.hasIssue ? C.failFg : C.text } });
