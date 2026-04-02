@@ -49,6 +49,9 @@ function goTo(n) {
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
   if (n === 1) initResumePanel();
+  // Track active screen so refresh restores position, but new tabs start at screen 1
+  if (n === 3) sessionStorage.setItem('cg_screen', '3');
+  else sessionStorage.removeItem('cg_screen');
 }
 
 function newSession() {
@@ -352,8 +355,12 @@ function loadSession() {
     if (d.strategy)    _sessionStrategy = d.strategy;
     if (Array.isArray(d.checklist) && d.checklist.length) {
       currentChecklist = d.checklist;
-      // Don't auto-navigate to screen 3 on load — user starts at screen 1
-      // and can resume from the resume panel
+      // Restore to screen 3 on refresh, but not on a fresh open/new tab
+      if (sessionStorage.getItem('cg_screen') === '3') {
+        goTo(3);
+        renderChecklist(); updateProgress(); updateTimeSummary();
+        $('exportBar').style.display = '';
+      }
     }
   } catch(e) { console.error('[CheckGen] loadSession error:', e.message, e); }
 }
