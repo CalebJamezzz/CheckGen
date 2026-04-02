@@ -397,7 +397,7 @@ async function sendInvites() {
       // Send via Netlify function (calls Resend)
       try {
         const inviterName = _profile?.name || _user.email?.split('@')[0] || 'A teammate';
-        const res = await fetch('/.netlify/functions/send-invite', {
+        const res = await fetch('/api/send-invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
